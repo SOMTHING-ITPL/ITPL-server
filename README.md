@@ -4,8 +4,7 @@ ITPL golang server
 ### dev env : 
 Golang/GIN ()
 
-
-###commit message should be like that..
+### commit message should be like that..
 - feat : ~~ <when something new features is added>
 - fix : ~~ <when specific feature is modified>
 - err : ~~ <debug>
