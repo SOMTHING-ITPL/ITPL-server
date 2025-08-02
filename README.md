@@ -1,8 +1,17 @@
 # ITPL-server
 ITPL golang server 
 
-### dev env : 
-Golang/GIN ()
+### dev env & used main package: 
+Golang
+GIN-GONIC
+GORM
+
+### run on local
+you should check config package. set all of DB config, and don't forget creating new itpl_db database. table will be automigrationed. 
+
+
+### deploy
+
 
 ### commit message should be like that..
 - feat : ~~ when something new features is added
