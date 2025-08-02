@@ -11,7 +11,8 @@ you should check config package. set all of DB config, and don't forget creating
 
 
 ### deploy
-
+database should be installed in host coumputer. 
+and docker container run on host net i think.. check it 
 
 ### commit message should be like that..
 - feat : ~~ when something new features is added
