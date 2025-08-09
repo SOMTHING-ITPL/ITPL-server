@@ -66,7 +66,7 @@ func registerCourseRoutes(rg *gin.RouterGroup) {
 
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/", listPlaceHandler)
+	rg.GET("/get-place-list", getPlaceList)
 	// rg.POST("/", createPlaceHandler)
 }
 
