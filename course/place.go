@@ -5,8 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/internal/externalapi"
-
+	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
 	"github.com/joho/godotenv"
 )
 
@@ -61,13 +60,13 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 		"cat3":          "A05020100",
 	}
 
-	finalurl, err := externalapi.BuildURL(api_url, params)
+	finalurl, err := api.BuildURL(api_url, params)
 	if err != nil {
 		return nil, err
 	}
 	log.Println(finalurl)
 
-	items, err := externalapi.FetchAndParseJSON(finalurl)
+	items, err := api.FetchAndParseJSON(finalurl)
 
 	if err != nil {
 		return nil, err

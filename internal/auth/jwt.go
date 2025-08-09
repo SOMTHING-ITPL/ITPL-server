@@ -11,18 +11,15 @@ import (
 
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
-// 
 type CustomClaims struct {
-	Username string `json:"username"`
-	User_id  string `json:"user_id"`
+	UserId uint `json:"user_id"`
 	jwt.RegisteredClaims
 }
 
 func GenerateJWT(loginUser *user.User) (string, error) {
 	expirationTime := time.Now().Add(1 * time.Hour)
 	claims := &CustomClaims{
-		Username: loginUser.Username,
-		User_id:  loginUser.User_id,
+		UserId: loginUser.ID,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(expirationTime),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),

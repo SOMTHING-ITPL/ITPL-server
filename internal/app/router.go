@@ -4,10 +4,11 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 // SetupRouter sets up the router
-func SetupRouter() *gin.Engine {
+func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
 	//this router does not needs auth
@@ -50,7 +51,6 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 func registerAuthRoutes(rg *gin.RouterGroup) {
 	// rg.GET("/:id", getUserHandler)
 	// rg.PUT("/:id", updateUserHandler)
-
 }
 
 // for about user
