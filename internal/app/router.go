@@ -39,12 +39,6 @@ func SetupRouter() *gin.Engine {
 	return r
 }
 
-func wrapHTTPHandler(h http.Handler) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		h.ServeHTTP(c.Writer, c.Request)
-	}
-}
-
 // This is for example for jo you can also check this for test
 func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 	rg.GET("/ping", func(c *gin.Context) {
@@ -72,7 +66,7 @@ func registerCourseRoutes(rg *gin.RouterGroup) {
 
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/", listPlaceHandler)
+	rg.GET("/get-place-list", getPlaceList)
 	// rg.POST("/", createPlaceHandler)
 }
 

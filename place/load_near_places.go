@@ -1,37 +1,17 @@
-package course
+package place
 
 import (
 	"log"
 	"os"
 	"strconv"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/internal/externalapi"
+	api "github.com/SOMTHING-ITPL/ITPL-server/internal/externalapi"
 
 	"github.com/joho/godotenv"
 )
 
-type Coordinate struct {
-	Latitude  float64 `json:"latitude"`
-	Longitude float64 `json:"longitude"`
-}
-
-type Place struct {
-	Tourapi_place_id string `json:"tourapi_place_id"`
-	Category         int64  `json:"category"`
-	Title            string `json:"title"`
-	Address          string `json:"address"`
-	Tel              string `json:"tel"`
-	Longitude        string `json:"longitude"`
-	Latitude         string `json:"latitude"`
-	PlaceImage       string `json:"place_image"`
-}
-
-type Course struct {
-	Places []Place `json:"course"`
-}
-
 func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
-	err := godotenv.Load("../.env")
+	err := godotenv.Load("../../.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -63,12 +43,12 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 		"cat3":          "A05020100",
 	}
 
-	finalurl, err := externalapi.BuildURL(api_url, params)
+	finalurl, err := api.BuildURL(api_url, params)
 	if err != nil {
 		return nil, err
 	}
 
-	items, err := externalapi.FetchAndParseJSON(finalurl)
+	items, err := api.FetchAndParseJSON(finalurl)
 
 	if err != nil {
 		return nil, err
