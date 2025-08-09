@@ -23,6 +23,7 @@ type Place struct {
 	Tel              string `json:"tel"`
 	Longitude        string `json:"longitude"`
 	Latitude         string `json:"latitude"`
+	PlaceImage       string `json:"place_image"`
 }
 
 type Course struct {
@@ -36,6 +37,7 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 	}
 
 	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
+
 	// for test, 수정 예정
 	params := map[string]string{
 		"serviceKey":    os.Getenv("SERVICE_KEY"),
@@ -44,7 +46,7 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 		"MobileOS":      "ETC",
 		"MobileApp":     "AppTest",
 		"_type":         "json",
-		"arrange":       "E",
+		"arrange":       "E", // 거리순
 		"mapX":          strconv.FormatFloat(c.Longitude, 'f', -1, 64),
 		"mapY":          strconv.FormatFloat(c.Latitude, 'f', -1, 64),
 		"radius":        "3000",
@@ -65,7 +67,6 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 	if err != nil {
 		return nil, err
 	}
-	log.Println(finalurl)
 
 	items, err := externalapi.FetchAndParseJSON(finalurl)
 
@@ -85,6 +86,7 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 			Tel:              item.Tel,
 			Longitude:        item.MapX,
 			Latitude:         item.MapY,
+			PlaceImage:       item.FirstImage,
 		}
 		places = append(places, place)
 	}
