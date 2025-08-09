@@ -1,12 +1,13 @@
 package config
 
-import "github.com/spf13/viper"
+import (
+	"github.com/spf13/viper"
+)
 
 type Config interface {
 	Load() error
 }
 
-// KaKaoConfig
 type KaKaoConfig struct {
 	ClientId     string
 	ClientSecret string
@@ -16,15 +17,21 @@ type KaKaoConfig struct {
 }
 
 func (k *KaKaoConfig) Load() error {
-	k.ClientId = viper.GetString("kakao.clientId")
-	k.ClientSecret = viper.GetString("kakao.clientSecret")
+	//In Yaml
 	k.Domain = viper.GetString("kakao.domain")
 	k.RedirectURI = viper.GetString("kakao.redirectURI")
 	k.ApiHost = viper.GetString("kakao.apiHost")
+
+	//In Env
+	if val := viper.GetString("KAKAO_CLIENT_ID"); val != "" {
+		k.ClientId = val
+	}
+	if val := viper.GetString("KAKAO_CLIENT_SECRET"); val != "" {
+		k.ClientSecret = val
+	}
 	return nil
 }
 
-// DBConfig
 type DBConfig struct {
 	User     string
 	Password string
@@ -34,10 +41,18 @@ type DBConfig struct {
 }
 
 func (d *DBConfig) Load() error {
-	d.User = viper.GetString("db.user")
-	d.Password = viper.GetString("db.password")
+	//In yaml
 	d.Host = viper.GetString("db.host")
 	d.Port = viper.GetString("db.port")
 	d.Database = viper.GetString("db.database")
+
+	//In Env
+	if val := viper.GetString("DB_USER"); val != "" {
+		d.User = val
+	}
+	if val := viper.GetString("DB_PASSWORD"); val != "" {
+		d.Password = val
+	}
+
 	return nil
 }

@@ -10,13 +10,15 @@ type ServerConfig struct {
 }
 
 func LoadConfigs(configs ...Config) error {
+
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
-	viper.AddConfigPath("../../config")
+	viper.AddConfigPath("./")
 
 	if err := viper.ReadInConfig(); err != nil {
 		return err
 	}
+	viper.AutomaticEnv()
 
 	for _, cfg := range configs {
 		if err := cfg.Load(); err != nil {
