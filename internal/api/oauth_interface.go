@@ -1,0 +1,26 @@
+package api
+
+import (
+	"net/url"
+)
+
+type OAuthClient interface {
+	MakeAccessTokenForm(code string) url.Values
+	GetAccessToken(code string) (OAuthTokenResponse, error)
+	GetUserInfo(accessToken string) (OAuthUserInfo, error)
+}
+
+type OAuthTokenResponse struct {
+	AccessToken  string `json:"access_token"`
+	TokenType    string `json:"token_type"`
+	RefreshToken string `json:"refresh_token,omitempty"`
+	ExpiresIn    int    `json:"expires_in,omitempty"`
+	Scope        string `json:"scope,omitempty"`
+}
+
+type OAuthUserInfo struct {
+	ID       string  `json:"id"`
+	Email    *string `json:"email,omitempty"`
+	Nickname *string `json:"nickname,omitempty"`
+	Photo    *string `json:"photo,omitempty"`
+}
