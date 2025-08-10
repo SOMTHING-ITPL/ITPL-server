@@ -11,7 +11,7 @@ type DBConfig struct {
 func GetDBConfig() DBConfig {
 	return DBConfig{
 		User:     "root",
-		Password: "534f4b4354", //check this field
+		Password: "", //check this field
 		Host:     "localhost",
 		Port:     "3306",
 		Database: "itpl_db",
