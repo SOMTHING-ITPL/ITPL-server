@@ -5,12 +5,7 @@ import (
 	"os"
 	"strconv"
 
-<<<<<<<< HEAD:course/place.go
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
-========
-	api "github.com/SOMTHING-ITPL/ITPL-server/internal/externalapi"
-
->>>>>>>> origin/develop:place/load_near_places.go
 	"github.com/joho/godotenv"
 )
 
