@@ -5,7 +5,7 @@ import (
 	"os"
 	"strconv"
 
-	api "github.com/SOMTHING-ITPL/ITPL-server/internal/externalapi"
+	api "github.com/SOMTHING-ITPL/ITPL-server/internal/api"
 
 	"github.com/joho/godotenv"
 )
