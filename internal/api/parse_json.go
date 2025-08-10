@@ -9,13 +9,14 @@ import (
 
 // Item 구조체: JSON "item" 배열 안의 객체 하나
 type Item struct {
-	ContentId string `json:"contentid"`
-	Title     string `json:"title"`
-	Addr1     string `json:"addr1"`
-	Addr2     string `json:"addr2"`
-	Tel       string `json:"tel"`
-	MapX      string `json:"mapx"`
-	MapY      string `json:"mapy"`
+	ContentId  string `json:"contentid"`
+	Title      string `json:"title"`
+	Addr1      string `json:"addr1"`
+	Addr2      string `json:"addr2"`
+	Tel        string `json:"tel"`
+	MapX       string `json:"mapx"`
+	MapY       string `json:"mapy"`
+	FirstImage string `json:"firstimage"`
 }
 
 // Items 구조체: JSON "items" 필드
