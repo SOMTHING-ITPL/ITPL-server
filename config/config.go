@@ -56,3 +56,27 @@ func (d *DBConfig) Load() error {
 
 	return nil
 }
+
+type GoogleConfig struct {
+	ClientId     string
+	ClientSecret string
+	Domain       string
+	RedirectURI  string
+	ApiHost      string
+}
+
+func (g *GoogleConfig) Load() error {
+	//In Yaml
+	g.Domain = viper.GetString("google.domain")
+	g.RedirectURI = viper.GetString("google.redirectURI")
+	g.ApiHost = viper.GetString("google.apiHost")
+
+	//In Env
+	if val := viper.GetString("GOOGLE_CLIENT_ID"); val != "" {
+		g.ClientId = val
+	}
+	if val := viper.GetString("GOOGLE_CLIENT_SECRET"); val != "" {
+		g.ClientSecret = val
+	}
+	return nil
+}

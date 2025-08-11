@@ -15,9 +15,9 @@ type KakaoClient struct {
 	client *http.Client
 }
 
-func NewKakaoClient(cfg *config.KaKaoConfig) *KakaoClient {
+func NewKakaoClient() *KakaoClient {
 	return &KakaoClient{
-		cfg:    cfg,
+		cfg:    config.KakaoCfg,
 		client: &http.Client{},
 	}
 }
@@ -31,7 +31,20 @@ func (k *KakaoClient) MakeAccessTokenForm(code string) url.Values {
 	return data
 }
 
-func (k *KakaoClient) GetAccessToken(code string) (OAuthTokenResponse, error) {
+func (k *KakaoClient) Login(code string) (OAuthUserInfo, error) {
+	res, err := k.getAccessToken(code)
+	if err != nil {
+		return OAuthUserInfo{}, err
+	}
+
+	user, err := k.getUserInfo(res.AccessToken)
+	if err != nil {
+		return OAuthUserInfo{}, err
+	}
+	return user, nil
+}
+
+func (k *KakaoClient) getAccessToken(code string) (OAuthTokenResponse, error) {
 	var tokenResp OAuthTokenResponse
 
 	tokenURL := fmt.Sprintf("%s/oauth/token", k.cfg.Domain)
@@ -48,7 +61,7 @@ func (k *KakaoClient) GetAccessToken(code string) (OAuthTokenResponse, error) {
 	return tokenResp, nil
 }
 
-func (k *KakaoClient) GetUserInfo(accessToken string) (OAuthUserInfo, error) {
+func (k *KakaoClient) getUserInfo(accessToken string) (OAuthUserInfo, error) {
 	var userInfo OAuthUserInfo
 	var kakaoRes KakaoUserResponse
 

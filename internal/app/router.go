@@ -13,8 +13,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
 	userRepo := user.NewRepository(db)
-	userService := user.NewService(userRepo)
-	userHandler := handler.NewUserHandler(userRepo, userService)
+	userHandler := handler.NewUserHandler(userRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")

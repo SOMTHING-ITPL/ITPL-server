@@ -7,6 +7,8 @@ import (
 	"net/http"
 )
 
+//조씨. 이기범이 reflect 찾아보래.
+
 // Item 구조체: JSON "item" 배열 안의 객체 하나
 type Item struct {
 	ContentId string `json:"contentid"`

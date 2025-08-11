@@ -5,14 +5,10 @@ import (
 )
 
 var (
-	cfg ServerConfig
+	KakaoCfg  *KaKaoConfig
+	GoogleCfg *GoogleConfig
+	DbCfg     *DBConfig
 )
-
-// 전역 변수로 넣어주기
-type ServerConfig struct {
-	KaKaoConfig *KaKaoConfig
-	DBConfig    *DBConfig
-}
 
 func LoadConfigs(configs ...Config) error {
 
@@ -34,16 +30,13 @@ func LoadConfigs(configs ...Config) error {
 	return nil
 }
 
-func InitConfigs() (*ServerConfig, error) {
-	kakaoCfg := &KaKaoConfig{}
-	dbCfg := &DBConfig{}
+func InitConfigs() error {
+	KakaoCfg = &KaKaoConfig{}
+	DbCfg = &DBConfig{}
 
-	if err := LoadConfigs(kakaoCfg, dbCfg); err != nil {
-		return nil, err
+	if err := LoadConfigs(KakaoCfg, DbCfg); err != nil {
+		return err
 	}
 
-	return &ServerConfig{
-		KaKaoConfig: kakaoCfg,
-		DBConfig:    dbCfg,
-	}, nil
+	return nil
 }

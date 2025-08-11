@@ -6,8 +6,9 @@ import (
 
 type OAuthClient interface {
 	MakeAccessTokenForm(code string) url.Values
-	GetAccessToken(code string) (OAuthTokenResponse, error)
-	GetUserInfo(accessToken string) (OAuthUserInfo, error)
+	Login(code string) (OAuthUserInfo, error)
+	getAccessToken(code string) (OAuthTokenResponse, error)
+	getUserInfo(accessToken string) (OAuthUserInfo, error)
 }
 
 type OAuthTokenResponse struct {
