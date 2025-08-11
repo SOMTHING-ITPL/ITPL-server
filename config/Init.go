@@ -4,6 +4,11 @@ import (
 	"github.com/spf13/viper"
 )
 
+var (
+	cfg ServerConfig
+)
+
+// 전역 변수로 넣어주기
 type ServerConfig struct {
 	KaKaoConfig *KaKaoConfig
 	DBConfig    *DBConfig

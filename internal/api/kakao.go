@@ -69,8 +69,8 @@ func (k *KakaoClient) GetUserInfo(accessToken string) (OAuthUserInfo, error) {
 
 	userInfo.ID = fmt.Sprintf("%d", kakaoRes.ID)
 	userInfo.Email = kakaoRes.KakaoAccount.Email
-	userInfo.Nickname = kakaoRes.KakaoAccount.Profile.Nickname
-	userInfo.Photo = kakaoRes.KakaoAccount.Profile.ProfileImageURL
+	// userInfo.Nickname = kakaoRes.KakaoAccount.Profile.Nickname
+	// userInfo.Photo = kakaoRes.KakaoAccount.Profile.ProfileImageURL
 
 	return userInfo, nil
 }

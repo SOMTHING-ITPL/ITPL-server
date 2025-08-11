@@ -3,13 +3,18 @@ package server
 import (
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-// SetupRouter sets up the router
 func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+
+	userRepo := user.NewRepository(db)
+	userService := user.NewService(userRepo)
+	userHandler := handler.NewUserHandler(userRepo, userService)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -25,7 +30,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 	// protected.Use(~)//should add middleWare
 	{
 		userGroup := protected.Group("/user")
-		registerUserRoutes(userGroup)
+		registerUserRoutes(userGroup, userHandler)
 
 		courseGroup := protected.Group("/course")
 		registerCourseRoutes(courseGroup)
@@ -54,9 +59,9 @@ func registerAuthRoutes(rg *gin.RouterGroup) {
 }
 
 // for about user
-func registerUserRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/", listPlaceHandler)
-	// rg.POST("/", createPlaceHandler)
+func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
+	rg.GET("/:id", userHandler.GetUser)
+	// rg.POST("/", userHandler.RegisterUser())
 }
 
 // for about course

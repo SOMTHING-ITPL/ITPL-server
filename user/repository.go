@@ -1,9 +1,15 @@
 package user
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+
+	"gorm.io/gorm"
+)
 
 type Repository interface {
-	FindByID(id uint) (*User, error)
+	CreateUser(user *User) error
+	GetById(id uint) (User, error)
+	GetByEmailAndProvider(email string, provider SocialProvider) (User, error)
 }
 
 type repository struct {
@@ -14,10 +20,34 @@ func NewRepository(db *gorm.DB) Repository {
 	return &repository{db: db}
 }
 
-func (r *repository) FindByID(id uint) (*User, error) {
-	var user User
-	if err := r.db.First(&user, id).Error; err != nil {
-		return nil, err
+func (r *repository) CreateUser(user *User) error {
+	result := r.db.Create(user)
+
+	if result.Error != nil {
+		fmt.Printf("create user error : %s\n", result.Error)
+		return result.Error
 	}
-	return &user, nil
+	return nil
+}
+
+func (r *repository) GetById(id uint) (User, error) {
+	var user User
+
+	result := r.db.First(&user, id)
+	if result.Error != nil {
+		fmt.Printf("get user error : %s\n", result.Error)
+		return User{}, result.Error
+	}
+	return user, nil
+}
+
+func (r *repository) GetByEmailAndProvider(email string, provider SocialProvider) (User, error) {
+	var user User
+
+	result := r.db.Where("email = ? AND social_provider = ?", email, provider).First(&user)
+	if result.Error != nil {
+		fmt.Printf("get user error : %s\n", result.Error)
+		return User{}, result.Error
+	}
+	return user, nil
 }

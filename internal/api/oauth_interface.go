@@ -19,8 +19,6 @@ type OAuthTokenResponse struct {
 }
 
 type OAuthUserInfo struct {
-	ID       string  `json:"id"`
-	Email    *string `json:"email,omitempty"`
-	Nickname *string `json:"nickname,omitempty"`
-	Photo    *string `json:"photo,omitempty"`
+	ID    string  `json:"id"`
+	Email *string `json:"email,omitempty"`
 }
