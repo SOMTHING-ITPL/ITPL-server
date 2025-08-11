@@ -16,13 +16,14 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	cfg, err := config.InitConfigs()
+	//init function 쓰기. 패키지 로드될 때 init function 실행됨.
+	err = config.InitConfigs()
 
 	if err != nil {
 		panic("Failed to load configs: " + err.Error())
 	}
 
-	db, err := storage.InitMySQL(*cfg.DBConfig)
+	db, err := storage.InitMySQL(*config.DbCfg)
 	if err != nil {
 		panic("Failed to init mysql: " + err.Error())
 	}
