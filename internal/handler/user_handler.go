@@ -10,10 +10,6 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-type UserHandler struct {
-	userRepository *user.Repository
-}
-
 func NewUserHandler(userRepository *user.Repository) *UserHandler {
 	return &UserHandler{userRepository: userRepository}
 }
@@ -97,18 +93,21 @@ func (h *UserHandler) RegisterSocialUser() gin.HandlerFunc {
 		var request req
 
 		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "check request params"})
 			return
 		}
 
 		client, err := user.GetProviderClient(request.SocialProvider)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to getClient"})
 			return
 		}
 		nickName := user.GenerateNanoIDNickname()
 		result, err := client.Login(request.AccessToken)
-
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to login"})
+			return
+		}
 		user := user.User{
 			NickName:       &nickName,
 			Email:          result.Email,
@@ -162,3 +161,10 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 		c.JSON(http.StatusOK, res{token: jwt})
 	}
 }
+
+// Profile iamge?
+// func (h *UserHandler) EditProfile() gin.HandlerFunc {
+// 	type req struct {
+// 		NickName string `json:"nick_name"`
+// 	}
+// }
