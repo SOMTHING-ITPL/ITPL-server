@@ -10,11 +10,6 @@ const (
 	ProviderGoogle SocialProvider = "google"
 )
 
-// User represents a registered user in the system.
-// Social login is supported via Google and Kakao.
-// - Local users have EncryptPwd set and SocialProvider = "local"
-// - Social users have SocialProvider != "local" and EncryptPwd = NULL
-// gorm 주석이 원래 저럼? .... 으....
 type User struct {
 	gorm.Model
 	Username       string         `gorm:"type:varchar(100);not null" json:"username"`

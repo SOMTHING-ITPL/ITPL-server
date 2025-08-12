@@ -4,16 +4,41 @@ import (
 	"github.com/spf13/viper"
 )
 
-type Config interface {
-	Load() error
+var (
+	KakaoCfg  *KaKaoConfig
+	GoogleCfg *GoogleConfig
+	DbCfg     *DBConfig
+)
+
+func LoadConfigs(configs ...Config) error {
+
+	viper.SetConfigName("config")
+	viper.SetConfigType("yaml")
+	viper.AddConfigPath("./")
+
+	if err := viper.ReadInConfig(); err != nil {
+		return err
+	}
+	viper.AutomaticEnv()
+
+	for _, cfg := range configs {
+		if err := cfg.Load(); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
-type KaKaoConfig struct {
-	ClientId     string
-	ClientSecret string
-	Domain       string
-	RedirectURI  string
-	ApiHost      string
+func InitConfigs() error {
+	KakaoCfg = &KaKaoConfig{}
+	DbCfg = &DBConfig{}
+
+	if err := LoadConfigs(KakaoCfg, DbCfg); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (k *KaKaoConfig) Load() error {
@@ -32,14 +57,6 @@ func (k *KaKaoConfig) Load() error {
 	return nil
 }
 
-type DBConfig struct {
-	User     string
-	Password string
-	Host     string
-	Port     string
-	Database string
-}
-
 func (d *DBConfig) Load() error {
 	//In yaml
 	d.Host = viper.GetString("db.host")
@@ -55,14 +72,6 @@ func (d *DBConfig) Load() error {
 	}
 
 	return nil
-}
-
-type GoogleConfig struct {
-	ClientId     string
-	ClientSecret string
-	Domain       string
-	RedirectURI  string
-	ApiHost      string
 }
 
 func (g *GoogleConfig) Load() error {
