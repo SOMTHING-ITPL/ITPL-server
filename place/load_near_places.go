@@ -6,6 +6,10 @@ import (
 	"strconv"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
+<<<<<<< HEAD
+=======
+
+>>>>>>> develop
 	"github.com/joho/godotenv"
 )
 
@@ -57,15 +61,19 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 
 	for _, item := range items {
 		// Convert item to Place
+		placeId, _ := strconv.ParseInt(item.ContentId, 10, 64)
+		uPlaceId := uint(placeId)
+		longitude, _ := strconv.ParseFloat(item.MapX, 64)
+		latitude, _ := strconv.ParseFloat(item.MapY, 64)
 		place := Place{
-			Tourapi_place_id: item.ContentId,
-			Category:         category,
-			Title:            item.Title,
-			Address:          item.Addr1 + " " + item.Addr2,
-			Tel:              item.Tel,
-			Longitude:        item.MapX,
-			Latitude:         item.MapY,
-			PlaceImage:       item.FirstImage,
+			TourapiPlaceId: uPlaceId,
+			Category:       category,
+			Title:          item.Title,
+			Address:        item.Addr1 + " " + item.Addr2,
+			Tel:            &item.Tel,
+			Longitude:      longitude,
+			Latitude:       latitude,
+			PlaceImage:     &item.FirstImage,
 		}
 		places = append(places, place)
 	}
