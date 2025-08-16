@@ -22,10 +22,11 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		registerHealthCheckRoutes(public)
 
 		authGroup := public.Group("/auth")
-		registerAuthRoutes(authGroup)
+		registerAuthRoutes(authGroup, userHandler)
 	}
 
 	protected := r.Group("/api")
+	protected.Use(AuthMiddleware())
 	// protected.Use(~)//should add middleWare
 	{
 		userGroup := protected.Group("/user")
@@ -52,9 +53,10 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 }
 
 // for login & sign in
-func registerAuthRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/:id", getUserHandler)
-	// rg.PUT("/:id", updateUserHandler)
+func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
+	rg.POST("/login", userHandler.LoginLocalUser())
+	rg.POST("/register", userHandler.RegisterLocalUser())
+	rg.POST("/social-login", userHandler.RegisterLocalUser())
 }
 
 // for about user

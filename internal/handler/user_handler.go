@@ -2,7 +2,6 @@ package handler
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/auth"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -15,11 +14,7 @@ func NewUserHandler(userRepository *user.Repository) *UserHandler {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
-	userID, err := strconv.ParseUint(c.Param("id"), 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
+	userID := 1
 
 	user, err := h.userRepository.GetById(uint(userID))
 	if err != nil {
@@ -161,6 +156,35 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 		c.JSON(http.StatusOK, res{token: jwt})
 	}
 }
+
+func (h *UserHandler) GetArtists() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		artist, err := h.userRepository.GetArtist()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get artist"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": artist})
+	}
+}
+
+func (h *UserHandler) GetGeners() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		geners, err := h.userRepository.GetGeners()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Get geners"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"data": geners})
+	}
+}
+
+// func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
+// 	type req struct {
+// 	}
+// }
 
 // Profile iamge?
 // func (h *UserHandler) EditProfile() gin.HandlerFunc {
