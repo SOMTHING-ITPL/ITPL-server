@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 )
@@ -27,7 +28,11 @@ func InitMySQL(cfg config.DBConfig) (*gorm.DB, error) {
 
 func AutoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
-	// &model.User{}, have to add model struct
+		&user.User{},
+		&user.Artist{},
+		&user.Genre{},
+		&user.UserArtist{},
+		&user.UserGenre{},
 	)
 
 	if err != nil {
