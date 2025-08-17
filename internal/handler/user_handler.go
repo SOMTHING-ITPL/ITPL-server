@@ -13,6 +13,24 @@ func NewUserHandler(userRepository *user.Repository) *UserHandler {
 	return &UserHandler{userRepository: userRepository}
 }
 
+func (h *UserHandler) CheckValidId() gin.HandlerFunc {
+	type req struct {
+		UserName string `json:"user_name"`
+	}
+
+	return func(c *gin.Context) {
+		var request req
+
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "check your body"})
+			return
+		}
+
+		_, err := h.userRepository.GetByUserName(request.UserName)
+		c.JSON(http.StatusOK, gin.H{"valid": err == nil}) //true or false
+	}
+
+}
 func (h *UserHandler) GetUser(c *gin.Context) {
 	userIDInterface, exists := c.Get("userID")
 	if !exists {
@@ -50,14 +68,18 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 		Email    string `json:"email"`
 	}
 	type res struct {
-		token string
+		Token string `json:"token"`
 	}
-
 	return func(c *gin.Context) {
 		var request req
 
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if _, err := h.userRepository.GetByUserName(request.UserName); err == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is already exist check if is USERID is validate"})
 			return
 		}
 
@@ -69,7 +91,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 
 		hashedPwdStr := string(hashedPwd)
 		user := user.User{
-			Username:       request.UserName,
+			UserName:       request.UserName,
 			NickName:       &request.NickName,
 			Email:          &request.Email,
 			SocialProvider: user.ProviderLocal,
@@ -88,7 +110,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, res{token: jwt})
+		c.JSON(http.StatusCreated, res{Token: jwt})
 	}
 }
 
@@ -98,9 +120,8 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 		AccessToken    string `json:"access_token"`
 	}
 	type res struct {
-		token string
+		Token string `json:"token"`
 	}
-
 	return func(c *gin.Context) {
 		var request req
 
@@ -121,12 +142,12 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 			return
 		}
 
-		targetUser, err := h.userRepository.GetByEmailAndProvider(*result.Email, user.SocialProvider(request.SocialProvider))
+		targetUser, err := h.userRepository.GetBySocialIDAndProvider(result.ID, user.SocialProvider(request.SocialProvider))
 		if err != nil {
 			nickName := user.GenerateNanoIDNickname()
 			targetUser := user.User{
 				NickName:       &nickName,
-				Email:          result.Email,
+				SocialID:       &result.ID,
 				SocialProvider: user.SocialProvider(request.SocialProvider),
 			}
 
@@ -142,7 +163,7 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 				return
 			}
 
-			c.JSON(http.StatusCreated, res{token: jwt})
+			c.JSON(http.StatusCreated, res{Token: jwt})
 			return
 		}
 
@@ -152,7 +173,7 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, res{token: jwt})
+		c.JSON(http.StatusCreated, res{Token: jwt})
 	}
 }
 
@@ -162,14 +183,14 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 		Pwd      string `json:"password"`
 	}
 	type res struct {
-		token string
+		Token string `json:"token"`
 	}
 
 	return func(c *gin.Context) {
 		var request req
 
 		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "check your body"})
 			return
 		}
 
@@ -178,6 +199,7 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Get user"})
 			return
 		}
+
 		err = bcrypt.CompareHashAndPassword([]byte(*user.EncryptPwd), []byte(request.Pwd))
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials"})
@@ -190,7 +212,7 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, res{token: jwt})
+		c.JSON(http.StatusOK, res{Token: jwt})
 	}
 }
 

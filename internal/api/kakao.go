@@ -10,19 +10,19 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 )
 
-type KakaoAccountProfile struct {
-	Nickname        *string `json:"nickname"`
-	ProfileImageURL *string `json:"profile_image_url"`
-}
+// type KakaoAccountProfile struct {
+// 	Nickname        *string `json:"nickname"`
+// 	ProfileImageURL *string `json:"profile_image_url"`
+// }
 
-type KakaoAccount struct {
-	Email   *string             `json:"email"`
-	Profile KakaoAccountProfile `json:"profile"`
-}
+// type KakaoAccount struct {
+// 	Email   *string             `json:"email"`
+// 	Profile KakaoAccountProfile `json:"profile"`
+// }
 
 type KakaoUserResponse struct {
-	ID           int64        `json:"id"`
-	KakaoAccount KakaoAccount `json:"kakao_account"`
+	ID int64 `json:"id"`
+	// KakaoAccount KakaoAccount `json:"kakao_account"`
 }
 
 type KakaoClient struct {
@@ -42,6 +42,7 @@ func (k *KakaoClient) MakeAccessTokenForm(code string) url.Values {
 	data.Set("grant_type", "authorization_code")
 	data.Set("client_id", k.cfg.ClientId)
 	data.Set("redirect_uri", k.cfg.RedirectURI)
+	data.Set("client_secret", k.cfg.ClientSecret)
 	data.Set("code", code)
 	return data
 }
@@ -96,7 +97,6 @@ func (k *KakaoClient) getUserInfo(accessToken string) (OAuthUserInfo, error) {
 	}
 
 	userInfo.ID = fmt.Sprintf("%d", kakaoRes.ID)
-	userInfo.Email = kakaoRes.KakaoAccount.Email
 	// userInfo.Nickname = kakaoRes.KakaoAccount.Profile.Nickname
 	// userInfo.Photo = kakaoRes.KakaoAccount.Profile.ProfileImageURL
 
