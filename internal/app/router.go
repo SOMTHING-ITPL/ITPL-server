@@ -3,12 +3,17 @@ package server
 import (
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
-// SetupRouter sets up the router
-func SetupRouter() *gin.Engine {
+func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+
+	userRepo := user.NewRepository(db)
+	userHandler := handler.NewUserHandler(userRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -17,14 +22,15 @@ func SetupRouter() *gin.Engine {
 		registerHealthCheckRoutes(public)
 
 		authGroup := public.Group("/auth")
-		registerAuthRoutes(authGroup)
+		registerAuthRoutes(authGroup, userHandler)
 	}
 
 	protected := r.Group("/api")
+	protected.Use(AuthMiddleware())
 	// protected.Use(~)//should add middleWare
 	{
 		userGroup := protected.Group("/user")
-		registerUserRoutes(userGroup)
+		registerUserRoutes(userGroup, userHandler)
 
 		courseGroup := protected.Group("/course")
 		registerCourseRoutes(courseGroup)
@@ -47,16 +53,21 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 }
 
 // for login & sign in
-func registerAuthRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/:id", getUserHandler)
-	// rg.PUT("/:id", updateUserHandler)
-
+func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
+	rg.POST("/login", userHandler.LoginLocalUser())
+	rg.POST("/register", userHandler.RegisterLocalUser())
+	rg.POST("/social-login", userHandler.LoginSocialUser())
 }
 
 // for about user
-func registerUserRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/", listPlaceHandler)
-	// rg.POST("/", createPlaceHandler)
+func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
+	rg.GET("/me", userHandler.GetUser)
+
+	rg.GET("/artist", userHandler.GetArtists())
+	rg.POST("/artist", userHandler.AddUserArtist())
+
+	rg.GET("/genre", userHandler.GetGenres())
+	rg.POST("/genre", userHandler.AddUserGenre())
 }
 
 // for about course
