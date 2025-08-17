@@ -3,6 +3,11 @@ kakao:
   domain: "https://kauth.kakao.com"
   redirectURI: "/oauth/callback"
   apiHost: "https://kapi.kakao.com"
+  
+google:
+  domain: "https://kauth.kakao.com"
+  redirectURI: "/oauth/callback"
+  apiHost: "https://kapi.kakao.com"
 
 db:
   host: "localhost"
