@@ -36,7 +36,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		registerCourseRoutes(courseGroup)
 
 		placeGroup := protected.Group("/place")
-		registerPlaceRoutes(placeGroup, db)
+		registerPlaceRoutes(placeGroup, db, userRepo)
 
 		concertGroup := protected.Group("/concert")
 		registerConcertRoutes(concertGroup)
@@ -81,8 +81,10 @@ func registerCourseRoutes(rg *gin.RouterGroup) {
 }
 
 // for about place
-func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB) {
-	rg.GET("get-place-list", getPlaceList(db))
+func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Repository) {
+	rg.GET("get-place-list", handler.GetPlaceList(db))
+	rg.POST("/write-review", handler.WriteReviewHandler(db, userRepo))
+	rg.POST("/delete-review/:rev_id", handler.DeleteReviewHandler(db, userRepo))
 	// rg.POST("/", createPlaceHandler)
 }
 

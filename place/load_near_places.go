@@ -18,20 +18,24 @@ func upsertByCreatedTime(db *gorm.DB, places []Place) error {
 
 		switch result.Error {
 		case nil:
+			// Place exists, check if we need to update
 			if existingPlace.CreatedTime != place.CreatedTime {
 				updateResult := db.Model(&existingPlace).Updates(place)
 				if updateResult.Error != nil {
 					log.Printf("Failed to update place %d: %v", place.TourapiPlaceId, updateResult.Error)
 				}
 			}
-			break // Place already exists and is up-to-date
+			// no action needed if CreatedTime is the same
+			break
 		case gorm.ErrRecordNotFound:
+			// Place does not exist, create a new one
 			createResult := db.Create(&place)
 			if createResult.Error != nil {
 				log.Printf("Failed to create new place %d: %v", place.TourapiPlaceId, createResult.Error)
 			}
 			break
 		default:
+			// Some other error
 			log.Printf("Database error while checking for place %d: %v", place.TourapiPlaceId, result.Error)
 		}
 	}
@@ -45,8 +49,6 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) 
 	}
 
 	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
-
-	// for test, 수정 예정
 	params := map[string]string{
 		"serviceKey":    os.Getenv("SERVICE_KEY"),
 		"numOfRows":     "30",
@@ -59,16 +61,6 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) 
 		"mapY":          strconv.FormatFloat(c.Latitude, 'f', -1, 64),
 		"radius":        "3000",
 		"contentTypeId": strconv.FormatInt(category, 10),
-		"lDongRegnCd":   "11",
-		"lDongSignguCd": "140",
-		"lclsSystm1":    "FD",
-		"lclsSystm2":    "FD01",
-		"lclsSystm3":    "FD010100",
-		"areaCode":      "1",
-		"sigunguCode":   "24",
-		"cat1":          "A05",
-		"cat2":          "A0502",
-		"cat3":          "A05020100",
 	}
 
 	finalurl, err := api.BuildURL(api_url, params)
