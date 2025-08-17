@@ -47,10 +47,10 @@ func (r *Repository) GetByUserName(id string) (User, error) {
 	return user, nil
 }
 
-func (r *Repository) GetByEmailAndProvider(email string, provider SocialProvider) (User, error) {
+func (r *Repository) GetBySocialIDAndProvider(socialID string, provider SocialProvider) (User, error) {
 	var user User
 
-	result := r.db.Where("email = ? AND social_provider = ?", email, provider).First(&user)
+	result := r.db.Where("social_id = ? AND social_provider = ?", socialID, provider).First(&user)
 	if result.Error != nil {
 		fmt.Printf("get user error : %s\n", result.Error)
 		return User{}, result.Error

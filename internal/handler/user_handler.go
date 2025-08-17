@@ -142,12 +142,12 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 			return
 		}
 
-		targetUser, err := h.userRepository.GetByEmailAndProvider(*result.Email, user.SocialProvider(request.SocialProvider))
+		targetUser, err := h.userRepository.GetBySocialIDAndProvider(result.ID, user.SocialProvider(request.SocialProvider))
 		if err != nil {
 			nickName := user.GenerateNanoIDNickname()
 			targetUser := user.User{
 				NickName:       &nickName,
-				Email:          result.Email,
+				SocialID:       &result.ID,
 				SocialProvider: user.SocialProvider(request.SocialProvider),
 			}
 
