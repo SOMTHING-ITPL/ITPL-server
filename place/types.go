@@ -1,8 +1,6 @@
 package place
 
 import (
-	"time"
-
 	"gorm.io/gorm"
 )
 
@@ -12,7 +10,6 @@ type Coordinate struct {
 }
 
 type Place struct {
-	gorm.Model
 	TourapiPlaceId uint    `json:"tourapi_place_id" gorm:"column:tourapi_place_id" gorm:"primaryKey"`
 	Category       int64   `json:"category" gorm:"column:category"`
 	Title          string  `json:"title" gorm:"column:title"`
@@ -21,17 +18,15 @@ type Place struct {
 	Longitude      float64 `json:"longitude" gorm:"column:longitude"`
 	Latitude       float64 `json:"latitude" gorm:"column:latitude"`
 	PlaceImage     *string `json:"place_image" gorm:"column:place_image"`
-	UpdatedAt      time.Time
+	CreatedTime    string  `json:"createdtime" gorm:"column:created_time"`
 }
 
 type PlaceReview struct {
 	gorm.Model
-	PlaceId   uint    `json:"place_id" gorm:"column:place_id"`
-	UserId    string  `json:"user_id" gorm:"column:user_id"`
-	Rating    float64 `json:"rating" gorm:"column:rating"`
-	Comment   string  `json:"comment" gorm:"column:comment"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	PlaceId uint    `json:"place_id" gorm:"column:place_id"`
+	UserId  string  `json:"user_id" gorm:"column:user_id"`
+	Rating  float64 `json:"rating" gorm:"column:rating"`
+	Comment string  `json:"comment" gorm:"column:comment"`
 }
 
 type review struct {
