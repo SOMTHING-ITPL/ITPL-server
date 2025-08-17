@@ -20,6 +20,14 @@ type DBConfig struct {
 	Database string
 }
 
+type RedisDBConfig struct {
+	User     string
+	Password string
+	Host     string
+	Port     string
+	Database string
+}
+
 type GoogleConfig struct {
 	ClientId     string
 	ClientSecret string

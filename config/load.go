@@ -8,6 +8,7 @@ var (
 	KakaoCfg  *KaKaoConfig
 	GoogleCfg *GoogleConfig
 	DbCfg     *DBConfig
+	RedisCfg  *RedisDBConfig
 )
 
 func LoadConfigs(configs ...Config) error {
@@ -33,8 +34,10 @@ func LoadConfigs(configs ...Config) error {
 func InitConfigs() error {
 	KakaoCfg = &KaKaoConfig{}
 	DbCfg = &DBConfig{}
+	GoogleCfg = &GoogleConfig{}
+	RedisCfg = &RedisDBConfig{}
 
-	if err := LoadConfigs(KakaoCfg, DbCfg); err != nil {
+	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg); err != nil {
 		return err
 	}
 
@@ -68,6 +71,20 @@ func (d *DBConfig) Load() error {
 		d.User = val
 	}
 	if val := viper.GetString("DB_PASSWORD"); val != "" {
+		d.Password = val
+	}
+
+	return nil
+}
+
+func (d *RedisDBConfig) Load() error {
+	//In yaml
+	d.Host = viper.GetString("rdb.host")
+	d.Port = viper.GetString("rdb.port")
+	d.Database = viper.GetString("rdb.database")
+
+	//In Env
+	if val := viper.GetString("REDIS_DB_PASSWORD"); val != "" {
 		d.Password = val
 	}
 
