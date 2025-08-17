@@ -79,7 +79,7 @@ func registerCourseRoutes(rg *gin.RouterGroup) {
 
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB) {
-	rg.GET("get-place-list", getPlaceList(db))
+	rg.GET("get-place-list", handler.GetPlaceList(db))
 	// rg.POST("/", createPlaceHandler)
 }
 
