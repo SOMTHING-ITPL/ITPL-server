@@ -62,10 +62,12 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 // for about user
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.GET("/me", userHandler.GetUser)
+
 	rg.GET("/artist", userHandler.GetArtists())
-	rg.GET("/gener", userHandler.GetGeners())
 	rg.POST("/artist", userHandler.AddUserArtist())
-	rg.POST("/gener", userHandler.AddUserGener())
+
+	rg.GET("/genre", userHandler.GetGenres())
+	rg.POST("/genre", userHandler.AddUserGenre())
 }
 
 // for about course
