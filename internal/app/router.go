@@ -55,6 +55,8 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 // for login & sign in
 func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/login", userHandler.LoginLocalUser())
+	rg.POST("/check-id", userHandler.CheckValidId())
+
 	rg.POST("/register", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
 }

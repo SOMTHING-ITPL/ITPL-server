@@ -16,13 +16,20 @@ const (
 
 type User struct {
 	gorm.Model
-	Username       string         `gorm:"type:varchar(100);not null" json:"username"`
-	NickName       *string        `gorm:"type:varchar(100);default:null" json:"nickname,omitempty"`
-	Email          *string        `gorm:"type:varchar(255);default:null" json:"email,omitempty"`
-	SocialID       *string        `gorm:"type:varchar(255);index:idx_provider_social,unique;default:null" json:"social_id,omitempty"`
-	SocialProvider SocialProvider `gorm:"type:enum('google','kakao','local');default:'local';not null;index:idx_provider_social,unique" json:"social_provider"`
-	Photo          *string        `gorm:"type:varchar(255);default:null" json:"photo,omitempty"`
-	EncryptPwd     *string        `gorm:"type:varchar(255);default:null" json:"encrypt_pwd,omitempty"`
+	ID uint `gorm:"primaryKey;autoIncrement" json:"id"`
+	//unique (조건부 unique 추가 email) 로컬 로그인용
+	UserName string  `gorm:"type:varchar(127);uniqueIndex:idx_local_username;default:null" json:"user_name,omitempty"`
+	Email    *string `gorm:"type:varchar(127);unique;default:null" json:"email,omitempty"`
+
+	NickName *string `gorm:"type:varchar(127);default:null" json:"nickname,omitempty"`
+
+	//unique 소셜 로그인용
+	SocialID       *string        `gorm:"type:varchar(255);default:null;uniqueIndex:idx_provider_social" json:"social_id,omitempty"`
+	SocialProvider SocialProvider `gorm:"type:enum('google','kakao','local');default:'local';not null;uniqueIndex:idx_provider_social" json:"social_provider"`
+
+	Photo      *string    `gorm:"type:varchar(255);default:null" json:"photo,omitempty"`
+	EncryptPwd *string    `gorm:"type:varchar(255);default:null" json:"encrypt_pwd,omitempty"`
+	Birthday   *time.Time `gorm:"type:date;default:null" json:"birthday,omitempty"`
 
 	UserArtists []UserArtist `gorm:"foreignKey:UserID" json:"user_artists,omitempty"`
 	UserGenres  []UserGenre  `gorm:"foreignKey:UserID" json:"user_genres,omitempty"`

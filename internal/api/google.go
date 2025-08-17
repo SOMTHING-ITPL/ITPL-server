@@ -93,7 +93,6 @@ func (g *GoogleClient) getUserInfo(accessToken string) (OAuthUserInfo, error) {
 	}
 
 	userInfo.ID = googleRes.ID
-	userInfo.Email = &googleRes.Email
 
 	return userInfo, nil
 }

@@ -1,12 +1,12 @@
 # config.yaml (환경마다 달라질 수 있지만 기본값)
 kakao:
   domain: "https://kauth.kakao.com"
-  redirectURI: "/oauth/callback"
+  redirectURI: "http://localhost:8080/oauth/callback"
   apiHost: "https://kapi.kakao.com"
   
 google:
   domain: "https://kauth.kakao.com"
-  redirectURI: "/oauth/callback"
+  redirectURI: "http://localhost:8080/oauth/callback"
   apiHost: "https://kapi.kakao.com"
 
 db:
