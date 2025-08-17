@@ -58,11 +58,15 @@ func (k *KaKaoConfig) Load() error {
 }
 
 func (d *DBConfig) Load() error {
+	viper.SetConfigFile("../config.yaml")
+	viper.ReadInConfig()
 	//In yaml
 	d.Host = viper.GetString("db.host")
 	d.Port = viper.GetString("db.port")
 	d.Database = viper.GetString("db.database")
 
+	viper.SetConfigFile("../.env")
+	viper.ReadInConfig()
 	//In Env
 	if val := viper.GetString("DB_USER"); val != "" {
 		d.User = val

@@ -21,6 +21,17 @@ type Place struct {
 	CreatedTime    string  `json:"createdtime" gorm:"column:created_time"`
 }
 
+type ReviewInfo struct {
+	Count int64
+	Avg   float64
+}
+
+type PlaceWithReview struct {
+	Place
+	ReviewCount int64   `json:"review_count"`
+	ReviewAvg   float64 `json:"review_avg"`
+}
+
 type PlaceReview struct {
 	gorm.Model
 	PlaceId uint    `json:"place_id" gorm:"column:place_id"`

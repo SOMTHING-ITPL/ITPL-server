@@ -1,4 +1,4 @@
-package server
+package handler
 
 import (
 	"net/http"
@@ -9,7 +9,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func getPlaceList(db *gorm.DB) gin.HandlerFunc {
+func GetPlaceList(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		lat, err := strconv.ParseFloat(c.Query("latitude"), 64)
 		if err != nil {
@@ -40,6 +40,16 @@ func getPlaceList(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"places": places})
+		var result []place.PlaceWithReview
+		for _, p := range places {
+			reviewInfo, _ := place.GetReviewInfo(db, p.TourapiPlaceId)
+			result = append(result, place.PlaceWithReview{
+				Place:       p,
+				ReviewCount: reviewInfo.Count,
+				ReviewAvg:   reviewInfo.Avg,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"places": result})
 	}
 }
