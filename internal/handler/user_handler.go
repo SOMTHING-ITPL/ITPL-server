@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/auth"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -13,9 +14,9 @@ func NewUserHandler(userRepository *user.Repository) *UserHandler {
 	return &UserHandler{userRepository: userRepository}
 }
 
-func (h *UserHandler) CheckValidId() gin.HandlerFunc {
+func (h *UserHandler) CheckValidEmail() gin.HandlerFunc {
 	type req struct {
-		UserName string `json:"user_name"`
+		Email string `json:"email"`
 	}
 
 	return func(c *gin.Context) {
@@ -26,34 +27,29 @@ func (h *UserHandler) CheckValidId() gin.HandlerFunc {
 			return
 		}
 
-		_, err := h.userRepository.GetByUserName(request.UserName)
+		_, err := h.userRepository.GetByEmail(request.Email)
 		c.JSON(http.StatusOK, gin.H{"valid": err == nil}) //true or false
 	}
 
 }
+
 func (h *UserHandler) GetUser() gin.HandlerFunc {
 	type res struct {
 		CreatedAt      string `json:"created_at"`
 		UpdatedAt      string `json:"updated_at"`
-		UserName       string `json:"user_name"`
 		Email          string `json:"email"`
 		NickName       string `json:"nick_name"`
 		SocialProvider string `json:"social_provider"`
 	}
 	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userID")
+
+		userID, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			c.JSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		user, err := h.userRepository.GetById(userID)
+		user, err := h.userRepository.GetById(userID.(uint))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Not found user! "})
 			return
@@ -63,7 +59,6 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			"data": res{
 				CreatedAt:      user.CreatedAt.String(),
 				UpdatedAt:      user.CreatedAt.String(),
-				UserName:       user.UserName,
 				NickName:       user.NickName,
 				Email:          *user.Email,
 				SocialProvider: string(user.SocialProvider),
@@ -73,17 +68,38 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 	}
 }
 
-// Profile iamge?
-// func (h *UserHandler) EditProfile() gin.HandlerFunc {
-// 	type req struct {
-// 		NickName string `json:"nick_name"`
-// 	}
-// }
+func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
+	type req struct {
+		NickName string     `json:"nickname"`
+		Photo    *string    `json:"photo,omitempty"`
+		Birthday *time.Time `json:"birthday,omitempty"`
+	}
+
+	return func(c *gin.Context) {
+		var body req
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(400, gin.H{"error": "invalid request body"})
+			return
+		}
+
+		userID, exists := c.Get("userID")
+		if !exists {
+			c.JSON(401, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		if err := h.userRepository.UpdateUser(userID.(uint), body.NickName, body.Photo, body.Birthday); err != nil {
+			c.JSON(500, gin.H{"error": "failed to update user"})
+			return
+		}
+
+		c.JSON(200, gin.H{"message": "profile updated successfully"})
+	}
+}
 
 func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	type req struct {
 		NickName string `json:"nick_name"`
-		UserName string `json:"user_name"`
 		Pwd      string `json:"password"`
 		Email    string `json:"email"`
 	}
@@ -98,7 +114,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		if _, err := h.userRepository.GetByUserName(request.UserName); err == nil {
+		if _, err := h.userRepository.GetByEmail(request.Email); err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is already exist check if is USERID is validate"})
 			return
 		}
@@ -111,7 +127,6 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 
 		hashedPwdStr := string(hashedPwd)
 		user := user.User{
-			UserName:       request.UserName,
 			NickName:       request.NickName,
 			Email:          &request.Email,
 			SocialProvider: user.ProviderLocal,
@@ -199,8 +214,8 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 
 func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 	type req struct {
-		UserName string `json:"user_name"`
-		Pwd      string `json:"password"`
+		Email string `json:"email"`
+		Pwd   string `json:"password"`
 	}
 	type res struct {
 		Token string `json:"token"`
@@ -214,7 +229,7 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		user, err := h.userRepository.GetByUserName(request.UserName)
+		user, err := h.userRepository.GetByEmail(request.Email)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Get user"})
 			return
@@ -265,15 +280,9 @@ func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
 		ArtistIDs []uint `json:"artist_ids"`
 	}
 	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userID")
+		userID, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-			return
-		}
-
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+			c.JSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
 
@@ -283,7 +292,7 @@ func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.userRepository.SetUserArtist(request.ArtistIDs, userID); err != nil {
+		if err := h.userRepository.UpdateUserArtist(request.ArtistIDs, userID.(uint)); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user artist on db"})
 			return
 		}
@@ -297,15 +306,9 @@ func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 		GenreIDs []uint `json:"genre_ids"`
 	}
 	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userID")
+		userID, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
-			return
-		}
-
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+			c.JSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
 
@@ -315,7 +318,7 @@ func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.userRepository.SetUserArtist(request.GenreIDs, userID); err != nil {
+		if err := h.userRepository.UpdateUserArtist(request.GenreIDs, userID.(uint)); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user genre on db"})
 			return
 		}
@@ -326,19 +329,13 @@ func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 
 func (h *UserHandler) GetUserArtists() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userID")
+		userID, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			c.JSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		artists, err := h.userRepository.GetUserArtists(userID)
+		artists, err := h.userRepository.GetUserArtists(userID.(uint))
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get Artist"})
 			return
@@ -350,19 +347,13 @@ func (h *UserHandler) GetUserArtists() gin.HandlerFunc {
 
 func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDInterface, exists := c.Get("userID")
+		userID, exists := c.Get("userID")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			c.JSON(401, gin.H{"error": "unauthorized"})
 			return
 		}
 
-		userID, ok := userIDInterface.(uint)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
-			return
-		}
-
-		genres, err := h.userRepository.GetUserGenres(userID)
+		genres, err := h.userRepository.GetUserGenres(userID.(uint))
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get genres"})
 			return

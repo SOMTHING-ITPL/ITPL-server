@@ -18,8 +18,7 @@ type User struct {
 	gorm.Model
 
 	//unique (조건부 unique 추가 email) 로컬 로그인용
-	UserName string  `gorm:"type:varchar(127);uniqueIndex:idx_local_username;default:null" json:"user_name,omitempty"`
-	Email    *string `gorm:"type:varchar(127);unique;default:null" json:"email,omitempty"`
+	Email *string `gorm:"type:varchar(127);uniqueIndex:idx_local_email;default:null" json:"email,omitempty"`
 
 	NickName string `gorm:"type:varchar(127);not null" json:"nickname"`
 

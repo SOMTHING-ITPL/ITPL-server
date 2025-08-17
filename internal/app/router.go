@@ -55,7 +55,7 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 // for login & sign in
 func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/login", userHandler.LoginLocalUser())
-	rg.POST("/check-id", userHandler.CheckValidId())
+	rg.POST("/check-email", userHandler.CheckValidEmail())
 
 	rg.POST("/register", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
@@ -64,6 +64,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 // for about user
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.GET("/me", userHandler.GetUser())
+	rg.PATCH("/me", userHandler.UpdateProfile())
 
 	rg.GET("/artist", userHandler.GetArtists())
 	rg.POST("/artist", userHandler.AddUserArtist())
