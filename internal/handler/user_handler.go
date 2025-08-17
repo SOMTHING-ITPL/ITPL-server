@@ -14,9 +14,19 @@ func NewUserHandler(userRepository *user.Repository) *UserHandler {
 }
 
 func (h *UserHandler) GetUser(c *gin.Context) {
-	userID := 1
+	userIDInterface, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+		return
+	}
 
-	user, err := h.userRepository.GetById(uint(userID))
+	userID, ok := userIDInterface.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
+	}
+
+	user, err := h.userRepository.GetById(userID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Not found user! "})
 		return
@@ -24,6 +34,13 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, user)
 }
+
+// Profile iamge?
+// func (h *UserHandler) EditProfile() gin.HandlerFunc {
+// 	type req struct {
+// 		NickName string `json:"nick_name"`
+// 	}
+// }
 
 func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	type req struct {
@@ -75,10 +92,10 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) RegisterSocialUser() gin.HandlerFunc {
+func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 	type req struct {
 		SocialProvider string `json:"social_provider"`
-		AccessToken    string `json:"user_name"`
+		AccessToken    string `json:"access_token"`
 	}
 	type res struct {
 		token string
@@ -97,19 +114,39 @@ func (h *UserHandler) RegisterSocialUser() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to getClient"})
 			return
 		}
-		nickName := user.GenerateNanoIDNickname()
+
 		result, err := client.Login(request.AccessToken)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to login"})
 			return
 		}
-		user := user.User{
-			NickName:       &nickName,
-			Email:          result.Email,
-			SocialProvider: user.SocialProvider(request.SocialProvider),
+
+		targetUser, err := h.userRepository.GetByEmailAndProvider(*result.Email, user.SocialProvider(request.SocialProvider))
+		if err != nil {
+			nickName := user.GenerateNanoIDNickname()
+			targetUser := user.User{
+				NickName:       &nickName,
+				Email:          result.Email,
+				SocialProvider: user.SocialProvider(request.SocialProvider),
+			}
+
+			err = h.userRepository.CreateUser(&targetUser)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+				return
+			}
+
+			jwt, err := auth.GenerateJWT(&targetUser)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate jwt"})
+				return
+			}
+
+			c.JSON(http.StatusCreated, res{token: jwt})
+			return
 		}
 
-		jwt, err := auth.GenerateJWT(&user)
+		jwt, err := auth.GenerateJWT(&targetUser)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate jwt"})
 			return
@@ -181,14 +218,66 @@ func (h *UserHandler) GetGeners() gin.HandlerFunc {
 	}
 }
 
-// func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
-// 	type req struct {
-// 	}
-// }
+func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
+	type req struct {
+		artistIDs []uint `json:"artist_ids"`
+	}
+	return func(c *gin.Context) {
+		userIDInterface, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			return
+		}
 
-// Profile iamge?
-// func (h *UserHandler) EditProfile() gin.HandlerFunc {
-// 	type req struct {
-// 		NickName string `json:"nick_name"`
-// 	}
-// }
+		userID, ok := userIDInterface.(uint)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+			return
+		}
+
+		var request req
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "check request params"})
+			return
+		}
+
+		if err := h.userRepository.SetUserArtist(request.artistIDs, userID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user artist on db"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "User artists updated successfully"})
+	}
+}
+
+func (h *UserHandler) AddUserGener() gin.HandlerFunc {
+	type req struct {
+		GenerIDs []uint `json:"gener_ids"`
+	}
+	return func(c *gin.Context) {
+		userIDInterface, exists := c.Get("userID")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
+			return
+		}
+
+		userID, ok := userIDInterface.(uint)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+			return
+		}
+
+		var request req
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "check request params"})
+			return
+		}
+
+		if err := h.userRepository.SetUserArtist(request.GenerIDs, userID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user gener on db"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "User gener updated successfully"})
+	}
+}

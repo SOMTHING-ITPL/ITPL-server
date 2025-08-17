@@ -56,13 +56,16 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/login", userHandler.LoginLocalUser())
 	rg.POST("/register", userHandler.RegisterLocalUser())
-	rg.POST("/social-login", userHandler.RegisterLocalUser())
+	rg.POST("/social-login", userHandler.LoginSocialUser())
 }
 
 // for about user
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
-	rg.GET("/:id", userHandler.GetUser)
-	// rg.POST("/", userHandler.RegisterUser())
+	rg.GET("/me", userHandler.GetUser)
+	rg.GET("/artist", userHandler.GetArtists())
+	rg.GET("/gener", userHandler.GetGeners())
+	rg.POST("/artist", userHandler.AddUserArtist())
+	rg.POST("/gener", userHandler.AddUserGener())
 }
 
 // for about course
