@@ -7,7 +7,7 @@ import (
 
 func buildReview(user user.User, text string, rating float64) review {
 	return review{
-		userId:  user.UserName,
+		userId:  user.NickName,
 		rating:  rating,
 		comment: text,
 	}
