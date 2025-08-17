@@ -5,16 +5,41 @@ import (
 	"os"
 	"strconv"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
-<<<<<<< HEAD
-=======
+	"gorm.io/gorm"
 
->>>>>>> develop
+	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
 	"github.com/joho/godotenv"
 )
 
-func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
-	err := godotenv.Load("../../.env")
+func upsertByCreatedTime(db *gorm.DB, places []Place) error {
+	for _, place := range places {
+		var existingPlace Place
+		result := db.Where("tourapi_place_id = ?", place.TourapiPlaceId).First(&existingPlace)
+
+		switch result.Error {
+		case nil:
+			if existingPlace.CreatedTime != place.CreatedTime {
+				updateResult := db.Model(&existingPlace).Updates(place)
+				if updateResult.Error != nil {
+					log.Printf("Failed to update place %d: %v", place.TourapiPlaceId, updateResult.Error)
+				}
+			}
+			break // Place already exists and is up-to-date
+		case gorm.ErrRecordNotFound:
+			createResult := db.Create(&place)
+			if createResult.Error != nil {
+				log.Printf("Failed to create new place %d: %v", place.TourapiPlaceId, createResult.Error)
+			}
+			break
+		default:
+			log.Printf("Database error while checking for place %d: %v", place.TourapiPlaceId, result.Error)
+		}
+	}
+	return nil
+}
+
+func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) {
+	err := godotenv.Load("../.env")
 	if err != nil {
 		log.Fatalf("Error loading .env file")
 	}
@@ -50,6 +75,7 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 	if err != nil {
 		return nil, err
 	}
+	log.Println("Final URL:", finalurl)
 
 	items, err := api.FetchAndParseJSON(finalurl)
 
@@ -74,9 +100,13 @@ func LoadNearPlaces(c Coordinate, category int64) ([]Place, error) {
 			Longitude:      longitude,
 			Latitude:       latitude,
 			PlaceImage:     &item.FirstImage,
+			CreatedTime:    item.CreatedTime,
 		}
 		places = append(places, place)
 	}
 
+	if err := upsertByCreatedTime(db, places); err != nil {
+		log.Printf("Failed to upsert places: %v", err)
+	}
 	return places, nil
 }
