@@ -68,15 +68,15 @@ func (r *Repository) GetArtist() ([]Artist, error) {
 	return artists, nil
 }
 
-func (r *Repository) GetGeners() ([]Genre, error) {
-	var geners []Genre
+func (r *Repository) GetGenres() ([]Genre, error) {
+	var genres []Genre
 
-	result := r.db.Find(&geners)
+	result := r.db.Find(&genres)
 
 	if result.Error != nil {
 		return nil, result.Error
 	}
-	return geners, nil
+	return genres, nil
 }
 
 func (r *Repository) SetUserArtist(artistIDs []uint, userID uint) error {
@@ -90,9 +90,9 @@ func (r *Repository) SetUserArtist(artistIDs []uint, userID uint) error {
 	return r.db.Create(&userArtists).Error
 }
 
-func (r *Repository) SetUserGeners(genersIDs []uint, userID uint) error {
+func (r *Repository) SetUserGenres(genresIDs []uint, userID uint) error {
 	var userGenres []UserGenre
-	for _, artistID := range genersIDs {
+	for _, artistID := range genresIDs {
 		userGenres = append(userGenres, UserGenre{
 			UserID:  userID,
 			GenreID: artistID,
@@ -119,19 +119,19 @@ func (r *Repository) GetUserArtists(userID uint) ([]Artist, error) {
 	return artists, nil
 }
 
-func (r *Repository) GetUserGeners(userID uint) ([]Genre, error) {
-	var geners []Genre
+func (r *Repository) GetUserGenres(userID uint) ([]Genre, error) {
+	var genres []Genre
 
 	err := r.db.
-		Joins("JOIN user_geners ug ON ug.gener_id = gener.id").
+		Joins("JOIN user_genres ug ON ug.genre_id = genre.id").
 		Where("ug.user_id = ?", userID).
-		Find(&geners).Error
+		Find(&genres).Error
 
 	if err != nil {
 		return nil, err
 	}
 
-	return geners, nil
+	return genres, nil
 }
 
 func (r *Repository) DeleteFavArtists(userID uint) error {
@@ -139,7 +139,7 @@ func (r *Repository) DeleteFavArtists(userID uint) error {
 	return result.Error
 }
 
-func (r *Repository) DeleteFavGeners(userID uint) error {
+func (r *Repository) DeleteFavGenres(userID uint) error {
 	result := r.db.Where("user_id = ?", userID).Delete(&UserGenre{})
 	return result.Error
 }

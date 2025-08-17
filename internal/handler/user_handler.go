@@ -206,15 +206,15 @@ func (h *UserHandler) GetArtists() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) GetGeners() gin.HandlerFunc {
+func (h *UserHandler) GetGenres() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		geners, err := h.userRepository.GetGeners()
+		genres, err := h.userRepository.GetGenres()
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Get geners"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Get genres"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"data": geners})
+		c.JSON(http.StatusOK, gin.H{"data": genres})
 	}
 }
 
@@ -250,9 +250,9 @@ func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) AddUserGener() gin.HandlerFunc {
+func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 	type req struct {
-		GenerIDs []uint `json:"gener_ids"`
+		GenreIDs []uint `json:"genre_ids"`
 	}
 	return func(c *gin.Context) {
 		userIDInterface, exists := c.Get("userID")
@@ -273,11 +273,11 @@ func (h *UserHandler) AddUserGener() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.userRepository.SetUserArtist(request.GenerIDs, userID); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user gener on db"})
+		if err := h.userRepository.SetUserArtist(request.GenreIDs, userID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user genre on db"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "User gener updated successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "User genre updated successfully"})
 	}
 }
