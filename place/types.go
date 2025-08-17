@@ -34,14 +34,16 @@ type PlaceWithReview struct {
 
 type PlaceReview struct {
 	gorm.Model
-	PlaceId uint    `json:"place_id" gorm:"column:place_id"`
-	UserId  uint    `json:"user_id" gorm:"column:user_id"`
-	Rating  float64 `json:"rating" gorm:"column:rating"`
-	Comment string  `json:"comment" gorm:"column:comment"`
+	PlaceId      uint    `json:"place_id" gorm:"column:place_id"`
+	UserId       uint    `json:"user_id" gorm:"column:user_id"`
+	UserNickName string  `json:"user_nickname" gorm:"column:user_nickname"`
+	Rating       float64 `json:"rating" gorm:"column:rating"`
+	Comment      *string `json:"comment" gorm:"column:comment"`
 }
 
 type review struct {
-	userId  uint
-	rating  float64
-	comment string
+	userId   uint
+	nickname string
+	rating   float64
+	comment  *string
 }

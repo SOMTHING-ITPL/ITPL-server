@@ -7,18 +7,20 @@ import (
 
 func buildReview(user user.User, text string, rating float64) review {
 	return review{
-		userId:  user.ID,
-		rating:  rating,
-		comment: text,
+		userId:   user.ID,
+		nickname: user.NickName,
+		rating:   rating,
+		comment:  &text,
 	}
 }
 
 func buildPlaceReview(placeId uint, rev review) PlaceReview {
 	return PlaceReview{
-		PlaceId: placeId,
-		UserId:  rev.userId,
-		Rating:  rev.rating,
-		Comment: rev.comment,
+		PlaceId:      placeId,
+		UserId:       rev.userId,
+		UserNickName: rev.nickname,
+		Rating:       rev.rating,
+		Comment:      rev.comment,
 	}
 }
 

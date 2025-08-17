@@ -92,7 +92,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 		hashedPwdStr := string(hashedPwd)
 		user := user.User{
 			UserName:       request.UserName,
-			NickName:       &request.NickName,
+			NickName:       request.NickName,
 			Email:          &request.Email,
 			SocialProvider: user.ProviderLocal,
 			EncryptPwd:     &hashedPwdStr,
@@ -146,7 +146,7 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 		if err != nil {
 			nickName := user.GenerateNanoIDNickname()
 			targetUser := user.User{
-				NickName:       &nickName,
+				NickName:       nickName,
 				SocialID:       &result.ID,
 				SocialProvider: user.SocialProvider(request.SocialProvider),
 			}
