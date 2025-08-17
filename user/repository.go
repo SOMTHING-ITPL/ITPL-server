@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -35,10 +36,10 @@ func (r *Repository) GetById(id uint) (User, error) {
 	return user, nil
 }
 
-func (r *Repository) GetByUserName(id string) (User, error) {
+func (r *Repository) GetByEmail(email string) (User, error) {
 	var user User
 
-	result := r.db.Where("user_name = ?", id).First(&user)
+	result := r.db.Where("email = ?", email).First(&user)
 
 	if result.Error != nil {
 		fmt.Printf("get user error : %s\n", result.Error)
@@ -80,7 +81,7 @@ func (r *Repository) GetGenres() ([]Genre, error) {
 	return genres, nil
 }
 
-func (r *Repository) SetUserArtist(artistIDs []uint, userID uint) error {
+func (r *Repository) UpdateUserArtist(artistIDs []uint, userID uint) error {
 	var userArtists []UserArtist
 	for _, artistID := range artistIDs {
 		userArtists = append(userArtists, UserArtist{
@@ -91,7 +92,7 @@ func (r *Repository) SetUserArtist(artistIDs []uint, userID uint) error {
 	return r.db.Create(&userArtists).Error
 }
 
-func (r *Repository) SetUserGenres(genresIDs []uint, userID uint) error {
+func (r *Repository) UpdateUserGenres(genresIDs []uint, userID uint) error {
 	var userGenres []UserGenre
 	for _, artistID := range genresIDs {
 		userGenres = append(userGenres, UserGenre{
@@ -143,4 +144,19 @@ func (r *Repository) DeleteFavArtists(userID uint) error {
 func (r *Repository) DeleteFavGenres(userID uint) error {
 	result := r.db.Where("user_id = ?", userID).Delete(&UserGenre{})
 	return result.Error
+}
+
+func (r *Repository) UpdateUser(userID uint, nickname string, photo *string, birthday *time.Time) error {
+
+	updates := map[string]interface{}{
+		"nickname": nickname,
+		"photo":    photo,
+		"birthday": birthday,
+	}
+
+	if err := r.db.Model(&User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
+		return err
+	}
+
+	return nil
 }
