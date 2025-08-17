@@ -15,7 +15,7 @@ func NewUserHandler(userRepository *user.Repository) *UserHandler {
 
 func (h *UserHandler) CheckValidId() gin.HandlerFunc {
 	type req struct {
-		UserID string `json:"user_id"`
+		UserName string `json:"user_name"`
 	}
 
 	return func(c *gin.Context) {
@@ -26,7 +26,7 @@ func (h *UserHandler) CheckValidId() gin.HandlerFunc {
 			return
 		}
 
-		_, err := h.userRepository.GetByUserID(request.UserID)
+		_, err := h.userRepository.GetByUserName(request.UserName)
 		c.JSON(http.StatusOK, gin.H{"valid": err == nil}) //true or false
 	}
 
@@ -63,7 +63,7 @@ func (h *UserHandler) GetUser(c *gin.Context) {
 func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	type req struct {
 		NickName string `json:"nick_name"`
-		UserID   string `json:"user_id"`
+		UserName string `json:"user_name"`
 		Pwd      string `json:"password"`
 		Email    string `json:"email"`
 	}
@@ -78,7 +78,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		if _, err := h.userRepository.GetByUserID(request.UserID); err == nil {
+		if _, err := h.userRepository.GetByUserName(request.UserName); err == nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is already exist check if is USERID is validate"})
 			return
 		}
@@ -91,7 +91,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 
 		hashedPwdStr := string(hashedPwd)
 		user := user.User{
-			UserID:         request.UserID,
+			UserName:       request.UserName,
 			NickName:       &request.NickName,
 			Email:          &request.Email,
 			SocialProvider: user.ProviderLocal,
@@ -179,8 +179,8 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 
 func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 	type req struct {
-		UserID string `json:"user_id"`
-		Pwd    string `json:"password"`
+		UserName string `json:"user_name"`
+		Pwd      string `json:"password"`
 	}
 	type res struct {
 		Token string `json:"token"`
@@ -194,7 +194,7 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		user, err := h.userRepository.GetByUserID(request.UserID)
+		user, err := h.userRepository.GetByUserName(request.UserName)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to Get user"})
 			return

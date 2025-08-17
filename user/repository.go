@@ -35,10 +35,10 @@ func (r *Repository) GetById(id uint) (User, error) {
 	return user, nil
 }
 
-func (r *Repository) GetByUserID(id string) (User, error) {
+func (r *Repository) GetByUserName(id string) (User, error) {
 	var user User
 
-	result := r.db.Where("user_id = ?", id).First(&user)
+	result := r.db.Where("user_name = ?", id).First(&user)
 
 	if result.Error != nil {
 		fmt.Printf("get user error : %s\n", result.Error)

@@ -17,7 +17,7 @@ const (
 type User struct {
 	gorm.Model
 	ID             uint           `gorm:"primaryKey;autoIncrement" json:"id"`
-	UserID         string         `gorm:"type:varchar(100);not null" json:"user_id"`
+	UserName       string         `gorm:"type:varchar(100);not null" json:"user_name"`
 	NickName       *string        `gorm:"type:varchar(100);default:null" json:"nickname,omitempty"`
 	Email          *string        `gorm:"type:varchar(255);default:null" json:"email,omitempty"`
 	SocialID       *string        `gorm:"type:varchar(255);index:idx_provider_social,unique;default:null" json:"social_id,omitempty"`

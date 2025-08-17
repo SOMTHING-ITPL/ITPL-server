@@ -14,7 +14,7 @@ func TestGenerateAndValidateJWT(t *testing.T) {
 	jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 	testUser := &user.User{
-		UserID: "123",
+		ID: 123,
 	}
 
 	tokenString, err := GenerateJWT(testUser)
