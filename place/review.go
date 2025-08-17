@@ -45,3 +45,20 @@ func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 
 	return result, err
 }
+
+func GetPlaceReviews(db *gorm.DB, placeID uint) ([]PlaceReview, error) {
+	var reviews []PlaceReview
+	err := db.Where("place_id = ?", placeID).Find(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+	return reviews, nil
+}
+
+func DeleteReview(db *gorm.DB, revId uint) error {
+	err := db.Where("id = ?", revId).Delete(&PlaceReview{}).Error
+	if err != nil {
+		return err
+	}
+	return nil
+}
