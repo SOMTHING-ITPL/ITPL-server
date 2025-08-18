@@ -5,32 +5,84 @@ import (
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/auth"
+	"github.com/SOMTHING-ITPL/ITPL-server/internal/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
 )
 
-func NewUserHandler(userRepository *user.Repository) *UserHandler {
-	return &UserHandler{userRepository: userRepository}
+func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository) *UserHandler {
+	return &UserHandler{userRepository: userRepository, smtpRepository: smtpRepository}
 }
 
-func (h *UserHandler) CheckValidEmail() gin.HandlerFunc {
+func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
 	type req struct {
-		Email string `json:"email"`
+		Email string `json:"email" binding:"required,email"`
 	}
 
 	return func(c *gin.Context) {
 		var request req
 
 		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "check your body"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		_, err := h.userRepository.GetByEmail(request.Email)
-		c.JSON(http.StatusOK, gin.H{"valid": err == nil}) //true or false
+		if _, err := h.userRepository.GetByEmail(request.Email); err == nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "This email is already exist"})
+			return
+		}
+
+		code := email.GenerateCode(6)
+
+		//save code during 10min
+		if err := h.smtpRepository.SetEmailCode(c, request.Email, code, 10*time.Minute); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save code"})
+			return
+		}
+
+		//send mail
+		if err := email.SendMail(request.Email, code); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to send code"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "verification code sent"})
 	}
 
+}
+
+func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
+	type req struct {
+		Email string `json:"email" binding:"required,email"`
+		Code  string `json:"code,omitempty"`
+	}
+
+	return func(c *gin.Context) {
+		var request req
+		if err := c.ShouldBindJSON(&request); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		savedCode, err := h.smtpRepository.GetEmailCode(c, request.Email)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "code expired or not found"})
+			return
+		}
+
+		if savedCode != request.Code {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
+			return
+		}
+
+		if h.smtpRepository.SetVerifiedEmail(c, request.Email) != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to set verified Email "})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "email verified"})
+	}
 }
 
 func (h *UserHandler) GetUser() gin.HandlerFunc {
@@ -99,9 +151,9 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 
 func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	type req struct {
-		NickName string `json:"nick_name"`
-		Pwd      string `json:"password"`
-		Email    string `json:"email"`
+		NickName string `json:"nick_name" binding:"required"`
+		Pwd      string `json:"password" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
 	}
 	type res struct {
 		Token string `json:"token"`
@@ -114,8 +166,14 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		if _, err := h.userRepository.GetByEmail(request.Email); err == nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "userID is already exist check if is USERID is validate"})
+		verified, err := h.smtpRepository.CheckVerifiedEmail(c, request.Email)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to get data through redis db"})
+			return
+		}
+		if !verified {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "verifing your email is first!"})
 			return
 		}
 
@@ -151,8 +209,8 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 
 func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 	type req struct {
-		SocialProvider string `json:"social_provider"`
-		AccessToken    string `json:"access_token"`
+		SocialProvider string `json:"social_provider" binding:"required" `
+		AccessToken    string `json:"access_token" binding:"required"`
 	}
 	type res struct {
 		Token string `json:"token"`
@@ -214,8 +272,8 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 
 func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 	type req struct {
-		Email string `json:"email"`
-		Pwd   string `json:"password"`
+		Email string `json:"email" binding:"required"`
+		Pwd   string `json:"password" binding:"required"`
 	}
 	type res struct {
 		Token string `json:"token"`
@@ -277,7 +335,7 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 
 func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
 	type req struct {
-		ArtistIDs []uint `json:"artist_ids"`
+		ArtistIDs []uint `json:"artist_ids" binding:"required"`
 	}
 	return func(c *gin.Context) {
 		userID, exists := c.Get("userID")
@@ -303,7 +361,7 @@ func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
 
 func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 	type req struct {
-		GenreIDs []uint `json:"genre_ids"`
+		GenreIDs []uint `json:"genre_ids" binding:"required"`
 	}
 	return func(c *gin.Context) {
 		userID, exists := c.Get("userID")

@@ -28,8 +28,13 @@ func main() {
 		panic("Failed to init mysql: " + err.Error())
 	}
 
+	rdb, err := storage.InitRedis(*config.RedisCfg)
+	if err != nil {
+		panic("Failed to init redis: " + err.Error())
+	}
+
 	storage.AutoMigrate(db)
-	r := server.SetupRouter(db)
+	r := server.SetupRouter(db, rdb)
 
 	r.Run(":8080")
 }

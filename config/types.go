@@ -21,11 +21,9 @@ type DBConfig struct {
 }
 
 type RedisDBConfig struct {
-	User     string
 	Password string
-	Host     string
-	Port     string
-	Database string
+	Addr     string
+	Database int
 }
 
 type GoogleConfig struct {
@@ -34,4 +32,11 @@ type GoogleConfig struct {
 	Domain       string
 	RedirectURI  string
 	ApiHost      string
+}
+
+type GoogleSMTPConfig struct {
+	HostServer  string
+	Port        string
+	From        string
+	AppPassword string
 }

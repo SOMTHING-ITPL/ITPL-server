@@ -9,12 +9,15 @@ google:
   redirectURI: "http://localhost:8080/oauth/callback"
   apiHost: "https://kapi.kakao.com"
 
+google_smtp:
+  smtpHost: "smtp.gmail.com"
+  smtpPort: "587"
+
 db:
   host: "localhost"
   port: "3306"
   database: "itpl_db"
 
 rdb:
-  host: "localhost"
-  port: "6379"
+  addr: "localhost:6379"
   database: 0

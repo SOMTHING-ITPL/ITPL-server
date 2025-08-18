@@ -3,17 +3,21 @@ package server
 import (
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/internal/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
 )
 
-func SetupRouter(db *gorm.DB) *gin.Engine {
+func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 	r := gin.Default()
 
 	userRepo := user.NewRepository(db)
-	userHandler := handler.NewUserHandler(userRepo)
+	smtpRepo := email.NewRepository(redisDB)
+
+	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -55,7 +59,8 @@ func registerHealthCheckRoutes(rg *gin.RouterGroup) {
 // for login & sign in
 func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/login", userHandler.LoginLocalUser())
-	rg.POST("/check-email", userHandler.CheckValidEmail())
+	rg.POST("/check-email", userHandler.SendEmailCode())
+	rg.POST("/verify-email", userHandler.VerifyEmailCode())
 
 	rg.POST("/register", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())

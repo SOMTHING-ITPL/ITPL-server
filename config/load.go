@@ -4,15 +4,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+// TODO : prod 환겨엥서는 환경변수 없으면 걍  panic
+
 var (
 	KakaoCfg  *KaKaoConfig
 	GoogleCfg *GoogleConfig
 	DbCfg     *DBConfig
 	RedisCfg  *RedisDBConfig
+	SmtpCfg   *GoogleSMTPConfig
 )
 
 func LoadConfigs(configs ...Config) error {
-
 	viper.SetConfigName("config")
 	viper.SetConfigType("yaml")
 	viper.AddConfigPath("./")
@@ -36,8 +38,9 @@ func InitConfigs() error {
 	DbCfg = &DBConfig{}
 	GoogleCfg = &GoogleConfig{}
 	RedisCfg = &RedisDBConfig{}
+	SmtpCfg = &GoogleSMTPConfig{}
 
-	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg); err != nil {
+	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg); err != nil {
 		return err
 	}
 
@@ -79,9 +82,8 @@ func (d *DBConfig) Load() error {
 
 func (d *RedisDBConfig) Load() error {
 	//In yaml
-	d.Host = viper.GetString("rdb.host")
-	d.Port = viper.GetString("rdb.port")
-	d.Database = viper.GetString("rdb.database")
+	d.Addr = viper.GetString("rdb.addr")
+	d.Database = viper.GetInt("rdb.database")
 
 	//In Env
 	if val := viper.GetString("REDIS_DB_PASSWORD"); val != "" {
@@ -103,6 +105,21 @@ func (g *GoogleConfig) Load() error {
 	}
 	if val := viper.GetString("GOOGLE_CLIENT_SECRET"); val != "" {
 		g.ClientSecret = val
+	}
+	return nil
+}
+
+func (gsmtp *GoogleSMTPConfig) Load() error {
+	//In yaml
+	gsmtp.HostServer = viper.GetString("google_smtp.smtpHost")
+	gsmtp.Port = viper.GetString("google_smtp.smtpPort")
+
+	//In Env
+	if val := viper.GetString("GOOGLE_SMTP_HOST"); val != "" {
+		gsmtp.From = val
+	}
+	if val := viper.GetString("GOOGLE_SMTP_APP_PASSWORD"); val != "" {
+		gsmtp.AppPassword = val
 	}
 	return nil
 }
