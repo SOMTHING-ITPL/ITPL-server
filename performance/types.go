@@ -15,7 +15,7 @@ type Repository struct {
 type Facility struct {
 	gorm.Model
 
-	KopisFacilityKey uint   `gorm:"unique;not null"`            // KOPIS 시설 키 (unique index)
+	KopisFacilityKey string `gorm:"unique;not null"`            // KOPIS 시설 키 (unique index)
 	Name             string `gorm:"type:varchar(255);not null"` // 공연 시설명
 	HallCount        *int
 	Characteristics  *string `gorm:"type:text"` // 시설 특성
@@ -33,27 +33,28 @@ type Facility struct {
 type Performance struct {
 	gorm.Model
 
-	Title         string `gorm:"type:varchar(255);not null"`
-	StartDate     *time.Time
-	EndDate       *time.Time
-	Cast          *string `gorm:"type:text"`
-	Runtime       *string `gorm:"type:varchar(50)"`
-	AgeRating     *string `gorm:"type:varchar(50)"`
-	Producer      *string `gorm:"type:varchar(255)"`
-	Organizer     *string `gorm:"type:varchar(255)"`
-	Sponsor       *string `gorm:"type:varchar(255)"`
-	TicketPrice   *string `gorm:"type:varchar(255)"`
-	PosterURL     *string `gorm:"type:varchar(255)"`
-	IntroImageURL *string `gorm:"type:varchar(255)"`
-	Region        *string `gorm:"type:varchar(100)"`
-	Genre         *string `gorm:"type:varchar(100)"`
-	Status        *string `gorm:"type:varchar(50)"`
-	IsForeign     *bool
-	LastModified  *time.Time
-	FacilityID    uint64
-	Facility      Facility
-	TicketSites   []PerformanceTicketSite `gorm:"foreignKey:PerformanceID"`
-	DeletedAt     gorm.DeletedAt          `gorm:"index"`
+	KopisPerformanceKey string `gorm:"unique;not null"` // KOPIS 키 (unique index)
+	Title               string `gorm:"type:varchar(255);not null"`
+	StartDate           *time.Time
+	EndDate             *time.Time
+	Cast                *string `gorm:"type:text"`
+	Runtime             *string `gorm:"type:varchar(50)"`
+	AgeRating           *string `gorm:"type:varchar(50)"`
+	Producer            *string `gorm:"type:varchar(255)"`
+	Organizer           *string `gorm:"type:varchar(255)"`
+	Sponsor             *string `gorm:"type:varchar(255)"`
+	TicketPrice         *string `gorm:"type:varchar(255)"`
+	PosterURL           *string `gorm:"type:varchar(255)"`
+	IntroImageURL       *string `gorm:"type:varchar(255)"`
+	Region              *string `gorm:"type:varchar(100)"`
+	Genre               *string `gorm:"type:varchar(100)"`
+	Status              *string `gorm:"type:varchar(50)"`
+	IsForeign           *bool
+	LastModified        *time.Time
+	FacilityID          uint64
+	Facility            Facility
+	TicketSites         []PerformanceTicketSite `gorm:"foreignKey:PerformanceID"`
+	DeletedAt           gorm.DeletedAt          `gorm:"index"`
 }
 
 type PerformanceTicketSite struct {
