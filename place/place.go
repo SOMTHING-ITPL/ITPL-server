@@ -8,7 +8,6 @@ import (
 	"gorm.io/gorm"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
-	"github.com/joho/godotenv"
 )
 
 func upsertByCreatedTime(db *gorm.DB, places []Place) error {
@@ -43,11 +42,6 @@ func upsertByCreatedTime(db *gorm.DB, places []Place) error {
 }
 
 func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) {
-	err := godotenv.Load("../.env")
-	if err != nil {
-		log.Fatalf("Error loading .env file")
-	}
-
 	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
 	params := map[string]string{
 		"serviceKey":    os.Getenv("SERVICE_KEY"),
@@ -101,4 +95,16 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) 
 		log.Printf("Failed to upsert places: %v", err)
 	}
 	return places, nil
+}
+
+func GetPlaceById(db *gorm.DB, placeId uint) (*Place, error) {
+	var place Place
+	err := db.Where("tourapi_place_id = ?", placeId).First(&place).Error
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil // Place not found
+		}
+		return nil, err // Other error
+	}
+	return &place, nil
 }
