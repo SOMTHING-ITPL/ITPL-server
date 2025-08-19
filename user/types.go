@@ -14,6 +14,10 @@ const (
 	ProviderGoogle SocialProvider = "google"
 )
 
+type Repository struct {
+	db *gorm.DB
+}
+
 type User struct {
 	gorm.Model
 

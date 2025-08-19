@@ -20,10 +20,27 @@ type DBConfig struct {
 	Database string
 }
 
+type RedisDBConfig struct {
+	Password string
+	Addr     string
+	Database int
+}
+
 type GoogleConfig struct {
 	ClientId     string
 	ClientSecret string
 	Domain       string
 	RedirectURI  string
 	ApiHost      string
+}
+
+type GoogleSMTPConfig struct {
+	HostServer  string
+	Port        string
+	From        string
+	AppPassword string
+}
+
+type KopisApiConfig struct {
+	SecretKey string
 }
