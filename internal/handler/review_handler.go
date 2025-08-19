@@ -44,11 +44,29 @@ func WriteReviewHandler(db *gorm.DB, userRepo *user.Repository) gin.HandlerFunc 
 
 func DeleteReviewHandler(db *gorm.DB, userRepo *user.Repository) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		revId, err := strconv.ParseUint(c.Param("rev_id"), 10, 32)
+		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
 			return
 		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+
+		rev, err := place.GetReviewByID(db, uint(revId))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Review not found"})
+			return
+		}
+
+		if rev.UserId != userID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own reviews"})
+			return
+		}
+
 		err = place.DeleteReview(db, uint(revId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
@@ -66,6 +84,29 @@ func GetPlaceReviewsHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 		reviews, err := place.GetPlaceReviews(db, uint(placeID))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reviews: " + err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"reviews": reviews})
+	}
+}
+
+func GetMyReviewsHandler(db *gorm.DB, userRepo *user.Repository) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+
+		user, err := userRepo.GetById(userID)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		reviews, err := place.GetMyReviews(db, user.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reviews: " + err.Error()})
 			return

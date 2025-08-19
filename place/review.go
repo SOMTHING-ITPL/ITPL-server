@@ -36,6 +36,15 @@ func WriteReview(db *gorm.DB, placeId uint, user user.User, text string, rating 
 	return nil
 }
 
+func GetReviewByID(db *gorm.DB, revId uint) (*PlaceReview, error) {
+	var review PlaceReview
+	err := db.Where("id = ?", revId).First(&review).Error
+	if err != nil {
+		return nil, err
+	}
+	return &review, nil
+}
+
 func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 
 	var result ReviewInfo
@@ -63,4 +72,13 @@ func DeleteReview(db *gorm.DB, revId uint) error {
 		return err
 	}
 	return nil
+}
+
+func GetMyReviews(db *gorm.DB, userID uint) ([]PlaceReview, error) {
+	var reviews []PlaceReview
+	err := db.Where("user_id = ?", userID).Find(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+	return reviews, nil
 }

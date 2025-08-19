@@ -82,9 +82,11 @@ func registerCourseRoutes(rg *gin.RouterGroup) {
 
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Repository) {
-	rg.GET("get-place-list", handler.GetPlaceList(db))
+	rg.GET("/get-place-list", handler.GetPlaceList(db))
 	rg.POST("/write-review", handler.WriteReviewHandler(db, userRepo))
-	rg.POST("/delete-review/:rev_id", handler.DeleteReviewHandler(db, userRepo))
+	rg.GET("/get-place-reviews/:place_id", handler.GetPlaceReviewsHandler(db))
+	rg.DELETE("/review/:review_id", handler.DeleteReviewHandler(db, userRepo))
+	rg.GET("/my-reviews", handler.GetMyReviewsHandler(db, userRepo))
 	// rg.POST("/", createPlaceHandler)
 }
 

@@ -1,9 +1,21 @@
 package course
 
 import (
-	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"gorm.io/gorm"
 )
 
 type Course struct {
-	Places []place.Place `json:"course"`
+	gorm.Model
+	UserId      uint    `json:"user_id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description"`
+	IsAICreated bool    `json:"is_ai_created"`
+}
+
+type CourseDetail struct {
+	gorm.Model
+	CourseId uint `json:"course_id"`
+	Day      int  `json:"day"`
+	Sequence int  `json:"sequence"`
+	PlaceId  uint `json:"place_id"`
 }
