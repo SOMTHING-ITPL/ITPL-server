@@ -12,6 +12,7 @@ var (
 	DbCfg     *DBConfig
 	RedisCfg  *RedisDBConfig
 	SmtpCfg   *GoogleSMTPConfig
+	KopisCfg  *KopisApiConfig
 )
 
 func LoadConfigs(configs ...Config) error {
@@ -39,8 +40,9 @@ func InitConfigs() error {
 	GoogleCfg = &GoogleConfig{}
 	RedisCfg = &RedisDBConfig{}
 	SmtpCfg = &GoogleSMTPConfig{}
+	KopisCfg = &KopisApiConfig{}
 
-	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg); err != nil {
+	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg); err != nil {
 		return err
 	}
 
@@ -121,5 +123,14 @@ func (gsmtp *GoogleSMTPConfig) Load() error {
 	if val := viper.GetString("GOOGLE_SMTP_APP_PASSWORD"); val != "" {
 		gsmtp.AppPassword = val
 	}
+	return nil
+}
+
+func (k *KopisApiConfig) Load() error {
+	//In Env
+	if val := viper.GetString("KOPIS_API_SECRET_KEY"); val != "" {
+		k.SecretKey = val
+	}
+
 	return nil
 }

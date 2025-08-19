@@ -40,3 +40,7 @@ type GoogleSMTPConfig struct {
 	From        string
 	AppPassword string
 }
+
+type KopisApiConfig struct {
+	SecretKey string
+}
