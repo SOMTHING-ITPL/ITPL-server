@@ -33,7 +33,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		registerUserRoutes(userGroup, userHandler)
 
 		courseGroup := protected.Group("/course")
-		registerCourseRoutes(courseGroup)
+		registerCourseRoutes(courseGroup, db, userRepo)
 
 		placeGroup := protected.Group("/place")
 		registerPlaceRoutes(placeGroup, db, userRepo)
@@ -76,7 +76,9 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 }
 
 // for about course
-func registerCourseRoutes(rg *gin.RouterGroup) {
+func registerCourseRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Repository) {
+	rg.POST("/create", handler.CreateCourseHandler(db, userRepo))
+	rg.POST("/:course_id/place", handler.AddPlaceToCourseHandler(db))
 	// rg.GET("/", listCourseHandler)
 }
 

@@ -5,16 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateCourse(db *gorm.DB, user user.User, title string, description *string) (*Course, error) {
+func CreateCourse(db *gorm.DB, user user.User, title string, description *string) error {
 	course := Course{
 		UserId:      user.ID,
 		Title:       title,
 		Description: description,
 	}
 	if err := db.Create(&course).Error; err != nil {
-		return nil, err
+		return err
 	}
-	return &course, nil
+	return nil
 }
 
 func GetCourseByCourseId(db *gorm.DB, courseID uint) (*Course, error) {

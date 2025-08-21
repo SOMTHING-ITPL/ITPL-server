@@ -5,12 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func buildReview(user user.User, text string, rating float64) review {
+func buildReview(user user.User, text string, rating float64, img string) review {
 	return review{
-		userId:   user.ID,
-		nickname: user.NickName,
-		rating:   rating,
-		comment:  &text,
+		userId:    user.ID,
+		nickname:  user.NickName,
+		rating:    rating,
+		comment:   &text,
+		reviewImg: &img,
 	}
 }
 
@@ -21,6 +22,7 @@ func buildPlaceReview(placeId uint, rev review) PlaceReview {
 		UserNickName: rev.nickname,
 		Rating:       rev.rating,
 		Comment:      rev.comment,
+		ReviewImage:  rev.reviewImg,
 	}
 }
 
@@ -31,8 +33,8 @@ func addReviewToDB(db *gorm.DB, rev PlaceReview) {
 	}
 }
 
-func WriteReview(db *gorm.DB, placeId uint, user user.User, text string, rating float64) error {
-	addReviewToDB(db, buildPlaceReview(placeId, buildReview(user, text, rating)))
+func WriteReview(db *gorm.DB, placeId uint, user user.User, text string, rating float64, img string) error {
+	addReviewToDB(db, buildPlaceReview(placeId, buildReview(user, text, rating, img)))
 	return nil
 }
 

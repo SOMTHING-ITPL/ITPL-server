@@ -16,6 +16,12 @@ func WriteReviewHandler(db *gorm.DB, userRepo *user.Repository) gin.HandlerFunc 
 		Text    string  `json:"text"`
 		Rating  float64 `json:"rating"`
 	}
+
+	/*
+		review image store logic here
+	*/
+	imgUrl := "test_url"
+
 	return func(c *gin.Context) {
 		var request req
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -34,7 +40,7 @@ func WriteReviewHandler(db *gorm.DB, userRepo *user.Repository) gin.HandlerFunc 
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		if err := place.WriteReview(db, request.PlaceId, user, request.Text, request.Rating); err != nil {
+		if err := place.WriteReview(db, request.PlaceId, user, request.Text, request.Rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}

@@ -39,11 +39,13 @@ type PlaceReview struct {
 	UserNickName string  `json:"user_nickname" gorm:"column:user_nickname"`
 	Rating       float64 `json:"rating" gorm:"column:rating"`
 	Comment      *string `json:"comment" gorm:"column:comment"`
+	ReviewImage  *string `json:"review_image" gorm:"column:review_image"`
 }
 
 type review struct {
-	userId   uint
-	nickname string
-	rating   float64
-	comment  *string
+	userId    uint
+	nickname  string
+	rating    float64
+	comment   *string
+	reviewImg *string
 }
