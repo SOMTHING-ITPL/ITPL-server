@@ -5,17 +5,15 @@ import (
 	"strconv"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-type PlaceHandler struct {
-	database *gorm.DB
-}
-
-func NewPlaceHandler(db *gorm.DB) *PlaceHandler {
+func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository) *PlaceHandler {
 	return &PlaceHandler{
-		database: db,
+		database:       db,
+		userRepository: userRepo,
 	}
 }
 

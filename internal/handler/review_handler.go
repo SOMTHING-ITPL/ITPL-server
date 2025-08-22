@@ -5,24 +5,10 @@ import (
 	"strconv"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
-	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-type ReviewHandler struct {
-	database       *gorm.DB
-	userRepository *user.Repository
-}
-
-func NewReviewHandler(db *gorm.DB, userRepo *user.Repository) *ReviewHandler {
-	return &ReviewHandler{
-		userRepository: userRepo,
-		database:       db,
-	}
-}
-
-func (h *ReviewHandler) WriteReviewHandler() gin.HandlerFunc {
+func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 	type req struct {
 		PlaceId uint    `json:"place_id"`
 		Text    string  `json:"text"`
@@ -60,7 +46,7 @@ func (h *ReviewHandler) WriteReviewHandler() gin.HandlerFunc {
 	}
 }
 
-func (h *ReviewHandler) DeleteReviewHandler() gin.HandlerFunc {
+func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
 		if err != nil {
@@ -94,7 +80,7 @@ func (h *ReviewHandler) DeleteReviewHandler() gin.HandlerFunc {
 	}
 }
 
-func (h *ReviewHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
+func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		placeID, err := strconv.ParseUint(c.Param("place_id"), 10, 32)
 		if err != nil {
@@ -110,7 +96,7 @@ func (h *ReviewHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 	}
 }
 
-func (h *ReviewHandler) GetMyReviewsHandler() gin.HandlerFunc {
+func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid, ok := c.Get("userID")
 		if !ok {

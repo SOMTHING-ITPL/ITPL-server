@@ -14,8 +14,8 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	userRepo := user.NewRepository(db)
 	userHandler := handler.NewUserHandler(userRepo)
-	reviewHandler := handler.NewReviewHandler(db, userRepo)
-	placeHandler := handler.NewPlaceHandler(db)
+
+	placeHandler := handler.NewPlaceHandler(db, userRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo)
 
 	//this router does not needs auth
@@ -39,7 +39,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		registerCourseRoutes(courseGroup, courseHandler)
 
 		placeGroup := protected.Group("/place")
-		registerPlaceRoutes(placeGroup, reviewHandler, placeHandler)
+		registerPlaceRoutes(placeGroup, placeHandler)
 
 		concertGroup := protected.Group("/concert")
 		registerConcertRoutes(concertGroup)
@@ -82,17 +82,16 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHandler) {
 	rg.POST("/create", courseHandler.CreateCourseHandler())
 	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
-	// rg.GET("/", listCourseHandler)
+	rg.GET("/my-courses", courseHandler.GetMyCourses())
 }
 
 // for about place
-func registerPlaceRoutes(rg *gin.RouterGroup, reviewHandler *handler.ReviewHandler, placeHandler *handler.PlaceHandler) {
-	rg.GET("/get-place-list", placeHandler.GetPlaceList())
-	rg.POST("/write-review", reviewHandler.WriteReviewHandler())
-	rg.GET("/get-place-reviews/:place_id", reviewHandler.GetPlaceReviewsHandler())
-	rg.DELETE("/review/:review_id", reviewHandler.DeleteReviewHandler())
-	rg.GET("/my-reviews", reviewHandler.GetMyReviewsHandler())
-	// rg.POST("/", createPlaceHandler)
+func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler) {
+	rg.GET("/place-list", placeHandler.GetPlaceList())
+	rg.GET("/reviews/:place_id", placeHandler.GetPlaceReviewsHandler())
+	rg.POST("/review", placeHandler.WriteReviewHandler())
+	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())
+	rg.DELETE("/review/:review_id", placeHandler.DeleteReviewHandler())
 }
 
 func registerConcertRoutes(rg *gin.RouterGroup) {

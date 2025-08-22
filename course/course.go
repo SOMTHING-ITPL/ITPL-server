@@ -10,6 +10,7 @@ func CreateCourse(db *gorm.DB, user user.User, title string, description *string
 		UserId:      user.ID,
 		Title:       title,
 		Description: description,
+		IsAICreated: false, // by default
 	}
 	if err := db.Create(&course).Error; err != nil {
 		return err
@@ -24,6 +25,15 @@ func GetCourseByCourseId(db *gorm.DB, courseID uint) (*Course, error) {
 		return nil, err
 	}
 	return &course, nil
+}
+
+func GetCoursesByUserId(db *gorm.DB, userID uint) ([]Course, error) {
+	var courses []Course
+	err := db.Where("user_id = ?", userID).Find(&courses).Error
+	if err != nil {
+		return nil, err
+	}
+	return courses, nil
 }
 
 func GetCourseDetails(db *gorm.DB, courseID uint) ([]CourseDetail, error) {

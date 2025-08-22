@@ -10,11 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-type CourseHandler struct {
-	database       *gorm.DB
-	userRepository *user.Repository
-}
-
 func NewCourseHandler(db *gorm.DB, userRepo *user.Repository) *CourseHandler {
 	return &CourseHandler{
 		database:       db,
@@ -28,7 +23,6 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 		Description *string `json:"description"`
 	}
 	return func(c *gin.Context) {
-
 		var request req
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
@@ -79,5 +73,42 @@ func (h *CourseHandler) AddPlaceToCourseHandler() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "Place added to course successfully"})
+	}
+}
+
+func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+			return
+		}
+
+		details, err := course.GetCourseDetails(h.database, uint(courseId))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"course_details": details})
+	}
+}
+
+func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+
+		courses, err := course.GetCoursesByUserId(h.database, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: " + err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"courses": courses})
 	}
 }
