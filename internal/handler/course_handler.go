@@ -10,7 +10,19 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateCourseHandler(db *gorm.DB, userRepo *user.Repository) func(c *gin.Context) {
+type CourseHandler struct {
+	database       *gorm.DB
+	userRepository *user.Repository
+}
+
+func NewCourseHandler(db *gorm.DB, userRepo *user.Repository) *CourseHandler {
+	return &CourseHandler{
+		database:       db,
+		userRepository: userRepo,
+	}
+}
+
+func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 	type req struct {
 		Title       string  `json:"title"`
 		Description *string `json:"description"`
@@ -29,12 +41,12 @@ func CreateCourseHandler(db *gorm.DB, userRepo *user.Repository) func(c *gin.Con
 			return
 		}
 		userID, _ := uid.(uint)
-		user, err := userRepo.GetById(userID)
+		user, err := h.userRepository.GetById(userID)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		err = course.CreateCourse(db, user, request.Title, request.Description)
+		err = course.CreateCourse(h.database, user, request.Title, request.Description)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create course: " + err.Error()})
 			return
@@ -43,7 +55,7 @@ func CreateCourseHandler(db *gorm.DB, userRepo *user.Repository) func(c *gin.Con
 	}
 }
 
-func AddPlaceToCourseHandler(db *gorm.DB) gin.HandlerFunc {
+func (h *CourseHandler) AddPlaceToCourseHandler() gin.HandlerFunc {
 	type req struct {
 		PlaceId  uint `json:"place_id"`
 		Day      int  `json:"day"`
@@ -62,7 +74,7 @@ func AddPlaceToCourseHandler(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 			return
 		}
-		if err := course.AddPlaceToCourse(db, courseID, request.PlaceId, request.Day, request.Sequence); err != nil {
+		if err := course.AddPlaceToCourse(h.database, courseID, request.PlaceId, request.Day, request.Sequence); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add place to course: " + err.Error()})
 			return
 		}

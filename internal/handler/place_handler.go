@@ -9,7 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-func GetPlaceList(db *gorm.DB) gin.HandlerFunc {
+type PlaceHandler struct {
+	database *gorm.DB
+}
+
+func NewPlaceHandler(db *gorm.DB) *PlaceHandler {
+	return &PlaceHandler{
+		database: db,
+	}
+}
+
+func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		lat, err := strconv.ParseFloat(c.Query("latitude"), 64)
 		if err != nil {
@@ -34,7 +44,7 @@ func GetPlaceList(db *gorm.DB) gin.HandlerFunc {
 			Longitude: lon,
 		}
 
-		places, err := place.LoadNearPlaces(coord, category, db)
+		places, err := place.LoadNearPlaces(coord, category, h.database)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -42,7 +52,7 @@ func GetPlaceList(db *gorm.DB) gin.HandlerFunc {
 
 		var result []place.PlaceWithReview
 		for _, p := range places {
-			reviewInfo, _ := place.GetReviewInfo(db, p.TourapiPlaceId)
+			reviewInfo, _ := place.GetReviewInfo(h.database, p.TourapiPlaceId)
 			result = append(result, place.PlaceWithReview{
 				Place:       p,
 				ReviewCount: reviewInfo.Count,

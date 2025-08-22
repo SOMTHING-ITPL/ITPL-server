@@ -14,6 +14,9 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	userRepo := user.NewRepository(db)
 	userHandler := handler.NewUserHandler(userRepo)
+	reviewHandler := handler.NewReviewHandler(db, userRepo)
+	placeHandler := handler.NewPlaceHandler(db)
+	courseHandler := handler.NewCourseHandler(db, userRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -33,10 +36,10 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		registerUserRoutes(userGroup, userHandler)
 
 		courseGroup := protected.Group("/course")
-		registerCourseRoutes(courseGroup, db, userRepo)
+		registerCourseRoutes(courseGroup, courseHandler)
 
 		placeGroup := protected.Group("/place")
-		registerPlaceRoutes(placeGroup, db, userRepo)
+		registerPlaceRoutes(placeGroup, reviewHandler, placeHandler)
 
 		concertGroup := protected.Group("/concert")
 		registerConcertRoutes(concertGroup)
@@ -76,19 +79,19 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 }
 
 // for about course
-func registerCourseRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Repository) {
-	rg.POST("/create", handler.CreateCourseHandler(db, userRepo))
-	rg.POST("/:course_id/place", handler.AddPlaceToCourseHandler(db))
+func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHandler) {
+	rg.POST("/create", courseHandler.CreateCourseHandler())
+	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
 	// rg.GET("/", listCourseHandler)
 }
 
 // for about place
-func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Repository) {
-	rg.GET("/get-place-list", handler.GetPlaceList(db))
-	rg.POST("/write-review", handler.WriteReviewHandler(db, userRepo))
-	rg.GET("/get-place-reviews/:place_id", handler.GetPlaceReviewsHandler(db))
-	rg.DELETE("/review/:review_id", handler.DeleteReviewHandler(db, userRepo))
-	rg.GET("/my-reviews", handler.GetMyReviewsHandler(db, userRepo))
+func registerPlaceRoutes(rg *gin.RouterGroup, reviewHandler *handler.ReviewHandler, placeHandler *handler.PlaceHandler) {
+	rg.GET("/get-place-list", placeHandler.GetPlaceList())
+	rg.POST("/write-review", reviewHandler.WriteReviewHandler())
+	rg.GET("/get-place-reviews/:place_id", reviewHandler.GetPlaceReviewsHandler())
+	rg.DELETE("/review/:review_id", reviewHandler.DeleteReviewHandler())
+	rg.GET("/my-reviews", reviewHandler.GetMyReviewsHandler())
 	// rg.POST("/", createPlaceHandler)
 }
 
