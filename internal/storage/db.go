@@ -6,6 +6,7 @@ import (
 
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
+	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/driver/mysql"
@@ -38,6 +39,10 @@ func AutoMigrate(db *gorm.DB) {
 		&course.CourseDetail{},
 		&place.Place{},
 		&place.PlaceReview{},
+		&performance.Performance{},
+		&performance.PerformanceTicketSite{},
+		&performance.Facility{},
+		&performance.UserRecentPerformance{},
 	)
 
 	if err != nil {
