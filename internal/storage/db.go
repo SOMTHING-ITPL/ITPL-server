@@ -42,7 +42,9 @@ func AutoMigrate(db *gorm.DB) {
 		&performance.Performance{},
 		&performance.PerformanceTicketSite{},
 		&performance.Facility{},
-		&performance.UserRecentPerformance{},
+		&performance.PerformanceImage{},
+
+		// &performance.UserRecentPerformance{},
 	)
 
 	if err != nil {

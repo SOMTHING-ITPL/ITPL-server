@@ -7,10 +7,12 @@ import (
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/SOMTHING-ITPL/ITPL-server/config"
 )
 
 // 그냥 config에 넣기 귀찮아 아니 이게 오히려 깔끔한 것 같기도 하고
-const KopisBaseURL = "http://kopis.or.kr/openApi/restful/pblprfr"
+const KopisBaseURL = "http://kopis.or.kr/openApi/restful"
 
 type KopisResponse[T any] struct {
 	Items []T `xml:"db" json:"items"`
@@ -39,60 +41,60 @@ type PerformanceListRequest struct {
 }
 
 type PerformanceDetailRes struct {
-	ID        string `xml:"mt20id"       json:"id"`
-	Name      string `xml:"prfnm"        json:"name"`
-	StartDate string `xml:"prfpdfrom"    json:"start_date"`
-	EndDate   string `xml:"prfpdto"      json:"end_date"`
-	Facility  string `xml:"fcltynm"      json:"facility"` //공연 시설명
-	Cast      string `xml:"prfcast"      json:"cast"`
-	Crew      string `xml:"prfcrew"      json:"crew"`
-	Runtime   string `xml:"prfruntime"   json:"runtime"`
-	Age       string `xml:"prfage"       json:"age"` //관람 연령
+	ID        string `xml:"mt20id"       `
+	Name      string `xml:"prfnm"        `
+	StartDate string `xml:"prfpdfrom"    `
+	EndDate   string `xml:"prfpdto"      `
+	Facility  string `xml:"fcltynm"     ` //공연 시설명
+	Cast      string `xml:"prfcast"      `
+	Crew      string `xml:"prfcrew"      `
+	Runtime   string `xml:"prfruntime"   `
+	Age       string `xml:"prfage"       ` //관람 연령
 	// Company       string   `xml:"entrpsnm"     json:"company"` //기획 제작사
 	// CompanyP      string   `xml:"entrpsnmP"    json:"company_p"` //제작사
 	// CompanyA      string   `xml:"entrpsnmA"    json:"company_a"`// 기획사
 	// CompanyH string `xml:"entrpsnmH"    json:"company_h"` //주최
 	// CompanyS string `xml:"entrpsnmS"    json:"company_s"` //주관
-	Price  string `xml:"pcseguidance" json:"price"`  //티켓 가격
-	Poster string `xml:"poster"       json:"poster"` // 포스터 이미지 경로
-	Story  string `xml:"sty"          json:"story"`  //줄거리
-	Area   string `xml:"area"         json:"area"`   // 지역
+	Price  string `xml:"pcseguidance"` //티켓 가격
+	Poster string `xml:"poster"`       // 포스터 이미지 경로
+	Story  string `xml:"sty"`          //줄거리
+	Area   string `xml:"area"`         // 지역
 	// Genre    string `xml:"genrenm"      json:"genre"`     // 장르
-	Visit string `xml:"visit"        json:"visit"` //내한
+	Visit string `xml:"visit"        ` //내한
 	// Festival      string   `xml:"festival"     json:"festival"` //축제 여부
-	UpdateDate   string   `xml:"updatedate"   json:"update_date"`   //최근 수정일
-	State        string   `xml:"prfstate"     json:"state"`         //공연 상태
-	StyUrls      []string `xml:"styurls>styurl" json:"sty_urls"`    //소개 이미지 목록
-	FacilityID   string   `xml:"mt10id"       json:"facility_id"`   //공연 시설 ID
-	DateGuidance string   `xml:"dtguidance"   json:"date_guidance"` // 공연 시간
+	UpdateDate   string   `xml:"updatedate"` //최근 수정일
+	State        string   `xml:"prfstate"`
+	StyUrls      []string `xml:"styurls>styurl"`
+	FacilityID   string   `xml:"mt10id"`
+	DateGuidance string   `xml:"dtguidance"`
 
-	Relates []Relate `xml:"relates>relate" json:"relates"` //예매처
+	Relates []Relate `xml:"relates>relate"`
 }
 
 // 공연 시설 상세 정보
 type FacilityDetailRes struct {
-	Name string `xml:"fcltynm"     json:"name"`
-	ID   string `xml:"mt10id"      json:"id"`
+	Name string `xml:"fcltynm"     `
+	ID   string `xml:"mt10id"      `
 	// VenueCount int    `xml:"mt13cnt"     json:"venue_count"`
-	Category  *string `xml:"fcltychartr" json:"category"`
-	OpenYear  *string `xml:"opende"      json:"open_year"`
-	SeatScale *string `xml:"seatscale"   json:"seat_scale"`
-	TelNo     *string `xml:"telno"       json:"tel"`
-	URL       *string `xml:"relateurl"   json:"url"` //homepage
-	Address   string  `xml:"adres"       json:"address"`
-	Latitude  string  `xml:"la"          json:"latitude"`
-	Longitude string  `xml:"lo"          json:"longitude"`
+	Category  *string `xml:"fcltychartr"`
+	OpenYear  *string `xml:"opende"    `
+	SeatScale *string `xml:"seatscale" `
+	TelNo     *string `xml:"telno"     `
+	URL       *string `xml:"relateurl"   ` //homepage
+	Address   string  `xml:"adres"       `
+	Latitude  string  `xml:"la"          `
+	Longitude string  `xml:"lo"          `
 
-	Restaurant string `xml:"restaurant"  json:"restaurant"`
-	Cafe       string `xml:"cafe"        json:"cafe"`
-	Store      string `xml:"store"       json:"store"`
+	Restaurant string `xml:"restaurant"  `
+	Cafe       string `xml:"cafe"        `
+	Store      string `xml:"store"       `
 	// Nolibang    string `xml:"nolibang"    json:"nolibang"`
 	// Suyu        string `xml:"suyu"        json:"suyu"`
 	// ParkBarrier string `xml:"parkbarrier" json:"park_barrier"`
 	// RestBarrier string `xml:"restbarrier" json:"rest_barrier"`
 	// RunwBarrier string `xml:"runwbarrier" json:"runw_barrier"`
 	// ElevBarrier string `xml:"elevbarrier" json:"elev_barrier"`
-	ParkingLot string `xml:"parkinglot"  json:"parking_lot"` //주차시설
+	ParkingLot string `xml:"parkinglot"  ` //주차시설
 }
 
 type Relate struct {
@@ -102,11 +104,10 @@ type Relate struct {
 
 func kopisGet[T any](endpoint string, params map[string]string) ([]T, error) {
 	values := url.Values{}
-	values.Set("service", "config.KopisCfg.SecretKey")
+	values.Set("service", config.KopisCfg.SecretKey)
 	for k, v := range params {
 		values.Set(k, v)
 	}
-
 	fullURL := fmt.Sprintf("%s?%s", endpoint, values.Encode())
 	client := &http.Client{Timeout: 10 * time.Second}
 
@@ -115,6 +116,10 @@ func kopisGet[T any](endpoint string, params map[string]string) ([]T, error) {
 		return nil, err
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status: %d", resp.StatusCode)
+	}
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -125,7 +130,6 @@ func kopisGet[T any](endpoint string, params map[string]string) ([]T, error) {
 	if err := xml.Unmarshal(body, &res); err != nil {
 		return nil, err
 	}
-
 	return res.Items, nil
 }
 
@@ -145,12 +149,13 @@ func GetPerformanceList(req PerformanceListRequest) ([]PerformanceListRes, error
 	if req.AfterDate != nil {
 		params["afterdate"] = *req.AfterDate
 	}
+	url := fmt.Sprintf("%s/%s", KopisBaseURL, "pblprfr")
 
-	return kopisGet[PerformanceListRes](KopisBaseURL, params)
+	return kopisGet[PerformanceListRes](url, params)
 }
 
 func GetDetailPerformance(performanceID string) (*PerformanceDetailRes, error) {
-	items, err := kopisGet[PerformanceDetailRes](fmt.Sprintf("%s/%s", KopisBaseURL, performanceID), nil)
+	items, err := kopisGet[PerformanceDetailRes](fmt.Sprintf("%s/%s/%s", KopisBaseURL, "pblprfr", performanceID), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +166,7 @@ func GetDetailPerformance(performanceID string) (*PerformanceDetailRes, error) {
 }
 
 func GetDetailFacility(facilityID string) (*FacilityDetailRes, error) {
-	items, err := kopisGet[FacilityDetailRes](fmt.Sprintf("%s/%s", KopisBaseURL, facilityID), nil)
+	items, err := kopisGet[FacilityDetailRes](fmt.Sprintf("%s/%s/%s", KopisBaseURL, "prfplc", facilityID), nil)
 	if err != nil {
 		return nil, err
 	}

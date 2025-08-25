@@ -17,7 +17,7 @@ import (
 func main() {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Fatal("fail to read .env file")
 	}
 
 	err = config.InitConfigs()
@@ -34,7 +34,7 @@ func main() {
 	today := time.Now()
 
 	// afterSixMonths := today.AddDate(0, 6, 0)
-	afterSixMonths := today.AddDate(0, 0, 1)
+	afterSixMonths := today.AddDate(0, 0, 5)
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
@@ -43,7 +43,6 @@ func main() {
 	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, false); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
-
 	// if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, false); err != nil {
 	// 	fmt.Errorf("error is occur ! %s", err)
 	// }

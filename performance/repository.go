@@ -36,7 +36,7 @@ func (r *Repository) GetFacilityById(id uint) (*Facility, error) {
 func (r *Repository) GetFacilityByKopisID(id string) (*Facility, error) {
 	var facility Facility
 
-	result := r.db.Where("kopis_facility_id = ?", id).First(&facility)
+	result := r.db.Where("kopis_facility_key = ?", id).First(&facility)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -49,7 +49,7 @@ func (r *Repository) GetFacilityByKopisID(id string) (*Facility, error) {
 func (r *Repository) GetPerformanceByKopisID(id string) (*Performance, error) {
 	var performance Performance
 
-	result := r.db.Where("kopis_performance_id = ?", id).First(&performance)
+	result := r.db.Where("kopis_performance_key = ?", id).First(&performance)
 
 	if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 		return nil, nil
@@ -85,6 +85,17 @@ func (r *Repository) CreatePerformance(performance *Performance) (uint, error) {
 }
 
 func (r *Repository) CreatePerformanceTicketSite(site *PerformanceTicketSite) error {
+	result := r.db.Create(site)
+
+	if result.Error != nil {
+		fmt.Printf("create ticket site error : %s\n", result.Error)
+		return result.Error
+	}
+
+	return nil
+}
+
+func (r *Repository) CreatePerformanceImage(site *PerformanceImage) error {
 	result := r.db.Create(site)
 
 	if result.Error != nil {

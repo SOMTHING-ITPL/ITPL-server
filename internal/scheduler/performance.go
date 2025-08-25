@@ -41,12 +41,24 @@ func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes) 
 	}, nil
 }
 
-func (s *PerformanceScheduler) BuildPerformanceTicketSites(perfID uint, urls []string) []performance.PerformanceTicketSite {
+func (s *PerformanceScheduler) BuilderPerformanceImages(perfID uint, urls []string) []performance.PerformanceImage {
+	sites := make([]performance.PerformanceImage, len(urls))
+	for i, url := range urls {
+		sites[i] = performance.PerformanceImage{
+			PerformanceID: perfID,
+			URL:           url,
+		}
+	}
+	return sites
+}
+func (s *PerformanceScheduler) BuilderPerformanceTicketSite(perfID uint, urls []api.Relate) []performance.PerformanceTicketSite {
 	sites := make([]performance.PerformanceTicketSite, len(urls))
+
 	for i, url := range urls {
 		sites[i] = performance.PerformanceTicketSite{
 			PerformanceID: perfID,
-			TicketSite:    url,
+			URL:           url.URL,
+			Name:          url.Name,
 		}
 	}
 	return sites
@@ -92,12 +104,13 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 		LastModified: lastTime,
 		Story:        &res.Story,
 		DateGuidance: &res.DateGuidance,
+		Genre:        "test", //Genre Code 들어와야 함.
 	}, nil
 }
 
 // 공연 목록 조회 -> 공연 상세 조회 / LLM 추가 정보 수집 -> 공연 시설 조회
 func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, afterDay *string, isRunnung bool) error {
-	pge, row := 0, 100
+	pge, row := 1, 100
 
 	for {
 		req := api.PerformanceListRequest{
@@ -115,16 +128,22 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 			return err
 		}
 		if len(performanceList) == 0 {
+			fmt.Print("no data ")
 			return nil
 		}
 
 		for _, performance := range performanceList {
-			facilityId, err := s.PutFacilityDetail(performance.Facility)
+			performanceRes, err := api.GetDetailPerformance(performance.ID)
+			if err != nil {
+				return fmt.Errorf("Scheduler: Get Performance fail: %w", err)
+			}
+
+			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID)
 			if err != nil {
 				return err
 			}
 
-			_, err = s.PutPerformanceDetail(performance.ID, facilityId)
+			_, err = s.PutPerformanceDetail(performanceRes, performance.ID, facilityId)
 			if err != nil {
 				return err
 			}
@@ -159,13 +178,17 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string) (uint, error) {
 	return facilityId, nil
 }
 
-func (s *PerformanceScheduler) PutPerformanceDetail(id string, facilityID uint) (uint, error) {
-	performanceRes, err := api.GetDetailPerformance(id)
+func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRes, id string, facilityID uint) (uint, error) {
+	// performanceRes, err := api.GetDetailPerformance(id)
+	data, err := s.PerformanceRepo.GetPerformanceByKopisID(id)
 	if err != nil {
-		return 0, fmt.Errorf("Scheduler: Get Performance fail: %w", err)
+		return 0, err
+	}
+	if data != nil {
+		return data.ID, nil //already exist 어케 처리해야하지 이미 있으면 업데이트로 처리해야 하나?
 	}
 
-	performance, err := s.BuilderPerformance(performanceRes, facilityID)
+	performance, err := s.BuilderPerformance(res, facilityID)
 	if err != nil {
 		return 0, fmt.Errorf("Scheduler: building performance fail: %w", err)
 	}
@@ -175,15 +198,22 @@ func (s *PerformanceScheduler) PutPerformanceDetail(id string, facilityID uint) 
 		return 0, fmt.Errorf("Scheduler: Creating performance fail: %w", err)
 	}
 
-	ticketList := s.BuildPerformanceTicketSites(performanceID, performanceRes.StyUrls)
-	if err != nil {
-		return 0, fmt.Errorf("Scheduler: building site fail: %w", err)
+	imageList := s.BuilderPerformanceImages(performanceID, res.StyUrls)
+
+	for _, image := range imageList {
+		if err := s.PerformanceRepo.CreatePerformanceImage(&image); err != nil {
+			return 0, fmt.Errorf("Scheduler: creating site fail: %w", err)
+		}
 	}
+
+	ticketList := s.BuilderPerformanceTicketSite(performanceID, res.Relates)
+
 	for _, ticket := range ticketList {
 		if err := s.PerformanceRepo.CreatePerformanceTicketSite(&ticket); err != nil {
 			return 0, fmt.Errorf("Scheduler: creating site fail: %w", err)
 		}
 	}
+
 	return performanceID, nil
 }
 
