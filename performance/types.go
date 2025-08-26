@@ -67,7 +67,8 @@ type Performance struct {
 	LastModified time.Time `json:"update_date"`                    // updatedate
 	Story        *string   `gorm:"type:text" json:"story"`         // sty
 	DateGuidance *string   `gorm:"type:text" json:"date_guidance"` // dtguidance
-	Genre        string    `gorm:"type:varchar(8)" json:"genre"`   // dtguidance
+	Genre        int       `gorm:"type:int" json:"genre"`          // dtguidance
+	Keyword      string    `gorm:"type:text" json:"keyword"`       // dtguidance
 
 	TicketSites []PerformanceTicketSite `gorm:"foreignKey:PerformanceID" json:"relates"` // 예매처
 }

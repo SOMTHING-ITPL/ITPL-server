@@ -64,7 +64,7 @@ func (s *PerformanceScheduler) BuilderPerformanceTicketSite(perfID uint, urls []
 	return sites
 }
 
-func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes, facilityId uint) (*performance.Performance, error) {
+func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes, gptRes *GPTResponse, facilityId uint) (*performance.Performance, error) {
 	layout := "2006.01.02"
 
 	fromTime, err := time.Parse(layout, res.EndDate)
@@ -104,7 +104,8 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 		LastModified: lastTime,
 		Story:        &res.Story,
 		DateGuidance: &res.DateGuidance,
-		Genre:        "test", //Genre Code 들어와야 함.
+		Genre:        gptRes.Genre,
+		Keyword:      gptRes.Keyword,
 	}, nil
 }
 
@@ -188,7 +189,13 @@ func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRe
 		return data.ID, nil //already exist 어케 처리해야하지 이미 있으면 업데이트로 처리해야 하나?
 	}
 
-	performance, err := s.BuilderPerformance(res, facilityID)
+	//preprocess
+	gptRes, err := PreProcessPerformance(res.Name, res.Cast)
+	if err != nil {
+		return 0, fmt.Errorf("Scheduler: preprocess performance fail: %w", err)
+	}
+
+	performance, err := s.BuilderPerformance(res, gptRes, facilityID)
 	if err != nil {
 		return 0, fmt.Errorf("Scheduler: building performance fail: %w", err)
 	}
