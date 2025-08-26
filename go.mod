@@ -3,6 +3,10 @@ module github.com/SOMTHING-ITPL/ITPL-server
 go 1.24.5
 
 require (
+	github.com/aws/aws-sdk-go-v2 v1.38.1
+	github.com/aws/aws-sdk-go-v2/feature/s3/manager v1.19.0
+	github.com/aws/aws-sdk-go-v2/service/s3 v1.87.1
+	github.com/aws/smithy-go v1.22.5
 	github.com/gin-gonic/gin v1.10.1
 	github.com/golang-jwt/jwt/v5 v5.3.0
 	github.com/joho/godotenv v1.5.1
@@ -14,6 +18,14 @@ require (
 
 require (
 	filippo.io/edwards25519 v1.1.0 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.0 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/configsources v1.4.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/endpoints/v2 v2.7.4 // indirect
+	github.com/aws/aws-sdk-go-v2/internal/v4a v1.4.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/accept-encoding v1.13.0 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/checksum v1.8.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.13.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/internal/s3shared v1.19.4 // indirect
 	github.com/bytedance/sonic v1.14.0 // indirect
 	github.com/bytedance/sonic/loader v0.3.0 // indirect
 	github.com/cloudwego/base64x v0.1.5 // indirect

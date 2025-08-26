@@ -9,22 +9,32 @@ import (
 )
 
 func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
-	type req struct {
-		PlaceId uint    `json:"place_id"`
-		Text    string  `json:"text"`
-		Rating  float64 `json:"rating"`
-	}
-
-	/*
-		review image store logic here
-	*/
-	imgUrl := "test_url"
-
 	return func(c *gin.Context) {
-		var request req
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		splaceId := c.PostForm("place_id") // text 필드
+		placeID, err := strconv.ParseUint(splaceId, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid place ID"})
 			return
+		}
+		placeId := uint(placeID)
+		text := c.PostForm("text")
+		srating := c.PostForm("rating")
+		rating, err := strconv.ParseFloat(srating, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating"})
+			return
+		}
+
+		var imgUrl []place.ReviewImage
+		// 이미지 파일 받기
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		for _, file := range files {
+			c.SaveUploadedFile(file, "./uploads/"+file.Filename)
+			/*
+				review image store logic here
+			*/
+			imgUrl = append(imgUrl, place.ReviewImage{URL: "./uploads/" + file.Filename})
 		}
 		uid, ok := c.Get("userID")
 		if !ok {
@@ -38,7 +48,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		if err := place.WriteReview(h.database, request.PlaceId, user, request.Text, request.Rating, imgUrl); err != nil {
+		if err := place.WriteReview(h.database, placeId, user, text, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}

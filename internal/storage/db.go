@@ -39,6 +39,7 @@ func AutoMigrate(db *gorm.DB) {
 		&course.CourseDetail{},
 		&place.Place{},
 		&place.PlaceReview{},
+		&place.ReviewImage{},
 	)
 
 	if err != nil {

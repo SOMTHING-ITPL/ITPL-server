@@ -5,13 +5,13 @@ import (
 	"gorm.io/gorm"
 )
 
-func buildReview(user user.User, text string, rating float64, img string) review {
+func buildReview(user user.User, text string, rating float64, imgs []ReviewImage) review {
 	return review{
-		userId:    user.ID,
-		nickname:  user.NickName,
-		rating:    rating,
-		comment:   &text,
-		reviewImg: &img,
+		userId:     user.ID,
+		nickname:   user.NickName,
+		rating:     rating,
+		comment:    &text,
+		reviewImgs: imgs,
 	}
 }
 
@@ -22,7 +22,7 @@ func buildPlaceReview(placeId uint, rev review) PlaceReview {
 		UserNickName: rev.nickname,
 		Rating:       rev.rating,
 		Comment:      rev.comment,
-		ReviewImage:  rev.reviewImg,
+		Images:       rev.reviewImgs,
 	}
 }
 
@@ -33,8 +33,8 @@ func addReviewToDB(db *gorm.DB, rev PlaceReview) {
 	}
 }
 
-func WriteReview(db *gorm.DB, placeId uint, user user.User, text string, rating float64, img string) error {
-	addReviewToDB(db, buildPlaceReview(placeId, buildReview(user, text, rating, img)))
+func WriteReview(db *gorm.DB, placeId uint, user user.User, text string, rating float64, imgs []ReviewImage) error {
+	addReviewToDB(db, buildPlaceReview(placeId, buildReview(user, text, rating, imgs)))
 	return nil
 }
 
@@ -61,7 +61,7 @@ func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 
 func GetPlaceReviews(db *gorm.DB, placeID uint) ([]PlaceReview, error) {
 	var reviews []PlaceReview
-	err := db.Where("place_id = ?", placeID).Find(&reviews).Error
+	err := db.Preload("Images").Where("place_id = ?", placeID).Find(&reviews).Error
 	if err != nil {
 		return nil, err
 	}
