@@ -33,6 +33,7 @@ func main() {
 		panic("Failed to init redis: " + err.Error())
 	}
 
+	//db 쪽으로 빼야 하나?
 	storage.AutoMigrate(db)
 	r := server.SetupRouter(db, rdb)
 

@@ -13,6 +13,7 @@ var (
 	RedisCfg  *RedisDBConfig
 	SmtpCfg   *GoogleSMTPConfig
 	KopisCfg  *KopisApiConfig
+	OpenAICfg *OpenAiConfig
 )
 
 func LoadConfigs(configs ...Config) error {
@@ -41,8 +42,9 @@ func InitConfigs() error {
 	RedisCfg = &RedisDBConfig{}
 	SmtpCfg = &GoogleSMTPConfig{}
 	KopisCfg = &KopisApiConfig{}
+	OpenAICfg = &OpenAiConfig{}
 
-	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg); err != nil {
+	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg, OpenAICfg); err != nil {
 		return err
 	}
 
@@ -130,6 +132,15 @@ func (k *KopisApiConfig) Load() error {
 	//In Env
 	if val := viper.GetString("KOPIS_API_SECRET_KEY"); val != "" {
 		k.SecretKey = val
+	}
+
+	return nil
+}
+
+func (o *OpenAiConfig) Load() error {
+	//In Env
+	if val := viper.GetString("OPEN_AI_SECRET_KEY"); val != "" {
+		o.SecretKey = val
 	}
 
 	return nil

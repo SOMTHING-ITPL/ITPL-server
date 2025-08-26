@@ -3,8 +3,9 @@ package server
 import (
 	"net/http"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/internal/email"
+	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
+	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
@@ -16,8 +17,10 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 
 	userRepo := user.NewRepository(db)
 	smtpRepo := email.NewRepository(redisDB)
+	performanceRepo := performance.NewRepository(db, redisDB)
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
+	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -34,7 +37,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 	// protected.Use(~)//should add middleWare
 	{
 		userGroup := protected.Group("/user")
-		registerUserRoutes(userGroup, userHandler)
+		registerUserRoutes(userGroup, userHandler, performanceHandler)
 
 		courseGroup := protected.Group("/course")
 		registerCourseRoutes(courseGroup)
@@ -42,8 +45,8 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 		placeGroup := protected.Group("/place")
 		registerPlaceRoutes(placeGroup, db, userRepo)
 
-		concertGroup := protected.Group("/concert")
-		registerConcertRoutes(concertGroup)
+		performanceGroup := protected.Group("/performance")
+		registerPerformanceRoutes(performanceGroup, performanceHandler)
 	}
 
 	return r
@@ -64,10 +67,14 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 
 	rg.POST("/register", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
+
+	//user email 비밀번호 찾기 제공해줘야 함.
+
 }
 
 // for about user
-func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
+// TODO : fix UpdateProfile handler. image upload
+func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, performanceHandler *handler.PerformanceHandler) {
 	rg.GET("/me", userHandler.GetUser())
 	rg.PATCH("/me", userHandler.UpdateProfile())
 
@@ -78,6 +85,20 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.GET("/genre", userHandler.GetGenres())
 	rg.POST("/genre", userHandler.AddUserGenre())
 	rg.GET("/genre/me", userHandler.GetUserGenres())
+
+	//공연 - 유저 관련
+	rg.GET("/performance/", performanceHandler.GetPerformanceLike()) //유저 Performance 조회
+	rg.POST("/performance/:id", performanceHandler.CreatePerformanceLike())
+	rg.DELETE("/performance/:id", performanceHandler.DeletePerformanceLike())
+
+	//공연 캘린더 추가 / 삭제 / 조회
+	rg.GET("/performance/calendar")
+	rg.POST("/performance/calendar")
+	rg.DELETE("/performance/calendar")
+
+	//최근 본 공연 목록 조회
+	rg.GET("/performance/recent", performanceHandler.GetRecentViewPerformance())
+
 }
 
 // for about course
@@ -95,7 +116,12 @@ func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Reposi
 	// rg.POST("/", createPlaceHandler)
 }
 
-func registerConcertRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/", listConcertHandler)
-	// rg.GET("/:id", getConcertHandler)
+func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {
+	rg.GET("/", performanceHandler.GetPerformanceShortList()) //목록조회
+	rg.GET("/:id", performanceHandler.GetPerformanceDetail()) //공연 상세 조회
+
+	rg.GET("/facility", performanceHandler.GetFacilityList())       //공연 시설 목록 조회
+	rg.GET("/facility/:id", performanceHandler.GetFacilityDetail()) //공연 시설 상세 조회
+
+	rg.GET("/top/:num", performanceHandler.GetTopPerformances()) //topN 공연 조회
 }

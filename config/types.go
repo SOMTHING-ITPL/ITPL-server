@@ -44,3 +44,7 @@ type GoogleSMTPConfig struct {
 type KopisApiConfig struct {
 	SecretKey string
 }
+
+type OpenAiConfig struct {
+	SecretKey string
+}
