@@ -35,7 +35,7 @@ type PlaceWithReview struct {
 type ReviewImage struct {
 	gorm.Model
 	ReviewID uint   `json:"review_id" gorm:"column:review_id"`
-	URL      string `json:"url" gorm:"column:url"`
+	Key      string `json:"key" gorm:"column:key"`
 }
 
 type PlaceReview struct {

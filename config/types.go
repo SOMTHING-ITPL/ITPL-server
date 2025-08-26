@@ -27,3 +27,9 @@ type GoogleConfig struct {
 	RedirectURI  string
 	ApiHost      string
 }
+
+type S3Config struct {
+	SecretKey  string
+	AccessKey  string
+	BucketName string
+}

@@ -1,9 +1,11 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/gin-gonic/gin"
 )
@@ -24,17 +26,18 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating"})
 			return
 		}
-
 		var imgUrl []place.ReviewImage
+
 		// 이미지 파일 받기
 		form, _ := c.MultipartForm()
 		files := form.File["images"]
-		for _, file := range files {
-			c.SaveUploadedFile(file, "./uploads/"+file.Filename)
-			/*
-				review image store logic here
-			*/
-			imgUrl = append(imgUrl, place.ReviewImage{URL: "./uploads/" + file.Filename})
+		for _, fileHeader := range files {
+			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d", placeId), fileHeader)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
 		}
 		uid, ok := c.Get("userID")
 		if !ok {
