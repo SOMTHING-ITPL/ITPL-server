@@ -4,8 +4,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/auth"
-	"github.com/SOMTHING-ITPL/ITPL-server/internal/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"

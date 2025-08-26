@@ -12,8 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-//performance table 채우는 cmd
-
+// 최초 1회만 실행되면 되는 코드임. +6month 까지만 담아놓는거.
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -24,7 +23,12 @@ func main() {
 	db, err := storage.InitMySQL(*config.DbCfg)
 	storage.AutoMigrate(db)
 
-	repo := performance.NewRepository(db)
+	rdb, err := storage.InitRedis(*config.RedisCfg)
+	if err != nil {
+		panic("Failed to init redis: " + err.Error())
+	}
+
+	repo := performance.NewRepository(db, rdb)
 
 	scheduler := scheduler.PerformanceScheduler{
 		PerformanceRepo: repo,
@@ -33,18 +37,18 @@ func main() {
 	//running
 	today := time.Now()
 
-	// afterSixMonths := today.AddDate(0, 6, 0)
-	afterSixMonths := today.AddDate(0, 0, 5)
+	afterSixMonths := today.AddDate(0, 6, 0)
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
 
+	//공연예정
 	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, false); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
-	// if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, false); err != nil {
-	// 	fmt.Errorf("error is occur ! %s", err)
-	// }
-
+	//공연중
+	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, true); err != nil {
+		fmt.Errorf("error is occur ! %s", err)
+	}
 }
