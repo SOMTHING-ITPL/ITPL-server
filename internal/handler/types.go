@@ -18,3 +18,8 @@ type CourseHandler struct {
 	database       *gorm.DB
 	userRepository *user.Repository
 }
+
+type ChatRoomHandler struct {
+	database       *gorm.DB
+	userRepository *user.Repository
+}

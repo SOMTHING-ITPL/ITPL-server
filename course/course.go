@@ -7,7 +7,7 @@ import (
 
 func CreateCourse(db *gorm.DB, user user.User, title string, description *string) error {
 	course := Course{
-		UserId:      user.ID,
+		UserID:      user.ID,
 		Title:       title,
 		Description: description,
 		IsAICreated: false, // by default
@@ -18,9 +18,9 @@ func CreateCourse(db *gorm.DB, user user.User, title string, description *string
 	return nil
 }
 
-func GetCourseByCourseId(db *gorm.DB, courseID uint) (*Course, error) {
+func GetCourseByCourseId(db *gorm.DB, courseId uint) (*Course, error) {
 	var course Course
-	err := db.Where("id = ?", courseID).First(&course).Error
+	err := db.Where("id = ?", courseId).First(&course).Error
 	if err != nil {
 		return nil, err
 	}
@@ -36,19 +36,19 @@ func GetCoursesByUserId(db *gorm.DB, userID uint) ([]Course, error) {
 	return courses, nil
 }
 
-func GetCourseDetails(db *gorm.DB, courseID uint) ([]CourseDetail, error) {
+func GetCourseDetails(db *gorm.DB, courseId uint) ([]CourseDetail, error) {
 	var details []CourseDetail
-	err := db.Where("course_id = ?", courseID).Order("day, sequence").Find(&details).Error
+	err := db.Where("course_id = ?", courseId).Order("day, sequence").Find(&details).Error
 	if err != nil {
 		return nil, err
 	}
 	return details, nil
 }
 
-func AddPlaceToCourse(db *gorm.DB, courseID uint, placeID uint, day int, sequence int) error {
+func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequence int) error {
 	courseDetail := CourseDetail{
-		CourseId: courseID,
-		PlaceId:  placeID,
+		CourseID: courseId,
+		PlaceID:  placeId,
 		Day:      day,
 		Sequence: sequence,
 	}
@@ -58,9 +58,22 @@ func AddPlaceToCourse(db *gorm.DB, courseID uint, placeID uint, day int, sequenc
 	return nil
 }
 
-func DeletePlaceFromCourse(db *gorm.DB, courseID uint, placeID uint) error {
-	if err := db.Where("course_id = ? AND place_id = ?", courseID, placeID).Delete(&CourseDetail{}).Error; err != nil {
+func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
+	if err := db.Where("course_id = ? AND place_id = ?", courseId, placeID).Delete(&CourseDetail{}).Error; err != nil {
 		return err
+	}
+	return nil
+}
+
+func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
+	if err := db.Where("Course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
+		return err
+	}
+	for _, detail := range details {
+		detail.CourseID = courseId
+		if err := db.Create(&detail).Error; err != nil {
+			return err
+		}
 	}
 	return nil
 }

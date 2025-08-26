@@ -17,6 +17,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	placeHandler := handler.NewPlaceHandler(db, userRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo)
+	chatRoomHandler := handler.NewChatRoomHandler(db, userRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -43,6 +44,9 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 		concertGroup := protected.Group("/concert")
 		registerConcertRoutes(concertGroup)
+
+		chatGroup := protected.Group("/chat")
+		registerChatRoutes(chatGroup, chatRoomHandler)
 	}
 
 	return r
@@ -83,6 +87,7 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 	rg.POST("/create", courseHandler.CreateCourseHandler())
 	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
 	rg.GET("/my-courses", courseHandler.GetMyCourses())
+	rg.PATCH("/:course_id/details", courseHandler.ModifyCourseHandler())
 }
 
 // for about place
@@ -97,4 +102,10 @@ func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler
 func registerConcertRoutes(rg *gin.RouterGroup) {
 	// rg.GET("/", listConcertHandler)
 	// rg.GET("/:id", getConcertHandler)
+}
+
+func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
+	rg.POST("/room", chatRoomHandler.CreateChatRoom())
+	// rg.GET("/chat-room/:id", getChatRoomHandler)
+	// rg.POST("/chat-room/:id/message", postMessageHandler)
 }

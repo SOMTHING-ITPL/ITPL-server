@@ -112,3 +112,29 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 		c.JSON(http.StatusOK, gin.H{"courses": courses})
 	}
 }
+
+func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
+	type request struct {
+		Details []course.CourseDetail `json:"details" binding:"required"`
+	}
+	return func(c *gin.Context) {
+		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+			return
+		}
+		var req request
+
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := course.ModifyCourse(h.database, uint(courseId), req.Details); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "course modified successfully"})
+	}
+}
