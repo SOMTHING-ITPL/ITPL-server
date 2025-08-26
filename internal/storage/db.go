@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
@@ -40,6 +41,8 @@ func AutoMigrate(db *gorm.DB) {
 		&place.Place{},
 		&place.PlaceReview{},
 		&place.ReviewImage{},
+		&chat.ChatRoom{},
+		&chat.ChatRoomMember{},
 	)
 
 	if err != nil {
