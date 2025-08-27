@@ -40,10 +40,10 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 		registerUserRoutes(userGroup, userHandler, performanceHandler)
 
 		courseGroup := protected.Group("/course")
-		registerCourseRoutes(courseGroup)
+		registerCourseRoutes(courseGroup, courseHandler)
 
 		placeGroup := protected.Group("/place")
-		registerPlaceRoutes(placeGroup, db, userRepo)
+		registerPlaceRoutes(placeGroup, placeHandler)
 
 		performanceGroup := protected.Group("/performance")
 		registerPerformanceRoutes(performanceGroup, performanceHandler)
@@ -102,8 +102,11 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, p
 }
 
 // for about course
-func registerCourseRoutes(rg *gin.RouterGroup) {
-	// rg.GET("/", listCourseHandler)
+func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHandler) {
+	rg.POST("/create", courseHandler.CreateCourseHandler())
+	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
+	rg.GET("/my-courses", courseHandler.GetMyCourses())
+	rg.PATCH("/:course_id/details", courseHandler.ModifyCourseHandler())
 }
 
 // for about place
