@@ -47,18 +47,6 @@ func GetReviewByID(db *gorm.DB, revId uint) (*PlaceReview, error) {
 	return &review, nil
 }
 
-func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
-
-	var result ReviewInfo
-
-	err := db.Model(&PlaceReview{}).
-		Select("COUNT(*) as count, IFNULL(AVG(rating), 0) as avg").
-		Where("place_id = ?", placeID).
-		Scan(&result).Error
-
-	return result, err
-}
-
 func GetPlaceReviews(db *gorm.DB, placeID uint) ([]PlaceReview, error) {
 	var reviews []PlaceReview
 	err := db.Preload("Images").Where("place_id = ?", placeID).Find(&reviews).Error
@@ -73,6 +61,12 @@ func DeleteReview(db *gorm.DB, revId uint) error {
 	if err != nil {
 		return err
 	}
+
+	err = db.Where("review_id = ?", revId).Delete(&ReviewImage{}).Error
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

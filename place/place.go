@@ -108,3 +108,15 @@ func GetPlaceById(db *gorm.DB, placeId uint) (*Place, error) {
 	}
 	return &place, nil
 }
+
+func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
+
+	var result ReviewInfo
+
+	err := db.Model(&PlaceReview{}).
+		Select("COUNT(*) as count, IFNULL(AVG(rating), 0) as avg").
+		Where("place_id = ?", placeID).
+		Scan(&result).Error
+
+	return result, err
+}

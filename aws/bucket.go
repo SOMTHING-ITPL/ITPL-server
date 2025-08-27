@@ -29,7 +29,7 @@ func UploadToS3(client *s3.Client, bucket, prefix string, fileHeader *multipart.
 	}
 	defer file.Close()
 
-	// 파일 확장자
+	// file extension
 	ext := strings.ToLower(filepath.Ext(fileHeader.Filename))
 	var contentType string
 	switch ext {
@@ -49,7 +49,7 @@ func UploadToS3(client *s3.Client, bucket, prefix string, fileHeader *multipart.
 	// key (ex: reviews/{prefix}/{filename})
 	key := fmt.Sprintf("%s/%s", prefix, fileHeader.Filename)
 
-	// S3 업로드
+	// S3 upload
 	_, err = client.PutObject(context.TODO(), &s3.PutObjectInput{
 		Bucket:      aws.String(bucket),
 		Key:         aws.String(key),
