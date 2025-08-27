@@ -68,7 +68,6 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/check-email", userHandler.SendEmailCode())
 	rg.POST("/verify-email", userHandler.VerifyEmailCode())
 
-	rg.POST("/register", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
 
 	//user email 비밀번호 찾기 제공해줘야 함.
