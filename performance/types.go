@@ -75,7 +75,7 @@ type Performance struct {
 	TicketSites []PerformanceTicketSite `gorm:"foreignKey:PerformanceID"`
 	Images      []PerformanceImage      `gorm:"foreignKey:PerformanceID"`
 
-	// Facility Facility `gorm:"foreignKey:FacilityID" json:"facility"`
+	Facility Facility `gorm:"foreignKey:FacilityID;references:ID" json:"-"`
 }
 
 type PerformanceImage struct {

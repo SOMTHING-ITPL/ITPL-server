@@ -94,9 +94,9 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, p
 	rg.DELETE("/performance/:id", performanceHandler.DeletePerformanceLike())
 
 	//공연 캘린더 추가 / 삭제 / 조회
-	rg.GET("/performance/calendar")
-	rg.POST("/performance/calendar")
-	rg.DELETE("/performance/calendar")
+	rg.GET("/calendar")
+	rg.POST("/calendar")
+	rg.DELETE("/calendar")
 
 	//최근 본 공연 목록 조회
 	rg.GET("/performance/recent", performanceHandler.GetRecentViewPerformance())
