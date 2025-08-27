@@ -21,6 +21,8 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
+	courseHandler := handler.NewCourseHandler(db, userRepo)
+	placeHandler := handler.NewPlaceHandler(db, userRepo)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -110,13 +112,12 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 }
 
 // for about place
-func registerPlaceRoutes(rg *gin.RouterGroup, db *gorm.DB, userRepo *user.Repository) {
-	rg.GET("/get-place-list", handler.GetPlaceList(db))
-	rg.POST("/write-review", handler.WriteReviewHandler(db, userRepo))
-	rg.GET("/get-place-reviews/:place_id", handler.GetPlaceReviewsHandler(db))
-	rg.DELETE("/review/:review_id", handler.DeleteReviewHandler(db, userRepo))
-	rg.GET("/my-reviews", handler.GetMyReviewsHandler(db, userRepo))
-	// rg.POST("/", createPlaceHandler)
+func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler) {
+	rg.GET("/place-list", placeHandler.GetPlaceList())
+	rg.GET("/reviews/:place_id", placeHandler.GetPlaceReviewsHandler())
+	rg.POST("/review", placeHandler.WriteReviewHandler())
+	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())
+	rg.DELETE("/review/:review_id", placeHandler.DeleteReviewHandler())
 }
 
 func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {

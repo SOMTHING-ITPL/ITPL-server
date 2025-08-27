@@ -48,3 +48,9 @@ type KopisApiConfig struct {
 type OpenAiConfig struct {
 	SecretKey string
 }
+
+type S3Config struct {
+	AccessKey  string
+	SecretKey  string
+	BucketName string
+}
