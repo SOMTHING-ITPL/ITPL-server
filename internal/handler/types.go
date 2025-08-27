@@ -3,9 +3,11 @@ package handler
 import (
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
+	"gorm.io/gorm"
 )
 
 type UserHandler struct {
@@ -93,4 +95,21 @@ type FacilityDetail struct {
 	Cafe       string `json:"cafe"`        // 카페 유무
 	Store      string `json:"store"`       // 상점 유무
 	ParkingLot string `json:"parking_lot"` // 주차시설
+}
+
+type PlaceHandler struct {
+	database       *gorm.DB
+	userRepository *user.Repository
+	BucketBasics   *aws.BucketBasics
+}
+
+type CourseHandler struct {
+	database       *gorm.DB
+	userRepository *user.Repository
+}
+
+type ChatRoomHandler struct {
+	database       *gorm.DB
+	userRepository *user.Repository
+	smtpRepository *email.Repository
 }

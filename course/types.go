@@ -6,7 +6,7 @@ import (
 
 type Course struct {
 	gorm.Model
-	UserId      uint    `json:"user_id"`
+	UserID      uint    `json:"user_id"`
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	IsAICreated bool    `json:"is_ai_created"`
@@ -14,8 +14,8 @@ type Course struct {
 
 type CourseDetail struct {
 	gorm.Model
-	CourseId uint `json:"course_id"`
+	CourseID uint `json:"course_id"`
 	Day      int  `json:"day"`
 	Sequence int  `json:"sequence"`
-	PlaceId  uint `json:"place_id"`
+	PlaceID  uint `json:"place_id"`
 }
