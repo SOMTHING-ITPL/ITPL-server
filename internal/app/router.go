@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -12,7 +13,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
+func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBasics) *gin.Engine {
 	r := gin.Default()
 
 	userRepo := user.NewRepository(db)
@@ -22,7 +23,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client) *gin.Engine {
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo)
-	placeHandler := handler.NewPlaceHandler(db, userRepo)
+	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 
 	//this router does not needs auth
 	public := r.Group("/")
@@ -113,7 +114,7 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler) {
-	rg.GET("/place-list", placeHandler.GetPlaceList())
+	rg.GET("/list", placeHandler.GetPlaceList())
 	rg.GET("/reviews/:place_id", placeHandler.GetPlaceReviewsHandler())
 	rg.POST("/review", placeHandler.WriteReviewHandler())
 	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())

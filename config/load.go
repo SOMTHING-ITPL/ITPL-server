@@ -145,3 +145,16 @@ func (o *OpenAiConfig) Load() error {
 
 	return nil
 }
+
+func (s *S3Config) Load() {
+	//In Env
+	if val := viper.GetString("AWS_ACCESS_KEY_ID"); val != "" {
+		s.AccessKey = val
+	}
+	if val := viper.GetString("AWS_SECRET_ACCESS_KEY"); val != "" {
+		s.SecretKey = val
+	}
+	if val := viper.GetString("BUCKET_NAME"); val != "" {
+		s.BucketName = val
+	}
+}

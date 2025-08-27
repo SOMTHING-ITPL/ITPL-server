@@ -4,16 +4,18 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository) *PlaceHandler {
+func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws.BucketBasics) *PlaceHandler {
 	return &PlaceHandler{
 		database:       db,
 		userRepository: userRepo,
+		BucketBasics:   bucketBasics,
 	}
 }
 

@@ -38,10 +38,11 @@ func AutoMigrate(db *gorm.DB) {
 		&course.Course{},
 		&course.CourseDetail{},
 		&place.Place{},
+		&place.ReviewImage{},
 		&place.PlaceReview{},
+		&performance.Facility{},
 		&performance.Performance{},
 		&performance.PerformanceTicketSite{},
-		&performance.Facility{},
 		&performance.PerformanceImage{},
 
 		// &performance.UserRecentPerformance{},
