@@ -13,7 +13,7 @@ type PerformanceScheduler struct {
 	PerformanceRepo *performance.Repository
 }
 
-func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes) (*performance.Facility, error) {
+func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes, region string) (*performance.Facility, error) {
 	lo, err := strconv.ParseFloat(facility.Longitude, 64)
 	if err != nil {
 		return nil, err
@@ -38,6 +38,7 @@ func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes) 
 		Restaurant:       facility.Restaurant,
 		Cafe:             facility.Cafe,
 		ParkingLot:       facility.ParkingLot,
+		Region:           region,
 	}, nil
 }
 
@@ -140,7 +141,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 				return fmt.Errorf("Scheduler: Get Performance fail: %w", err)
 			}
 
-			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID)
+			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID, performanceRes.Area)
 			if err != nil {
 				return err
 			}
@@ -155,7 +156,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 }
 
 // 아 애매하네 .. 이것도 캐싱형태로 해야 하나? 으으음 계속 날리는 형태로 ? 애매한데 ...
-func (s *PerformanceScheduler) PutFacilityDetail(id string) (uint, error) {
+func (s *PerformanceScheduler) PutFacilityDetail(id string, region string) (uint, error) {
 	//is already in db?
 	data, err := s.PerformanceRepo.GetFacilityByKopisID(id)
 	if err != nil {
@@ -169,7 +170,7 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string) (uint, error) {
 	if err != nil {
 		return 0, fmt.Errorf("Scheduler: GetFacility fail: %w", err)
 	}
-	facility, err := s.BuilderFacility(facilityRes)
+	facility, err := s.BuilderFacility(facilityRes, region)
 	if err != nil {
 		return 0, fmt.Errorf("Scheduler: building Facility fail: %w", err)
 	}

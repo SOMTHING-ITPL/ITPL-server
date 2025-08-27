@@ -78,7 +78,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 // TODO : fix UpdateProfile handler. image upload
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, performanceHandler *handler.PerformanceHandler) {
 	rg.GET("/me", userHandler.GetUser())
-	rg.PATCH("/me", userHandler.UpdateProfile())
+	rg.PATCH("/me", userHandler.UpdateProfile()) //이 부분 수정해야함.
 
 	rg.GET("/artist", userHandler.GetArtists())
 	rg.POST("/artist", userHandler.AddUserArtist())
@@ -127,5 +127,6 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 	rg.GET("/facility", performanceHandler.GetFacilityList())       //공연 시설 목록 조회
 	rg.GET("/facility/:id", performanceHandler.GetFacilityDetail()) //공연 시설 상세 조회
 
-	rg.GET("/top/:num", performanceHandler.GetTopPerformances()) //topN 공연 조회
+	rg.GET("/top", performanceHandler.GetTopPerformances()) //topN 공연 조회
+	rg.POST("/view", performanceHandler.IncrementPerformanceView())
 }

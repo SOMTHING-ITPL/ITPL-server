@@ -16,9 +16,9 @@ func getSystemPrompt() string {
 	prompt := fmt.Sprintf(`You are a data analyst for a performance recommendation system.
 Classify the genre of a performance and extract 20 core keywords in Korean.
 Use this genre list (return integer only):
-0: KPOP, 1: Rock/Metal, 2: Ballad, 3: Rap/Hip-hop, 4: Folk/Trot,
-5: Fan Meeting, 6: Indie, 7: Jazz/Soul, 8: International Artist (Visit Korea),
-9: R&B, 10: EDM, 11: Dinner Show, 12: Others
+1: KPOP, 2: Rock/Metal, 3: Ballad, 4: Rap/Hip-hop, 5: Folk/Trot,
+6: Fan Meeting, 7: Indie, 8: Jazz/Soul, 9: International Artist (Visit Korea),
+10: R&B, 11: EDM, 12: Dinner Show, 13: Others
 Output strictly in JSON:
 {
 "genre": int,

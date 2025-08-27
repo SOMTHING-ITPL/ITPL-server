@@ -4,7 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strconv"
+	"strings"
+	"time"
 
 	"github.com/go-redis/redis/v8"
 	"gorm.io/gorm"
@@ -30,7 +33,7 @@ func (r *Repository) GetFacilityById(id uint) (*Facility, error) {
 
 	result := r.db.First(&facility, id)
 	if result.Error != nil {
-		fmt.Printf("get facility error : %s\n", result.Error)
+		fmt.Printf("get facility error %d : %s\n ", id, result.Error)
 		return &Facility{}, result.Error
 	}
 	return &facility, nil
@@ -96,12 +99,12 @@ func (r *Repository) GetPerformancesByIDs(ids []uint) ([]Performance, error) {
 }
 
 // TODO : 이거 제대로 동작하는지 테스트해봐야 함.
-func (r *Repository) FindPerformances(page, limit int, genre, region, keyword string) ([]Performance, error) {
+func (r *Repository) FindPerformances(page, limit, genre int, region, keyword string) ([]Performance, error) {
 	var performances []Performance
 	db := r.db.Model(&Performance{})
 
 	//this should be code 01 02 03 04 ...
-	if genre != "" {
+	if genre != 0 {
 		db = db.Where("genre = ?", genre)
 	}
 	//
@@ -110,6 +113,8 @@ func (r *Repository) FindPerformances(page, limit int, genre, region, keyword st
 	}
 	if keyword != "" { //이거 키워드에서 찾게 해야 하나?
 		db = db.Where("title LIKE ?", "%"+keyword+"%")
+		keyword = strings.TrimSpace(keyword)
+
 	}
 
 	offset := (page - 1) * limit
@@ -179,20 +184,24 @@ func (r *Repository) GetPerformanceImages(prefId uint) ([]PerformanceImage, erro
 	return images, nil
 }
 
-// JOIN으로 한 번에 가져오기.
 func (r *Repository) GetPerformanceWithTicketsAndImages(perfID uint) (*PerformanceWithTicketsAndImage, error) {
-	var result PerformanceWithTicketsAndImage
 	var perf Performance
 
 	err := r.db.Preload("TicketSites").Preload("Images").First(&perf, perfID).Error
-
 	if err != nil {
 		return nil, err
 	}
 
-	return &result, nil
-}
+	log.Printf("Fetched Performance: ID=%d, FacilityID=%d, Title=%s\n", perf.ID, perf.FacilityID, perf.Title)
 
+	result := &PerformanceWithTicketsAndImage{
+		Performance:       perf,
+		TicketSites:       perf.TicketSites,
+		PerformanceImages: perf.Images,
+	}
+
+	return result, nil
+}
 func (r *Repository) GetUserLike(userID uint) ([]Performance, error) {
 	var favorites []PerformanceUserLike
 
@@ -314,4 +323,23 @@ func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]Perf
 		})
 	}
 	return topPerformances, nil
+}
+
+func (r *Repository) IncrementPerformanceScore(perfID uint, score float64, ctx context.Context) error {
+	key := "performance_views"
+	ttl := 3 * 24 * 60 * 60
+
+	//점수 증가 시키는 부분
+	if err := r.rdb.ZIncrBy(ctx, key, score, fmt.Sprintf("%d", perfID)).Err(); err != nil {
+		log.Printf("Failed to increment score for performance %d: %v", perfID, err)
+		return err
+	}
+
+	//TTL 최대 3일?
+	err := r.rdb.Expire(ctx, key, time.Duration(ttl)*time.Second).Err()
+	if err != nil {
+		log.Printf("Failed to set TTL: %v", err)
+	}
+
+	return nil
 }

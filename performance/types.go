@@ -28,11 +28,11 @@ type Facility struct {
 	Address         string  `gorm:"type:varchar(255)" json:"addree"`     // 주소
 	Latitude        float64 `gorm:"type:decimal(10,7)" json:"latitude"`  // 위도
 	Longitude       float64 `gorm:"type:decimal(10,7)" json:"longitude"` // 경도
-
-	Restaurant string `gorm:"type:varchar(255)" json:"restaurant"`  // 음식점 유무
-	Cafe       string `gorm:"type:varchar(255)" json:"cafe"`        // 카페 유무
-	Store      string `gorm:"type:varchar(255)" json:"store"`       // 상점 유무
-	ParkingLot string `gorm:"type:varchar(255)" json:"parking_lot"` // 주차시설
+	Region          string  `gorm:"type:varchar(255)" json:"region"`
+	Restaurant      string  `gorm:"type:varchar(255)" json:"restaurant"`  // 음식점 유무
+	Cafe            string  `gorm:"type:varchar(255)" json:"cafe"`        // 카페 유무
+	Store           string  `gorm:"type:varchar(255)" json:"store"`       // 상점 유무
+	ParkingLot      string  `gorm:"type:varchar(255)" json:"parking_lot"` // 주차시설
 
 	Performances []Performance `gorm:"foreignKey:FacilityID"`
 }
@@ -79,16 +79,16 @@ type Performance struct {
 }
 
 type PerformanceImage struct {
-	PerformanceID uint        `gorm:"primaryKey" json:"performance_id"`
+	PerformanceID uint        `gorm:"primaryKey" json:"-"`
 	URL           string      `gorm:"primaryKey;type:varchar(255)" json:"url"`
-	Performance   Performance `gorm:"foreignKey:PerformanceID" json:"performance,omitempty"`
+	Performance   Performance `gorm:"foreignKey:PerformanceID" json:"-"`
 }
 
 type PerformanceTicketSite struct {
-	PerformanceID uint        `gorm:"primaryKey" json:"performance_id"`
+	PerformanceID uint        `gorm:"primaryKey" json:"-"`
 	URL           string      `gorm:"primaryKey;type:varchar(255)" json:"url"`
 	Name          string      `gorm:"type:varchar(255)" json:"name"`
-	Performance   Performance `gorm:"foreignKey:PerformanceID" json:"performance,omitempty"`
+	Performance   Performance `gorm:"foreignKey:PerformanceID" json:"-"`
 }
 
 type PerformanceUserLike struct {
