@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -19,12 +20,13 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	userRepo := user.NewRepository(db)
 	smtpRepo := email.NewRepository(redisDB)
 	performanceRepo := performance.NewRepository(db, redisDB)
+	calendarRepo := calendar.NewRepository(db)
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
-
+	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	//this router does not needs auth
 	public := r.Group("/")
 	{
@@ -40,7 +42,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	// protected.Use(~)//should add middleWare
 	{
 		userGroup := protected.Group("/user")
-		registerUserRoutes(userGroup, userHandler, performanceHandler)
+		registerUserRoutes(userGroup, userHandler, performanceHandler, calendarHandler)
 
 		courseGroup := protected.Group("/course")
 		registerCourseRoutes(courseGroup, courseHandler)
@@ -76,7 +78,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 
 // for about user
 // TODO : fix UpdateProfile handler. image upload
-func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, performanceHandler *handler.PerformanceHandler) {
+func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, performanceHandler *handler.PerformanceHandler, calendarHandler *handler.CalendarHandler) {
 	rg.GET("/me", userHandler.GetUser())
 	rg.PATCH("/me", userHandler.UpdateProfile()) //이 부분 수정해야함.
 
@@ -94,9 +96,9 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, p
 	rg.DELETE("/performance/:id", performanceHandler.DeletePerformanceLike())
 
 	//공연 캘린더 추가 / 삭제 / 조회
-	rg.GET("/calendar")
-	rg.POST("/calendar")
-	rg.DELETE("/calendar")
+	rg.GET("/calendar", calendarHandler.GetCalendarData())
+	rg.POST("/calendar", calendarHandler.CreateCalendarData())
+	rg.DELETE("/calendar", calendarHandler.DeleteCalendarData())
 
 	//최근 본 공연 목록 조회
 	rg.GET("/performance/recent", performanceHandler.GetRecentViewPerformance())

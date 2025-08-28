@@ -135,20 +135,22 @@ func kopisGet[T any](endpoint string, params map[string]string) ([]T, error) {
 
 func GetPerformanceList(req PerformanceListRequest) ([]PerformanceListRes, error) {
 	params := map[string]string{
-		"stdate":   req.StartDate,
-		"eddate":   req.EndDate,
-		"cpage":    req.CPage,
-		"rows":     req.Rows,
-		"shcate":   "CCCD",
-		"prfstate": "01",
+		"stdate": req.StartDate,
+		"eddate": req.EndDate,
+		"cpage":  req.CPage,
+		"rows":   req.Rows,
+		"shcate": "CCCD", //대중음악
 	}
 
-	if req.Running {
-		params["prfstate"] = "02"
-	}
 	if req.AfterDate != nil {
 		params["afterdate"] = *req.AfterDate
+	} else {
+		if req.Running {
+			params["prfstate"] = "02" //공연중
+			params["prfstate"] = "01" //공연예정
+		}
 	}
+
 	url := fmt.Sprintf("%s/%s", KopisBaseURL, "pblprfr")
 
 	return kopisGet[PerformanceListRes](url, params)

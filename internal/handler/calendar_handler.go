@@ -6,17 +6,27 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
+	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/gin-gonic/gin"
 )
 
+func NewCalendarHandler(calRepo *calendar.Repository, perfRepo *performance.Repository) *CalendarHandler {
+	return &CalendarHandler{
+		calendarRepo:    calRepo,
+		performanceRepo: perfRepo,
+	}
+}
+
 func (ch *CalendarHandler) CreateCalendarData() gin.HandlerFunc {
 	type req struct {
-		Date string `form:"date" binding:"required"`
+		Date          string `json:"date" binding:"required"`
+		PerformanceID uint   `json:"performance_id" binding:"required"`
 	}
 
 	return func(c *gin.Context) {
 		var req req
-		if err := c.ShouldBindQuery(&req); err != nil {
+		if err := c.ShouldBindJSON(&req); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid query params"})
 			return
 		}
@@ -35,20 +45,13 @@ func (ch *CalendarHandler) CreateCalendarData() gin.HandlerFunc {
 			return
 		}
 
-		perfIdStr := c.Param("id")
-		perfid, err := strconv.ParseUint(perfIdStr, 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "path parameter type is not uint"})
-			return
-		}
-
-		_, err = ch.performanceRepo.GetPerformanceById(uint(perfid))
+		_, err = ch.performanceRepo.GetPerformanceById(req.PerformanceID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "ther is no performance id"})
 			return
 		}
 
-		if ch.calendarRepo.CreateCalendar(uint(perfid), uint(userID), parsedDate) != nil {
+		if ch.calendarRepo.CreateCalendar(req.PerformanceID, uint(userID), parsedDate) != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to create Calendar record"})
 			return
 		}
@@ -130,5 +133,10 @@ func (ch *CalendarHandler) GetCalendarData() gin.HandlerFunc {
 			dayKey := fmt.Sprintf("%d", cal.Day)
 			result[dayKey] = append(result[dayKey], short)
 		}
+		c.JSON(http.StatusInternalServerError, CommonRes{
+			Message: "success",
+			Data:    result,
+		})
+
 	}
 }

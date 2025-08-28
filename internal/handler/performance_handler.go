@@ -28,7 +28,7 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req PerformanceListRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid query params"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
 			return
 		}
 

@@ -139,3 +139,7 @@ func (r *Repository) GetPerformanceWithTicketsAndImages(perfID uint) (*Performan
 
 	return result, nil
 }
+
+func (r *Repository) UpdatePerformance(perf *Performance) error {
+	return r.db.Save(perf).Error
+}

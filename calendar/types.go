@@ -1,9 +1,8 @@
 package calendar
 
 import (
-	"os/user"
-
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/gorm"
 )
 
