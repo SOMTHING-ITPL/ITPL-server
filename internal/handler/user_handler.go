@@ -95,11 +95,7 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 	}
 	return func(c *gin.Context) {
 
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		user, err := h.userRepository.GetById(userID.(uint))
 		if err != nil {
@@ -134,11 +130,7 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 			return
 		}
 
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		if err := h.userRepository.UpdateUser(userID.(uint), body.NickName, body.Photo, body.Birthday); err != nil {
 			c.JSON(500, gin.H{"error": "failed to update user"})
@@ -338,11 +330,7 @@ func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
 		ArtistIDs []uint `json:"artist_ids" binding:"required"`
 	}
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		var request req
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -364,11 +352,7 @@ func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 		GenreIDs []uint `json:"genre_ids" binding:"required"`
 	}
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		var request req
 		if err := c.ShouldBindJSON(&request); err != nil {
@@ -387,11 +371,7 @@ func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 
 func (h *UserHandler) GetUserArtists() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		artists, err := h.userRepository.GetUserArtists(userID.(uint))
 		if err != nil {
@@ -405,11 +385,7 @@ func (h *UserHandler) GetUserArtists() gin.HandlerFunc {
 
 func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		genres, err := h.userRepository.GetUserGenres(userID.(uint))
 		if err != nil {

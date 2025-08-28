@@ -14,6 +14,7 @@ var (
 	SmtpCfg   *GoogleSMTPConfig
 	KopisCfg  *KopisApiConfig
 	OpenAICfg *OpenAiConfig
+	S3Cfg     *S3Config
 )
 
 func LoadConfigs(configs ...Config) error {
@@ -43,8 +44,9 @@ func InitConfigs() error {
 	SmtpCfg = &GoogleSMTPConfig{}
 	KopisCfg = &KopisApiConfig{}
 	OpenAICfg = &OpenAiConfig{}
+	S3Cfg = &S3Config{}
 
-	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg, OpenAICfg); err != nil {
+	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg, OpenAICfg, S3Cfg); err != nil {
 		return err
 	}
 
@@ -146,7 +148,7 @@ func (o *OpenAiConfig) Load() error {
 	return nil
 }
 
-func (s *S3Config) Load() {
+func (s *S3Config) Load() error {
 	//In Env
 	if val := viper.GetString("AWS_ACCESS_KEY_ID"); val != "" {
 		s.AccessKey = val
@@ -157,4 +159,5 @@ func (s *S3Config) Load() {
 	if val := viper.GetString("BUCKET_NAME"); val != "" {
 		s.BucketName = val
 	}
+	return nil
 }

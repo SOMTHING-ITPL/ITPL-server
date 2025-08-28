@@ -37,18 +37,18 @@ func main() {
 	//running
 	today := time.Now()
 
-	afterSixMonths := today.AddDate(0, 6, 0)
+	afterSixMonths := today.AddDate(0, 1, 0) //6으로 변경해야함.
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
 
 	//공연예정
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, false); err != nil {
+	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, false, nil); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 	//공연중
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, true); err != nil {
+	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, true, nil); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 }
