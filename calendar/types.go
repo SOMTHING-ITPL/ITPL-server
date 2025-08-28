@@ -12,10 +12,14 @@ type Calendar struct {
 	PerformanceID uint `json:"performance_id"`
 	UserID        uint `json:"user_id"`
 
-	Year  uint `json:"year"`
-	Month uint `json:"month"`
-	Day   uint `json:"day"`
+	Year  int `json:"year"`
+	Month int `json:"month"`
+	Day   int `json:"day"`
 
 	Performance performance.Performance `gorm:"foreignKey:PerformanceID" json:"-"`
 	User        user.User               `gorm:"foreignKey:UserID" json:"-"`
+}
+
+type Repository struct {
+	db *gorm.DB
 }

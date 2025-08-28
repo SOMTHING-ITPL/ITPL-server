@@ -137,11 +137,7 @@ func (p *PerformanceHandler) GetFacilityDetail() gin.HandlerFunc {
 // 최근 본 공연 목록 조회
 func (p *PerformanceHandler) GetRecentViewPerformance() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		userIDUint, ok := userID.(uint)
 		if !ok {
@@ -211,11 +207,7 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 // 공연 좋아요 생성
 func (p *PerformanceHandler) CreatePerformanceLike() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userIDStr, _ := c.Get("userID")
 
 		userID, ok := userIDStr.(uint)
 		if !ok {
@@ -243,11 +235,7 @@ func (p *PerformanceHandler) CreatePerformanceLike() gin.HandlerFunc {
 // 공연 좋아요 목록 조회
 func (p *PerformanceHandler) GetPerformanceLike() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userIDStr, _ := c.Get("userID")
 
 		//middleware로 빼버릴까..
 		userID, ok := userIDStr.(uint)
