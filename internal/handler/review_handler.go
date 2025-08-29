@@ -12,7 +12,7 @@ import (
 
 func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		splaceId := c.PostForm("place_id") // text 필드
+		splaceId := c.PostForm("place_id")
 		placeID, err := strconv.ParseUint(splaceId, 10, 32)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid place ID"})
@@ -84,7 +84,7 @@ func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
 			return
 		}
 
-		err = place.DeleteReview(h.database, uint(revId))
+		err = place.DeleteReview(h.database, uint(revId), *h.BucketBasics)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
 			return
