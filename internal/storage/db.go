@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -44,8 +45,8 @@ func AutoMigrate(db *gorm.DB) {
 		&performance.Performance{},
 		&performance.PerformanceTicketSite{},
 		&performance.PerformanceImage{},
-
-		// &performance.UserRecentPerformance{},
+		&performance.PerformanceUserLike{},
+		&calendar.Calendar{},
 	)
 
 	if err != nil {

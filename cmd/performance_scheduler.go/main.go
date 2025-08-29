@@ -12,8 +12,7 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// 주기적으로 실행되어야 하는 스크립트 파일. 보완 필요함.
-// 해당 로직을 그냥 서버에 걸어두는건?
+// 최초 1회만 실행되면 되는 코드임. +6month 까지만 담아놓는거.
 func main() {
 	err := godotenv.Load()
 	if err != nil {
@@ -38,19 +37,14 @@ func main() {
 	//running
 	today := time.Now()
 
-	afterSixMonths := today.AddDate(0, 6, 0)
+	afterSixMonths := today.AddDate(0, 1, 0)
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
 
-	//공연예정 특정 일자 이후로 업데이트 된 것만 반영하면 됨.
-	//updateAT 비교 후에 저장하는 형태
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, false); err != nil {
-		fmt.Errorf("error is occur ! %s", err)
-	}
-	//공연중
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, nil, true); err != nil {
+	//걍 자정 이후로 추가되는 데이터 있으면 가져오면 될 것 같은데? 추가로 공연중 / 공연예정도 다 담아야함.
+	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, false, &todayStr); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 }
