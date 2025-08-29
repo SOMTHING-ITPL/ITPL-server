@@ -19,6 +19,7 @@ func NewBucketBasics(cfg aws.Config, s3Cfg *config.S3Config) *BucketBasics {
 	return &BucketBasics{
 		S3Client:   client,
 		BucketName: s3Cfg.BucketName,
+		AwsConfig:  cfg,
 	}
 }
 

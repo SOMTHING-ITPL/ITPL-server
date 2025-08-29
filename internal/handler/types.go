@@ -113,3 +113,16 @@ type ChatRoomHandler struct {
 	userRepository *user.Repository
 	smtpRepository *email.Repository
 }
+
+type ReviewImageResponse struct {
+	URL string `json:"url"`
+}
+
+type PlaceReviewResponse struct {
+	ID           uint                  `json:"id"`
+	UserID       uint                  `json:"user_id"`
+	UserNickname string                `json:"user_nickname"`
+	Rating       float64               `json:"rating"`
+	Comment      *string               `json:"comment"`
+	Images       []ReviewImageResponse `json:"images"`
+}

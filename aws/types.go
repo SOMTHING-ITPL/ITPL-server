@@ -1,6 +1,7 @@
 package aws
 
 import (
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
@@ -11,4 +12,5 @@ import (
 type BucketBasics struct {
 	S3Client   *s3.Client
 	BucketName string
+	AwsConfig  aws.Config
 }

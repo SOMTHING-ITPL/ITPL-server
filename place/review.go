@@ -72,7 +72,7 @@ func DeleteReview(db *gorm.DB, revId uint) error {
 
 func GetMyReviews(db *gorm.DB, userID uint) ([]PlaceReview, error) {
 	var reviews []PlaceReview
-	err := db.Where("user_id = ?", userID).Find(&reviews).Error
+	err := db.Preload("Images").Where("user_id = ?", userID).Find(&reviews).Error
 	if err != nil {
 		return nil, err
 	}
