@@ -55,17 +55,6 @@ func (r *Repository) GetBySocialIDAndProvider(socialID string, provider SocialPr
 	return user, nil
 }
 
-func (r *Repository) GetArtist() ([]Artist, error) {
-	var artists []Artist
-
-	result := r.db.Find(&artists)
-
-	if result.Error != nil {
-		return nil, result.Error
-	}
-	return artists, nil
-}
-
 func (r *Repository) GetGenres() ([]Genre, error) {
 	var genres []Genre
 
@@ -77,17 +66,6 @@ func (r *Repository) GetGenres() ([]Genre, error) {
 	return genres, nil
 }
 
-func (r *Repository) UpdateUserArtist(artistIDs []uint, userID uint) error {
-	var userArtists []UserArtist
-	for _, artistID := range artistIDs {
-		userArtists = append(userArtists, UserArtist{
-			UserID:   userID,
-			ArtistID: artistID,
-		})
-	}
-	return r.db.Create(&userArtists).Error
-}
-
 func (r *Repository) UpdateUserGenres(genresIDs []uint, userID uint) error {
 	var userGenres []UserGenre
 	for _, artistID := range genresIDs {
@@ -97,24 +75,6 @@ func (r *Repository) UpdateUserGenres(genresIDs []uint, userID uint) error {
 		})
 	}
 	return r.db.Create(&userGenres).Error
-}
-
-func (r *Repository) GetUserArtists(userID uint) ([]Artist, error) {
-	var artists []Artist
-
-	// SELECT a.* FROM artists a
-	// INNER JOIN user_artists ua ON a.id = ua.artist_id
-	// WHERE ua.user_id = ?
-	err := r.db.
-		Joins("JOIN user_artists ua ON ua.artist_id = artists.id").
-		Where("ua.user_id = ?", userID).
-		Find(&artists).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return artists, nil
 }
 
 func (r *Repository) GetUserGenres(userID uint) ([]Genre, error) {
@@ -130,11 +90,6 @@ func (r *Repository) GetUserGenres(userID uint) ([]Genre, error) {
 	}
 
 	return genres, nil
-}
-
-func (r *Repository) DeleteFavArtists(userID uint) error {
-	result := r.db.Where("user_id = ?", userID).Delete(&UserArtist{})
-	return result.Error
 }
 
 func (r *Repository) DeleteFavGenres(userID uint) error {
