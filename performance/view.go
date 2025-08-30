@@ -20,11 +20,6 @@ func (r *Repository) CreateRecentView(userID uint, performanceID uint, ctx conte
 		return err
 	}
 
-	// 공연 별 조회수 집계
-	if err := r.rdb.ZIncrBy(ctx, "performance_views", 1, fmt.Sprintf("%d", performanceID)).Err(); err != nil {
-		return err
-	}
-
 	return nil
 }
 

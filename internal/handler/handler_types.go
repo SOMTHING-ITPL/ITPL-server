@@ -12,6 +12,7 @@ import (
 type UserHandler struct {
 	userRepository *user.Repository
 	smtpRepository *email.Repository
+	BucketBasics   *aws.BucketBasics
 }
 
 type PerformanceHandler struct {

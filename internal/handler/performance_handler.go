@@ -304,6 +304,14 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 
 func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userIDStr, _ := c.Get("userID")
+
+		userID, ok := userIDStr.(uint)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+			return
+		}
+
 		perfIdStr := c.Query("perfId")
 		if perfIdStr == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Top num is required"})
@@ -328,6 +336,11 @@ func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to increase score"})
 			return
 		}
+		if err := p.performanceRepo.CreateRecentView(userID, uint(perfId), c.Request.Context()); err != nil { //user 최근 공연 집계
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to increase score"})
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 		return
 	}
