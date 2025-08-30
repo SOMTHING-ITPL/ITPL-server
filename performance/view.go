@@ -56,13 +56,12 @@ func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]Perf
 		return nil, err
 	}
 
-	topPerformances := make([]PerformanceScore, len(zs))
+	topPerformances := make([]PerformanceScore, 0, len(zs))
 	for _, z := range zs {
 		idStr, ok := z.Member.(string)
 		if !ok {
 			continue
 		}
-
 		idUint, convErr := strconv.ParseUint(idStr, 10, 64)
 		if convErr != nil {
 			continue
@@ -73,6 +72,7 @@ func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]Perf
 			Score: z.Score,
 		})
 	}
+
 	return topPerformances, nil
 }
 

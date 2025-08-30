@@ -167,6 +167,10 @@ func (p *PerformanceHandler) GetRecentViewPerformance() gin.HandlerFunc {
 
 // top N 공연 목록 조회 + score 표시해줘야 함?
 func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
+	type res struct {
+		Performance performanceShort
+		Score       float64
+	}
 	return func(c *gin.Context) {
 		numStr := c.Query("num")
 		if numStr == "" {
@@ -197,9 +201,17 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		result := make([]res, len(perfScores))
+		for i, _ := range perfScores {
+			result[i] = res{
+				Performance: ToPerformanceShort(performances[i]),
+				Score:       perfScores[i].Score,
+			}
+		}
+
+		c.JSON(http.StatusOK, &CommonRes{
+			Message: "success",
+			Data:    result,
 		})
 	}
 }

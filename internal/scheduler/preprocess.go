@@ -15,7 +15,9 @@ type GPTResponse struct {
 
 func getSystemPrompt() string {
 	prompt := fmt.Sprintf(`You are a data analyst for a performance recommendation system.
-Classify the genre of a performance and extract 20 core keywords in Korean. and also extract more detail cast 
+Classify the genre of a performance and extract 20 core keywords in Korean.
+Also extract the cast (performers, singers, musicians, actors, or notable guests mentioned in the text).
+
 Use this genre list (return integer only):
 1: KPOP, 2: Rock/Metal, 3: Ballad, 4: Rap/Hip-hop, 5: Folk/Trot,
 6: Fan Meeting, 7: Indie, 8: Jazz/Soul, 9: International Artist (Visit Korea),
@@ -26,7 +28,7 @@ Output strictly in JSON:
 {
 "genre": int,
 "keyword": "keyword1|keyword2| ... keyword20",
-"cast" : string
+"cast" : "cast1 cast2 cast3"
 }
 `)
 	return prompt
