@@ -116,6 +116,7 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler) {
 	rg.GET("/list", placeHandler.GetPlaceList())
+	rg.GET("/:place_id/info", placeHandler.GetPlaceInfoHandler())
 	rg.GET("/reviews/:place_id", placeHandler.GetPlaceReviewsHandler())
 	rg.POST("/review", placeHandler.WriteReviewHandler())
 	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())

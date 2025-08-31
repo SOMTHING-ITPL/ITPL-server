@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/place"
 )
 
 type CommonRes struct {
@@ -94,4 +95,9 @@ type PlaceReviewResponse struct {
 	Rating       float64               `json:"rating"`
 	Comment      *string               `json:"comment"`
 	Images       []ReviewImageResponse `json:"images"`
+}
+
+type PlaceInfoResponse struct {
+	PlaceInfo place.PlaceInfo
+	Reviews   []PlaceReviewResponse
 }
