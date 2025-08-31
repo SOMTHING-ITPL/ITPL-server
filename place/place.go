@@ -121,7 +121,7 @@ func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 	return result, err
 }
 
-func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceInfo, error) {
+func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceWithReview, error) {
 	var reviews []PlaceReview
 	err := db.Preload("Images").Where("place_id = ?", placeId).Find(&reviews).Error
 	if err != nil {
@@ -135,9 +135,5 @@ func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceInfo, error) {
 		ReviewAvg:   reviewInfo.Avg,
 	}
 
-	placeInfo := PlaceInfo{
-		PlaceWithReview: placeWithReview,
-	}
-
-	return placeInfo, err
+	return placeWithReview, err
 }

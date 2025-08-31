@@ -24,7 +24,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
-	courseHandler := handler.NewCourseHandler(db, userRepo)
+	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	//this router does not needs auth
@@ -110,14 +110,16 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 	rg.POST("/create", courseHandler.CreateCourseHandler())
 	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
 	rg.GET("/my-courses", courseHandler.GetMyCourses())
+	rg.GET(":course_id/details", courseHandler.GetCourseDetails())
 	rg.PATCH("/:course_id/details", courseHandler.ModifyCourseHandler())
+	rg.POST("/suggestion", courseHandler.CourseSuggestionHandler())
 }
 
 // for about place
 func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler) {
 	rg.GET("/list", placeHandler.GetPlaceList())
 	rg.GET("/:place_id/info", placeHandler.GetPlaceInfoHandler())
-	rg.GET("/reviews/:place_id", placeHandler.GetPlaceReviewsHandler())
+	rg.GET("/:place_id/reviews", placeHandler.GetPlaceReviewsHandler())
 	rg.POST("/review", placeHandler.WriteReviewHandler())
 	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())
 	rg.DELETE("/review/:review_id", placeHandler.DeleteReviewHandler())

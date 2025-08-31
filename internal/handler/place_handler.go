@@ -65,7 +65,6 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 	}
 }
 
-// Images 필드 로직....
 func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		placeId, err := strconv.ParseUint(c.Param("place_id"), 10, 32)
@@ -82,7 +81,7 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 
 		revs, err := place.GetPlaceReviews(h.database, uint(placeId))
 		if err != nil {
-			log.Printf("fail to Load Reviews : %v", err)
+			c.JSON(http.StatusBadGateway, gin.H{"error": err})
 		}
 
 		var reviews []PlaceReviewResponse

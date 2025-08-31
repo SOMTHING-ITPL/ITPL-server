@@ -98,6 +98,6 @@ type PlaceReviewResponse struct {
 }
 
 type PlaceInfoResponse struct {
-	PlaceInfo place.PlaceInfo
+	PlaceInfo place.PlaceWithReview
 	Reviews   []PlaceReviewResponse
 }
