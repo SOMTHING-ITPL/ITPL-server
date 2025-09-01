@@ -75,7 +75,7 @@ func (d *DBConfig) Load() error {
 	d.Database = viper.GetString("db.database")
 
 	//In Env
-	if val := viper.GetString("DB_USER"); val != "" {
+	if val := viper.GetString("DB_HOST"); val != "" {
 		d.Host = val
 	}
 
