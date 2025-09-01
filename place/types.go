@@ -55,3 +55,7 @@ type review struct {
 	comment    *string
 	reviewImgs []ReviewImage
 }
+
+type PlaceInfo struct {
+	PlaceWithReview
+}

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"strconv"
 
@@ -61,5 +62,59 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"places": result})
+	}
+}
+
+func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		placeId, err := strconv.ParseUint(c.Param("place_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
+			return
+		}
+
+		pInfo, err := place.GetPlaceInfo(h.database, uint(placeId))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid place ID"})
+			return
+		}
+
+		revs, err := place.GetPlaceReviews(h.database, uint(placeId))
+		if err != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": err})
+		}
+
+		var reviews []PlaceReviewResponse
+		for _, rev := range revs {
+			var imgResponses []ReviewImageResponse
+			for _, img := range rev.Images {
+				url, err := aws.GetPresignURL(
+					h.BucketBasics.AwsConfig,
+					h.BucketBasics.BucketName,
+					img.Key,
+				)
+				if err != nil {
+					log.Printf("presign url error: %v", err)
+					continue
+				}
+				imgResponses = append(imgResponses, ReviewImageResponse{URL: url})
+			}
+
+			reviews = append(reviews, PlaceReviewResponse{
+				ID:           rev.ID,
+				UserID:       rev.UserId,
+				UserNickname: rev.UserNickName,
+				Rating:       rev.Rating,
+				Comment:      rev.Comment,
+				Images:       imgResponses,
+			})
+		}
+
+		placeInfoResponse := PlaceInfoResponse{
+			PlaceInfo: pInfo,
+			Reviews:   reviews,
+		}
+
+		c.JSON(http.StatusOK, gin.H{"placeInfo": placeInfoResponse})
 	}
 }

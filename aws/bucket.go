@@ -19,6 +19,7 @@ func NewBucketBasics(cfg aws.Config, s3Cfg *config.S3Config) *BucketBasics {
 	return &BucketBasics{
 		S3Client:   client,
 		BucketName: s3Cfg.BucketName,
+		AwsConfig:  cfg,
 	}
 }
 
@@ -61,6 +62,18 @@ func UploadToS3(client *s3.Client, bucket, prefix string, fileHeader *multipart.
 	}
 
 	return key, nil
+}
+
+func DeleteImage(client *s3.Client, bucketName, KeyName string) error {
+	input := &s3.DeleteObjectInput{
+		Bucket: aws.String(bucketName),
+		Key:    aws.String(KeyName),
+	}
+	_, err := client.DeleteObject(context.TODO(), input)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func GetPresignURL(cfg aws.Config, bucketName, keyName string) (string, error) {

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/place"
 )
 
 type CommonRes struct {
@@ -81,4 +82,22 @@ type FacilityDetail struct {
 	Cafe       string `json:"cafe"`        // 카페 유무
 	Store      string `json:"store"`       // 상점 유무
 	ParkingLot string `json:"parking_lot"` // 주차시설
+}
+
+type ReviewImageResponse struct {
+	URL string `json:"url"`
+}
+
+type PlaceReviewResponse struct {
+	ID           uint                  `json:"id"`
+	UserID       uint                  `json:"user_id"`
+	UserNickname string                `json:"user_nickname"`
+	Rating       float64               `json:"rating"`
+	Comment      *string               `json:"comment"`
+	Images       []ReviewImageResponse `json:"images"`
+}
+
+type PlaceInfoResponse struct {
+	PlaceInfo place.PlaceWithReview
+	Reviews   []PlaceReviewResponse
 }

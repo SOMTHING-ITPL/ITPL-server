@@ -120,3 +120,20 @@ func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 
 	return result, err
 }
+
+func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceWithReview, error) {
+	var reviews []PlaceReview
+	err := db.Preload("Images").Where("place_id = ?", placeId).Find(&reviews).Error
+	if err != nil {
+		log.Printf("Failed to Load Review Images %v: ", err)
+	}
+	place, err := GetPlaceById(db, placeId)
+	reviewInfo, err := GetReviewInfo(db, placeId)
+	placeWithReview := PlaceWithReview{
+		Place:       *place,
+		ReviewCount: reviewInfo.Count,
+		ReviewAvg:   reviewInfo.Avg,
+	}
+
+	return placeWithReview, err
+}
