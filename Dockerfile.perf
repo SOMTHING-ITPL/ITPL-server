@@ -1,0 +1,25 @@
+  1 # Build stage
+  2 FROM golang:1.24.5-alpine AS builder
+  3
+  4 RUN apk add --no-cache git
+  5
+  6 WORKDIR /app
+  7
+  8 COPY go.mod go.sum ./
+  9 RUN go mod download && go mod verify
+ 10
+ 11 COPY . .
+ 12
+ 13 RUN go build -o main ./cmd/db_init/main.go
+ 14
+ 15 # Runtime stage
+ 16 FROM debian:bullseye-slim
+ 17
+ 18 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+ 19     rm -rf /var/lib/apt/lists/*
+ 20
+ 21 COPY --from=builder /app/main /usr/local/bin/main
+ 22
+ 23 EXPOSE 8080
+ 24
+ 25 ENTRYPOINT ["main"]

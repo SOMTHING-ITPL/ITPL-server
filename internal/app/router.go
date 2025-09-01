@@ -75,11 +75,10 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/login", userHandler.LoginLocalUser())
 	rg.POST("/check-email", userHandler.SendEmailCode())
 	rg.POST("/verify-email", userHandler.VerifyEmailCode())
-
+	rg.POST("/register-local", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
 
 	//user email 비밀번호 찾기 제공해줘야 함.
-
 }
 
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {

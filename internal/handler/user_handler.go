@@ -160,7 +160,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 		NickName string `json:"nick_name" binding:"required"`
 		Pwd      string `json:"password" binding:"required"`
 		Email    string `json:"email" binding:"required,email"`
-		Birthday string `json:"birthday"`
+		Birthday string `json:"birthday"` //required 아님
 	}
 	type res struct {
 		Token string `json:"token"`
