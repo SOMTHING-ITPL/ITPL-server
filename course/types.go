@@ -10,6 +10,8 @@ type Course struct {
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
 	IsAICreated bool    `json:"is_ai_created"`
+	FacilityID  uint    `json:"facility_id"`
+	ImageKey    string  `json:"image_key"`
 }
 
 type CourseDetail struct {
