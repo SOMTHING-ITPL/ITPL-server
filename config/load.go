@@ -91,8 +91,11 @@ func (d *DBConfig) Load() error {
 
 func (d *RedisDBConfig) Load() error {
 	//In yaml
-	d.Addr = viper.GetString("rdb.addr")
 	d.Database = viper.GetInt("rdb.database")
+
+	if val := viper.GetString("REDIS_ADDR"); val != "" {
+		d.Addr = val
+	}
 
 	//In Env
 	if val := viper.GetString("REDIS_DB_PASSWORD"); val != "" {
