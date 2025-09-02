@@ -215,6 +215,17 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 				Message: "Course Created",
 				Data:    res,
 			})
+		case 3:
+			createdCourse := course.ThreeDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
+			res := response{
+				Course:        createdCourse,
+				CourseDetails: courseDetails,
+			}
+			c.JSON(http.StatusOK, CommonRes{
+				Message: "Course Created",
+				Data:    res,
+			})
 		default:
 			c.JSON(http.StatusOK, gin.H{"message": "default"})
 		}
