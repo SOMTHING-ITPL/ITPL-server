@@ -27,8 +27,9 @@ type PlaceHandler struct {
 }
 
 type CourseHandler struct {
-	database       *gorm.DB
-	userRepository *user.Repository
+	database        *gorm.DB
+	userRepository  *user.Repository
+	performanceRepo *performance.Repository
 }
 
 type ChatRoomHandler struct {

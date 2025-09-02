@@ -1,6 +1,7 @@
 package place
 
 import (
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/gorm"
 )
@@ -56,14 +57,28 @@ func GetPlaceReviews(db *gorm.DB, placeID uint) ([]PlaceReview, error) {
 	return reviews, nil
 }
 
-func DeleteReview(db *gorm.DB, revId uint) error {
-	err := db.Where("id = ?", revId).Delete(&PlaceReview{}).Error
-	if err != nil {
+func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error {
+	// Load images
+	var images []ReviewImage
+	if err := db.Where("review_id = ?", revId).Find(&images).Error; err != nil {
 		return err
 	}
 
-	err = db.Where("review_id = ?", revId).Delete(&ReviewImage{}).Error
-	if err != nil {
+	// Delete images from S3
+	for _, img := range images {
+		err := aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, img.Key)
+		if err != nil {
+			return err
+		}
+	}
+
+	// 3. Delete review image records
+	if err := db.Where("review_id = ?", revId).Delete(&ReviewImage{}).Error; err != nil {
+		return err
+	}
+
+	// 4. Delete review record
+	if err := db.Where("id = ?", revId).Delete(&PlaceReview{}).Error; err != nil {
 		return err
 	}
 
@@ -72,7 +87,7 @@ func DeleteReview(db *gorm.DB, revId uint) error {
 
 func GetMyReviews(db *gorm.DB, userID uint) ([]PlaceReview, error) {
 	var reviews []PlaceReview
-	err := db.Where("user_id = ?", userID).Find(&reviews).Error
+	err := db.Preload("Images").Where("user_id = ?", userID).Find(&reviews).Error
 	if err != nil {
 		return nil, err
 	}

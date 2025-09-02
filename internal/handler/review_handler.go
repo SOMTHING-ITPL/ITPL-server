@@ -12,7 +12,7 @@ import (
 
 func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		splaceId := c.PostForm("place_id") // text 필드
+		splaceId := c.PostForm("place_id")
 		placeID, err := strconv.ParseUint(splaceId, 10, 32)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid place ID"})
@@ -84,7 +84,7 @@ func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
 			return
 		}
 
-		err = place.DeleteReview(h.database, uint(revId))
+		err = place.DeleteReview(h.database, uint(revId), *h.BucketBasics)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
 			return
@@ -105,7 +105,24 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reviews: " + err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"reviews": reviews})
+		var response []PlaceReviewResponse
+		for _, r := range reviews {
+			var imgs []ReviewImageResponse
+			for _, img := range r.Images {
+				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
+				imgs = append(imgs, ReviewImageResponse{URL: url})
+			}
+			response = append(response, PlaceReviewResponse{
+				ID:           r.ID,
+				UserID:       r.UserId,
+				UserNickname: r.UserNickName,
+				Rating:       r.Rating,
+				Comment:      r.Comment,
+				Images:       imgs,
+			})
+		}
+
+		c.JSON(http.StatusOK, gin.H{"reviews": response})
 	}
 }
 
@@ -128,6 +145,22 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reviews: " + err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"reviews": reviews})
+		var response []PlaceReviewResponse
+		for _, r := range reviews {
+			var imgs []ReviewImageResponse
+			for _, img := range r.Images {
+				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
+				imgs = append(imgs, ReviewImageResponse{URL: url})
+			}
+			response = append(response, PlaceReviewResponse{
+				ID:           r.ID,
+				UserID:       r.UserId,
+				UserNickname: r.UserNickName,
+				Rating:       r.Rating,
+				Comment:      r.Comment,
+				Images:       imgs,
+			})
+		}
+		c.JSON(http.StatusOK, gin.H{"reviews": response})
 	}
 }
