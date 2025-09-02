@@ -49,7 +49,12 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create course: " + err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Course created successfully"})
+
+		res := CommonRes{
+			Message: "Course created successfully",
+		}
+
+		c.JSON(http.StatusOK, res)
 	}
 }
 
@@ -104,7 +109,10 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			Details: details,
 		}
 
-		c.JSON(http.StatusOK, gin.H{"course_details": res})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Course Details",
+			Data:    res,
+		})
 	}
 }
 
@@ -123,7 +131,10 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"courses": courses})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "My Courses",
+			Data:    courses,
+		})
 	}
 }
 
@@ -189,7 +200,10 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 				Course:        createdCourse,
 				CourseDetails: courseDetails,
 			}
-			c.JSON(http.StatusOK, gin.H{"createdCourse": res})
+			c.JSON(http.StatusOK, CommonRes{
+				Message: "Course Created",
+				Data:    res,
+			})
 		case 2:
 			createdCourse := course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
 			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
@@ -197,7 +211,10 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 				Course:        createdCourse,
 				CourseDetails: courseDetails,
 			}
-			c.JSON(http.StatusOK, gin.H{"createdCourse": res})
+			c.JSON(http.StatusOK, CommonRes{
+				Message: "Course Created",
+				Data:    res,
+			})
 		default:
 			c.JSON(http.StatusOK, gin.H{"message": "default"})
 		}

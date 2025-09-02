@@ -59,7 +59,7 @@ func ValidateJWT(tokenString string) (*CustomClaims, error) {
 	claims := &CustomClaims{}
 
 	// Parse and validate
-	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.ParseWithClaims(tokenString, claims, func(t *jwt.Token) (any, error) {
 		// Validate the signing method
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")
