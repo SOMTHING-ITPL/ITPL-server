@@ -26,6 +26,8 @@ go.work.sum
 
 *.env
 
+Dockerfile.cron
+Dockerfile.init
 # Editor/IDE
 # .idea/
 # .vscode/

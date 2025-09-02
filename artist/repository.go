@@ -20,6 +20,9 @@ func (r *Repository) GetArtist() ([]Artist, error) {
 }
 
 func (r *Repository) UpdateUserArtist(artistIDs []uint, userID uint) error {
+	if err := r.db.Where("user_id = ?", userID).Delete(&UserArtist{}).Error; err != nil {
+		return err
+	}
 	var userArtists []UserArtist
 	for _, artistID := range artistIDs {
 		userArtists = append(userArtists, UserArtist{
@@ -27,7 +30,14 @@ func (r *Repository) UpdateUserArtist(artistIDs []uint, userID uint) error {
 			ArtistID: artistID,
 		})
 	}
-	return r.db.Create(&userArtists).Error
+
+	if len(userArtists) > 0 {
+		if err := r.db.Create(&userArtists).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *Repository) GetUserArtists(userID uint) ([]Artist, error) {
