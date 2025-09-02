@@ -190,6 +190,14 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 				CourseDetails: courseDetails,
 			}
 			c.JSON(http.StatusOK, gin.H{"createdCourse": res})
+		case 2:
+			createdCourse := course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
+			res := response{
+				Course:        createdCourse,
+				CourseDetails: courseDetails,
+			}
+			c.JSON(http.StatusOK, gin.H{"createdCourse": res})
 		default:
 			c.JSON(http.StatusOK, gin.H{"message": "default"})
 		}
