@@ -71,11 +71,14 @@ func (k *KaKaoConfig) Load() error {
 
 func (d *DBConfig) Load() error {
 	//In yaml
-	d.Host = viper.GetString("db.host")
 	d.Port = viper.GetString("db.port")
 	d.Database = viper.GetString("db.database")
 
 	//In Env
+	if val := viper.GetString("DB_USER"); val != "" {
+		d.Host = val
+	}
+
 	if val := viper.GetString("DB_USER"); val != "" {
 		d.User = val
 	}
