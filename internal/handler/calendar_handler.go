@@ -56,7 +56,6 @@ func (ch *CalendarHandler) CreateCalendarData() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
-
 	}
 }
 
@@ -133,10 +132,9 @@ func (ch *CalendarHandler) GetCalendarData() gin.HandlerFunc {
 			dayKey := fmt.Sprintf("%d", cal.Day)
 			result[dayKey] = append(result[dayKey], short)
 		}
-		c.JSON(http.StatusInternalServerError, CommonRes{
+		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
 			Data:    result,
 		})
-
 	}
 }

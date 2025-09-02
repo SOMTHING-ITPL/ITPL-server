@@ -34,17 +34,8 @@ type User struct {
 	EncryptPwd *string    `gorm:"type:varchar(255);default:null" json:"encrypt_pwd,omitempty"`
 	Birthday   *time.Time `gorm:"type:date;default:null" json:"birthday,omitempty"`
 
-	UserArtists []UserArtist `gorm:"foreignKey:UserID" json:"user_artists,omitempty"`
-	UserGenres  []UserGenre  `gorm:"foreignKey:UserID" json:"user_genres,omitempty"`
-}
-
-type Artist struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string    `gorm:"type:varchar(255);not null;unique" json:"name"`
-	ImageURL  *string   `gorm:"type:varchar(255);default:null" json:"image_url,omitempty"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
-
-	UserArtists []UserArtist `gorm:"foreignKey:ArtistID" json:"user_artists,omitempty"`
+	// UserArtists []UserArtist `gorm:"foreignKey:UserID" json:"user_artists,omitempty"`
+	// UserGenres  []UserGenre  `gorm:"foreignKey:UserID" json:"user_genres,omitempty"`
 }
 
 type Genre struct {
@@ -53,15 +44,6 @@ type Genre struct {
 	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
 
 	UserGenres []UserGenre `gorm:"foreignKey:GenreID" json:"user_genres,omitempty"`
-}
-
-type UserArtist struct {
-	UserID    uint      `gorm:"primaryKey" json:"user_id"`
-	ArtistID  uint      `gorm:"primaryKey" json:"artist_id"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
-
-	User   User   `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE;" json:"user"`
-	Artist Artist `gorm:"foreignKey:ArtistID;constraint:OnDelete:CASCADE;" json:"artist"`
 }
 
 type UserGenre struct {

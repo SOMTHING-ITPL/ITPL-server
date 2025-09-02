@@ -3,6 +3,7 @@ package server
 import (
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/artist"
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
@@ -21,12 +22,14 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	smtpRepo := email.NewRepository(redisDB)
 	performanceRepo := performance.NewRepository(db, redisDB)
 	calendarRepo := calendar.NewRepository(db)
+	artistRepo := artist.NewRepository(db)
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
+	artistHandler := handler.NewArtistHandler(artistRepo)
 	//this router does not needs auth
 	public := r.Group("/")
 	{
@@ -42,7 +45,10 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	// protected.Use(~)//should add middleWare
 	{
 		userGroup := protected.Group("/user")
-		registerUserRoutes(userGroup, userHandler, performanceHandler, calendarHandler)
+		registerUserRoutes(userGroup, userHandler)
+		registerArtistRoutes(userGroup, artistHandler)
+		registerCalendarRoutes(userGroup, calendarHandler)
+		registerUserPerformanceRoutes(userGroup, performanceHandler)
 
 		courseGroup := protected.Group("/course")
 		registerCourseRoutes(courseGroup, courseHandler)
@@ -69,39 +75,37 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/login", userHandler.LoginLocalUser())
 	rg.POST("/check-email", userHandler.SendEmailCode())
 	rg.POST("/verify-email", userHandler.VerifyEmailCode())
-
-	rg.POST("/register", userHandler.RegisterLocalUser())
+	rg.POST("/register-local", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
 
 	//user email 비밀번호 찾기 제공해줘야 함.
-
 }
 
-// for about user
-// TODO : fix UpdateProfile handler. image upload
-func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler, performanceHandler *handler.PerformanceHandler, calendarHandler *handler.CalendarHandler) {
+func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.GET("/me", userHandler.GetUser())
-	rg.PATCH("/me", userHandler.UpdateProfile()) //이 부분 수정해야함.
-
-	rg.GET("/artist", userHandler.GetArtists())
-	rg.POST("/artist", userHandler.AddUserArtist())
-	rg.GET("/artist/me", userHandler.GetUserArtists())
-
+	rg.PATCH("/me", userHandler.UpdateProfile())
 	rg.GET("/genre", userHandler.GetGenres())
 	rg.POST("/genre", userHandler.AddUserGenre())
 	rg.GET("/genre/me", userHandler.GetUserGenres())
 
-	//공연 - 유저 관련
+}
+func registerArtistRoutes(rg *gin.RouterGroup, artistHandler *handler.ArtistHandler) {
+
+	rg.GET("/artist", artistHandler.GetArtists())
+	rg.POST("/artist", artistHandler.AddUserArtist())
+	rg.GET("/artist/me", artistHandler.GetUserArtists())
+
+}
+func registerCalendarRoutes(rg *gin.RouterGroup, calendarHandler *handler.CalendarHandler) {
+	rg.GET("/calendar", calendarHandler.GetCalendarData())
+	rg.POST("/calendar", calendarHandler.CreateCalendarData())
+	rg.DELETE("/calendar", calendarHandler.DeleteCalendarData())
+}
+func registerUserPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {
 	rg.GET("/performance/", performanceHandler.GetPerformanceLike()) //유저 Performance 조회
 	rg.POST("/performance/:id", performanceHandler.CreatePerformanceLike())
 	rg.DELETE("/performance/:id", performanceHandler.DeletePerformanceLike())
 
-	//공연 캘린더 추가 / 삭제 / 조회
-	rg.GET("/calendar", calendarHandler.GetCalendarData())
-	rg.POST("/calendar", calendarHandler.CreateCalendarData())
-	rg.DELETE("/calendar", calendarHandler.DeleteCalendarData())
-
-	//최근 본 공연 목록 조회
 	rg.GET("/performance/recent", performanceHandler.GetRecentViewPerformance())
 
 }

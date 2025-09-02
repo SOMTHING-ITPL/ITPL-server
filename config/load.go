@@ -71,11 +71,14 @@ func (k *KaKaoConfig) Load() error {
 
 func (d *DBConfig) Load() error {
 	//In yaml
-	d.Host = viper.GetString("db.host")
 	d.Port = viper.GetString("db.port")
 	d.Database = viper.GetString("db.database")
 
 	//In Env
+	if val := viper.GetString("DB_HOST"); val != "" {
+		d.Host = val
+	}
+
 	if val := viper.GetString("DB_USER"); val != "" {
 		d.User = val
 	}
@@ -88,8 +91,11 @@ func (d *DBConfig) Load() error {
 
 func (d *RedisDBConfig) Load() error {
 	//In yaml
-	d.Addr = viper.GetString("rdb.addr")
 	d.Database = viper.GetInt("rdb.database")
+
+	if val := viper.GetString("REDIS_ADDR"); val != "" {
+		d.Addr = val
+	}
 
 	//In Env
 	if val := viper.GetString("REDIS_DB_PASSWORD"); val != "" {

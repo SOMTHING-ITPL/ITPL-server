@@ -160,7 +160,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 
 // 아 애매하네 .. 이것도 캐싱형태로 해야 하나? 으으음 계속 날리는 형태로 ? 애매한데 ...
 func (s *PerformanceScheduler) PutFacilityDetail(id string, region string) (uint, error) {
-	//is already in db?
+	//is already in db? 존재하거나 / error 일 경우 ->
 	data, err := s.PerformanceRepo.GetFacilityByKopisID(id)
 	if err != nil {
 		return 0, err

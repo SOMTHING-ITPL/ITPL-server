@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/SOMTHING-ITPL/ITPL-server/artist"
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
@@ -12,6 +13,7 @@ import (
 type UserHandler struct {
 	userRepository *user.Repository
 	smtpRepository *email.Repository
+	BucketBasics   *aws.BucketBasics
 }
 
 type PerformanceHandler struct {
@@ -39,4 +41,8 @@ type ChatRoomHandler struct {
 type CalendarHandler struct {
 	calendarRepo    *calendar.Repository
 	performanceRepo *performance.Repository
+}
+
+type ArtistHandler struct {
+	artistRepo *artist.Repository
 }
