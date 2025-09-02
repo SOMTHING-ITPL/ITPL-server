@@ -66,21 +66,32 @@ func (r *Repository) GetGenres() ([]Genre, error) {
 }
 
 func (r *Repository) UpdateUserGenres(genresIDs []uint, userID uint) error {
+	if err := r.db.Where("user_id = ?", userID).Delete(&UserGenre{}).Error; err != nil {
+		return err
+	}
+
 	var userGenres []UserGenre
-	for _, artistID := range genresIDs {
+	for _, genreID := range genresIDs {
 		userGenres = append(userGenres, UserGenre{
 			UserID:  userID,
-			GenreID: artistID,
+			GenreID: genreID,
 		})
 	}
-	return r.db.Create(&userGenres).Error
+
+	if len(userGenres) > 0 {
+		if err := r.db.Create(&userGenres).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *Repository) GetUserGenres(userID uint) ([]Genre, error) {
 	var genres []Genre
 
 	err := r.db.
-		Joins("JOIN user_genres ug ON ug.genre_id = genre.id").
+		Joins("JOIN user_genres ug ON ug.genre_id = genres.id").
 		Where("ug.user_id = ?", userID).
 		Find(&genres).Error
 

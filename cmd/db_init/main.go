@@ -25,7 +25,8 @@ func main() {
 
 	rdb, err := storage.InitRedis(*config.RedisCfg)
 	if err != nil {
-		panic("Failed to init redis: " + err.Error())
+		//no need to use redis
+		// panic("Failed to init redis: " + err.Error())
 	}
 
 	repo := performance.NewRepository(db, rdb)
@@ -51,4 +52,6 @@ func main() {
 	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, true, nil); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
+
+	fmt.Println("Performance list updated successfully!")
 }

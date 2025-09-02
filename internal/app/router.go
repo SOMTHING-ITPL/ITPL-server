@@ -87,7 +87,6 @@ func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.GET("/genre", userHandler.GetGenres())
 	rg.POST("/genre", userHandler.AddUserGenre())
 	rg.GET("/genre/me", userHandler.GetUserGenres())
-
 }
 func registerArtistRoutes(rg *gin.RouterGroup, artistHandler *handler.ArtistHandler) {
 
@@ -99,7 +98,7 @@ func registerArtistRoutes(rg *gin.RouterGroup, artistHandler *handler.ArtistHand
 func registerCalendarRoutes(rg *gin.RouterGroup, calendarHandler *handler.CalendarHandler) {
 	rg.GET("/calendar", calendarHandler.GetCalendarData())
 	rg.POST("/calendar", calendarHandler.CreateCalendarData())
-	rg.DELETE("/calendar", calendarHandler.DeleteCalendarData())
+	rg.DELETE("/calendar/:id", calendarHandler.DeleteCalendarData())
 }
 func registerUserPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {
 	rg.GET("/performance/", performanceHandler.GetPerformanceLike()) //유저 Performance 조회
