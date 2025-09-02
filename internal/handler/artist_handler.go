@@ -21,7 +21,10 @@ func (h *ArtistHandler) GetArtists() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"data": artist})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    artist,
+		})
 	}
 }
 
@@ -43,7 +46,9 @@ func (h *ArtistHandler) AddUserArtist() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "User artists updated successfully"})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+		})
 	}
 }
 
@@ -56,7 +61,10 @@ func (h *ArtistHandler) GetUserArtists() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get Artist"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"data": artists})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    artists,
+		})
 
 	}
 }

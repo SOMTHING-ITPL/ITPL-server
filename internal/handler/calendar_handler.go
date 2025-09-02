@@ -56,7 +56,6 @@ func (ch *CalendarHandler) CreateCalendarData() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
-
 	}
 }
 
@@ -137,6 +136,5 @@ func (ch *CalendarHandler) GetCalendarData() gin.HandlerFunc {
 			Message: "success",
 			Data:    result,
 		})
-
 	}
 }

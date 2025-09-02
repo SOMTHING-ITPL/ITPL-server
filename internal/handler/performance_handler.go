@@ -248,7 +248,7 @@ func (p *PerformanceHandler) CreatePerformanceLike() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"Message": "success",
+			"message": "success",
 		})
 	}
 }
@@ -308,7 +308,7 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"Message": "success",
+			"message": "success",
 		})
 
 	}
@@ -353,7 +353,7 @@ func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"Message": "success"})
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
 		return
 	}
 }
