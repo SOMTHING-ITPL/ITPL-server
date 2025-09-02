@@ -32,9 +32,8 @@ func (r *Repository) GetCalendar(userID uint, month int, year int) ([]Calendar, 
 	return calendar, nil
 }
 
-func (r *Repository) DeleteCalendar(userID uint, perfID uint) error {
-	result := r.db.Where("performance_id = ? AND user_id = ?", perfID, userID).Delete(&Calendar{})
-
+func (r *Repository) DeleteCalendar(id uint) error {
+	result := r.db.Where("id = ?", id).Delete(&Calendar{})
 	if result.Error != nil {
 		return result.Error
 	}

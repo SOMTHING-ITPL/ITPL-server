@@ -61,22 +61,14 @@ func (ch *CalendarHandler) CreateCalendarData() gin.HandlerFunc {
 
 func (ch *CalendarHandler) DeleteCalendarData() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr, _ := c.Get("userID")
-
-		userID, ok := userIDStr.(uint)
-		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
-			return
-		}
-
-		perfIdStr := c.Param("id")
-		perfid, err := strconv.ParseUint(perfIdStr, 10, 64)
+		calendarIDStr := c.Param("id")
+		calendarID, err := strconv.ParseUint(calendarIDStr, 10, 64)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "path parameter type is not uint"})
 			return
 		}
 
-		if ch.calendarRepo.DeleteCalendar(uint(userID), uint(perfid)) != nil {
+		if ch.calendarRepo.DeleteCalendar(uint(calendarID)) != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to delete calendar data "})
 			return
 		}
@@ -86,10 +78,10 @@ func (ch *CalendarHandler) DeleteCalendarData() gin.HandlerFunc {
 }
 
 func (ch *CalendarHandler) GetCalendarData() gin.HandlerFunc {
-	// type calendarData struct {
-	// 	Day         uint             `json:"day"`
-	// 	Performance performanceShort `json:"performance"`
-	// }
+	type res struct {
+		Performance performanceShort `json:"performances"`
+		CalendarID  uint             `json:"calendar_id"`
+	}
 
 	return func(c *gin.Context) {
 		userIDStr, _ := c.Get("userID")
@@ -125,12 +117,15 @@ func (ch *CalendarHandler) GetCalendarData() gin.HandlerFunc {
 			return
 		}
 
-		result := make(map[string][]performanceShort)
+		result := make(map[string][]res)
 		for _, cal := range data {
 			short := ToPerformanceShort(cal.Performance)
 
 			dayKey := fmt.Sprintf("%d", cal.Day)
-			result[dayKey] = append(result[dayKey], short)
+			result[dayKey] = append(result[dayKey], res{
+				Performance: short,
+				CalendarID:  cal.ID,
+			})
 		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
