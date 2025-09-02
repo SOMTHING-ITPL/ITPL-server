@@ -104,7 +104,7 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	dinners, _ := place.LoadNearPlaces(coord, 39, db)
 	AddPlaceToCourse(db, course.ID, dinners[random].TourapiPlaceId, 2, 4)
 
-	//2일차 숙소
+	//2일차 숙소 - 1일차 숙소 그대로
 	accommodation := GetSpecificCouseDetail(db, course, 1, 2)
 	AddPlaceToCourse(db, course.ID, accommodation.PlaceID, 2, 5)
 
@@ -113,5 +113,8 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	//3일차 아점
 	brunchs, _ := place.LoadNearPlaces(coord, 39, db)
 	AddPlaceToCourse(db, course.ID, brunchs[random].TourapiPlaceId, 3, 1)
+
+	shoppings, _ := place.LoadNearPlaces(coord, 38, db)
+	AddPlaceToCourse(db, course.ID, shoppings[random].TourapiPlaceId, 3, 2)
 	return course
 }
