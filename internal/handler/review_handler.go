@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
@@ -118,6 +119,7 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
+				CreatedAt:    r.CreatedAt.Format(time.RFC3339),
 				Images:       imgs,
 			})
 		}
@@ -158,6 +160,7 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
+				CreatedAt:    r.CreatedAt.Format(time.RFC3339),
 				Images:       imgs,
 			})
 		}
