@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	"log"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
@@ -28,6 +27,5 @@ func SendPromptToModel(userPrompt string, systemPrompt string) (string, error) {
 		return "", err
 	}
 
-	fmt.Println(resp.Choices[0].Message.Content) // check
 	return resp.Choices[0].Message.Content, nil
 }

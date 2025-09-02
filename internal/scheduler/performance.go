@@ -13,7 +13,7 @@ type PerformanceScheduler struct {
 	PerformanceRepo *performance.Repository
 }
 
-func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes) (*performance.Facility, error) {
+func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes, region string) (*performance.Facility, error) {
 	lo, err := strconv.ParseFloat(facility.Longitude, 64)
 	if err != nil {
 		return nil, err
@@ -38,6 +38,7 @@ func (s *PerformanceScheduler) BuilderFacility(facility *api.FacilityDetailRes) 
 		Restaurant:       facility.Restaurant,
 		Cafe:             facility.Cafe,
 		ParkingLot:       facility.ParkingLot,
+		Region:           region,
 	}, nil
 }
 
@@ -83,6 +84,9 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 	if err != nil {
 		fmt.Println("last 변환 실패:", err)
 	}
+	if res.Cast == "" {
+		res.Cast = gptRes.Cast
+	}
 
 	return &performance.Performance{
 		Title:               res.Name,
@@ -111,7 +115,7 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 }
 
 // 공연 목록 조회 -> 공연 상세 조회 / LLM 추가 정보 수집 -> 공연 시설 조회
-func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, afterDay *string, isRunnung bool) error {
+func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, isRunnung bool, afterDay *string) error {
 	pge, row := 1, 100
 
 	for {
@@ -140,7 +144,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 				return fmt.Errorf("Scheduler: Get Performance fail: %w", err)
 			}
 
-			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID)
+			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID, performanceRes.Area)
 			if err != nil {
 				return err
 			}
@@ -155,7 +159,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 }
 
 // 아 애매하네 .. 이것도 캐싱형태로 해야 하나? 으으음 계속 날리는 형태로 ? 애매한데 ...
-func (s *PerformanceScheduler) PutFacilityDetail(id string) (uint, error) {
+func (s *PerformanceScheduler) PutFacilityDetail(id string, region string) (uint, error) {
 	//is already in db?
 	data, err := s.PerformanceRepo.GetFacilityByKopisID(id)
 	if err != nil {
@@ -169,7 +173,7 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string) (uint, error) {
 	if err != nil {
 		return 0, fmt.Errorf("Scheduler: GetFacility fail: %w", err)
 	}
-	facility, err := s.BuilderFacility(facilityRes)
+	facility, err := s.BuilderFacility(facilityRes, region)
 	if err != nil {
 		return 0, fmt.Errorf("Scheduler: building Facility fail: %w", err)
 	}
@@ -180,6 +184,39 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string) (uint, error) {
 	return facilityId, nil
 }
 
+func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDetailRes, originalPerf *performance.Performance, facilityID uint) (uint, error) {
+	var layout = "2006-01-02 15:04:05"
+
+	fromTime, err := time.Parse(layout, updatePerf.EndDate)
+	if err != nil {
+		fmt.Println("from 변환 실패:", err)
+	}
+
+	toTime, err := time.Parse(layout, updatePerf.StartDate)
+	if err != nil {
+		fmt.Println("to 변환 실패:", err)
+	}
+
+	//poster 나 예매처 변경된거에 대해서도 반영을 해줘야 하는부분 ..? 귀찮은데 ..
+	originalPerf.AgeRating = &updatePerf.Age
+	if updatePerf.Cast != "" {
+		originalPerf.Cast = &updatePerf.Cast
+	}
+	originalPerf.Crew = &updatePerf.Crew
+	originalPerf.UpdatedAt = time.Now()
+	originalPerf.DateGuidance = &updatePerf.DateGuidance
+	originalPerf.EndDate = fromTime
+	originalPerf.StartDate = toTime
+	originalPerf.FacilityID = facilityID
+	originalPerf.FacilityName = updatePerf.Facility
+
+	if err := s.PerformanceRepo.UpdatePerformance(originalPerf); err != nil {
+		return 0, fmt.Errorf("Scheduler: updating performance fail: %w", err)
+	}
+
+	return originalPerf.ID, nil
+}
+
 func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRes, id string, facilityID uint) (uint, error) {
 	// performanceRes, err := api.GetDetailPerformance(id)
 	data, err := s.PerformanceRepo.GetPerformanceByKopisID(id)
@@ -187,13 +224,19 @@ func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRe
 		return 0, err
 	}
 	if data != nil {
-		return data.ID, nil //already exist 어케 처리해야하지 이미 있으면 업데이트로 처리해야 하나?
+		s.UpdatePerformance(res, data, facilityID)
+		return data.ID, nil
 	}
 
 	//preprocess
 	gptRes, err := PreProcessPerformance(res.Name, res.Cast)
 	if err != nil {
-		return 0, fmt.Errorf("Scheduler: preprocess performance fail: %w", err)
+		fmt.Printf("Scheduler: preprocess performance fail: %w", err) //log는 따로 남겨놔야 할 듯?
+		gptRes = &GPTResponse{                                        //일단 임의의 값을 채워넣는 형태
+			Keyword: res.Name,
+			Genre:   12,
+			Cast:    res.Cast,
+		}
 	}
 
 	performance, err := s.BuilderPerformance(res, gptRes, facilityID)
@@ -224,24 +267,3 @@ func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRe
 
 	return performanceID, nil
 }
-
-//스케줄러 예시
-// func main() {
-// 	ticker := time.NewTicker(24 * time.Hour) // 24시간마다 실행
-// 	defer ticker.Stop()
-
-// 	// 초기 실행
-// 	doTask()
-
-// 	for {
-// 		select {
-// 		case <-ticker.C:
-// 			doTask()
-// 		}
-// 	}
-// }
-
-// func doTask() {
-// 	fmt.Println("오늘 공연 데이터를 업데이트합니다:", time.Now())
-// 	// 여기에 공연 데이터를 긁어오는 로직 작성
-// }

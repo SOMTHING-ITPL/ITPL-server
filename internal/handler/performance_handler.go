@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"errors"
 	"net/http"
 	"strconv"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func NewPerformanceHandler(repo *performance.Repository) *PerformanceHandler {
@@ -18,7 +20,7 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 	type PerformanceListRequest struct {
 		Page    int    `form:"page" binding:"required"`
 		Limit   int    `form:"limit" binding:"required"`
-		Genre   string `form:"genre"`   //optional
+		Genre   int    `form:"genre"`   //optional
 		Region  string `form:"region"`  // optional
 		Keyword string `form:"keyword"` // optional
 	}
@@ -26,11 +28,10 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req PerformanceListRequest
 		if err := c.ShouldBindQuery(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid query params"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid body"})
 			return
 		}
 
-		//조회
 		performances, err := p.performanceRepo.FindPerformances(req.Page, req.Limit, req.Genre, req.Region, req.Keyword)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to findPerformances"})
@@ -46,6 +47,10 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 
 // 공연 상세 조회
 func (p *PerformanceHandler) GetPerformanceDetail() gin.HandlerFunc {
+	type res struct {
+		Performance PerformanceDetail `json:"performance"`
+		Facility    FacilityDetail    `json:"facility"`
+	}
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
 		id, err := strconv.ParseUint(idStr, 10, 64)
@@ -69,16 +74,17 @@ func (p *PerformanceHandler) GetPerformanceDetail() gin.HandlerFunc {
 		}
 		facilityRes := ToFacilityDetail(facility)
 
-		c.JSON(http.StatusOK, gin.H{
-			"message":     "success",
-			"performance": perfRes,
-			"facility":    facilityRes,
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: res{
+				Performance: perfRes,
+				Facility:    facilityRes,
+			},
 		})
-
 	}
 }
 
-// 공연 시설 목록 조회
+// 공연 시설 목록 조회 + 그것도 해야 하나 .. ?
 func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 	type FacilityListRequest struct {
 		Page   int    `form:"page" binding:"required"`
@@ -131,11 +137,7 @@ func (p *PerformanceHandler) GetFacilityDetail() gin.HandlerFunc {
 // 최근 본 공연 목록 조회
 func (p *PerformanceHandler) GetRecentViewPerformance() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userID, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userID, _ := c.Get("userID")
 
 		userIDUint, ok := userID.(uint)
 		if !ok {
@@ -205,13 +207,8 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 // 공연 좋아요 생성
 func (p *PerformanceHandler) CreatePerformanceLike() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userIDStr, _ := c.Get("userID")
 
-		//middleware로 빼버릴까..
 		userID, ok := userIDStr.(uint)
 		if !ok {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
@@ -238,11 +235,7 @@ func (p *PerformanceHandler) CreatePerformanceLike() gin.HandlerFunc {
 // 공연 좋아요 목록 조회
 func (p *PerformanceHandler) GetPerformanceLike() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDStr, exists := c.Get("userID")
-		if !exists {
-			c.JSON(401, gin.H{"error": "unauthorized"})
-			return
-		}
+		userIDStr, _ := c.Get("userID")
 
 		//middleware로 빼버릴까..
 		userID, ok := userIDStr.(uint)
@@ -294,5 +287,36 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 			"message": "success",
 		})
 
+	}
+}
+
+func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		perfIdStr := c.Query("perfId")
+		if perfIdStr == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Top num is required"})
+			return
+		}
+
+		perfId, err := strconv.ParseInt(perfIdStr, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid num type"})
+			return
+		}
+		//performance 존재하는지 확인
+		_, err = p.performanceRepo.GetPerformanceById(uint(perfId))
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "not exist that performance id "})
+			return
+		} else if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+			return
+		}
+		if err := p.performanceRepo.IncrementPerformanceScore(uint(perfId), 1, c.Request.Context()); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to increase score"})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
+		return
 	}
 }
