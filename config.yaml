@@ -19,5 +19,4 @@ db:
   database: "itpl_db"
 
 rdb:
-  addr: "localhost:6379"
   database: 0

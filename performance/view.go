@@ -20,11 +20,6 @@ func (r *Repository) CreateRecentView(userID uint, performanceID uint, ctx conte
 		return err
 	}
 
-	// 공연 별 조회수 집계
-	if err := r.rdb.ZIncrBy(ctx, "performance_views", 1, fmt.Sprintf("%d", performanceID)).Err(); err != nil {
-		return err
-	}
-
 	return nil
 }
 
@@ -56,13 +51,12 @@ func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]Perf
 		return nil, err
 	}
 
-	topPerformances := make([]PerformanceScore, len(zs))
+	topPerformances := make([]PerformanceScore, 0, len(zs))
 	for _, z := range zs {
 		idStr, ok := z.Member.(string)
 		if !ok {
 			continue
 		}
-
 		idUint, convErr := strconv.ParseUint(idStr, 10, 64)
 		if convErr != nil {
 			continue
@@ -73,6 +67,7 @@ func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]Perf
 			Score: z.Score,
 		})
 	}
+
 	return topPerformances, nil
 }
 

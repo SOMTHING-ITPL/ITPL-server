@@ -38,9 +38,12 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: PerformanceListRes{
+				Performances: ToPerformanceShortList(performances),
+				Count:        len(performances),
+			},
 		})
 	}
 }
@@ -104,9 +107,12 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
 
-		c.JSON(http.StatusOK, FacilityListRes{
-			Facilities: ToFacilityShortList(facilities),
-			Count:      len(facilities),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: FacilityListRes{
+				Facilities: ToFacilityShortList(facilities),
+				Count:      len(facilities),
+			},
 		})
 	}
 }
@@ -127,9 +133,9 @@ func (p *PerformanceHandler) GetFacilityDetail() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message":  "success",
-			"facility": ToFacilityDetail(facility),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    ToFacilityDetail(facility),
 		})
 	}
 }
@@ -158,15 +164,22 @@ func (p *PerformanceHandler) GetRecentViewPerformance() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: PerformanceListRes{
+				Performances: ToPerformanceShortList(performances),
+				Count:        len(performances),
+			},
 		})
 	}
 }
 
 // top N 공연 목록 조회 + score 표시해줘야 함?
 func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
+	type res struct {
+		Performance performanceShort
+		Score       float64
+	}
 	return func(c *gin.Context) {
 		numStr := c.Query("num")
 		if numStr == "" {
@@ -197,9 +210,17 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		result := make([]res, len(perfScores))
+		for i, _ := range perfScores {
+			result[i] = res{
+				Performance: ToPerformanceShort(performances[i]),
+				Score:       perfScores[i].Score,
+			}
+		}
+
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    result,
 		})
 	}
 }
@@ -250,9 +271,12 @@ func (p *PerformanceHandler) GetPerformanceLike() gin.HandlerFunc {
 
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: PerformanceListRes{
+				Performances: ToPerformanceShortList(performances),
+				Count:        len(performances),
+			},
 		})
 	}
 }
@@ -292,6 +316,14 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 
 func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		userIDStr, _ := c.Get("userID")
+
+		userID, ok := userIDStr.(uint)
+		if !ok {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "invalid user id type"})
+			return
+		}
+
 		perfIdStr := c.Query("perfId")
 		if perfIdStr == "" {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Top num is required"})
@@ -316,6 +348,11 @@ func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to increase score"})
 			return
 		}
+		if err := p.performanceRepo.CreateRecentView(userID, uint(perfId), c.Request.Context()); err != nil { //user 최근 공연 집계
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to increase score"})
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 		return
 	}

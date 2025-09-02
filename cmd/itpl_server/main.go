@@ -17,9 +17,9 @@ import (
 func main() {
 	//set env file
 	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
 
 	//init function 쓰기. 패키지 로드될 때 init function 실행됨.
 	err = config.InitConfigs()
