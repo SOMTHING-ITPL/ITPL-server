@@ -61,7 +61,10 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, gin.H{"places": result})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Place Loaded Successfully",
+			Data:    result,
+		})
 	}
 }
 
@@ -115,6 +118,8 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 			Reviews:   reviews,
 		}
 
-		c.JSON(http.StatusOK, gin.H{"placeInfo": placeInfoResponse})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Place Info",
+			Data:    placeInfoResponse})
 	}
 }
