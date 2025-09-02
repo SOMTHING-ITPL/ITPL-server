@@ -122,7 +122,9 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, gin.H{"reviews": response})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Place Reviews",
+			Data:    response})
 	}
 }
 
@@ -161,6 +163,8 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				Images:       imgs,
 			})
 		}
-		c.JSON(http.StatusOK, gin.H{"reviews": response})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "My Reviews",
+			Data:    response})
 	}
 }

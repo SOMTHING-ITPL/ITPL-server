@@ -59,9 +59,32 @@ func TwoDayCourse(db *gorm.DB, user user.User, title string, description *string
 	if err != nil {
 		log.Printf("failed to load places")
 	}
-	random := rand.Intn(30)
+	random := rand.Intn(10)
 
+	//1일차 저녁
 	restaurant := restaurants[random]
 	AddPlaceToCourse(db, course.ID, restaurant.TourapiPlaceId, 1, 1)
+
+	//숙소
+	accommodations, err := place.LoadNearPlaces(coord, 32, db)
+	if err != nil {
+		log.Printf("failed to load places")
+	}
+	accommodation := accommodations[random]
+	AddPlaceToCourse(db, course.ID, accommodation.TourapiPlaceId, 1, 2)
+
+	acoord := place.Coordinate{
+		Latitude:  accommodation.Latitude,
+		Longitude: accommodation.Longitude,
+	}
+
+	random = rand.Intn(5)
+	//아점... ㅋㅋ
+	restaurants, err = place.LoadNearPlaces(acoord, 39, db)
+	AddPlaceToCourse(db, course.ID, restaurants[random].TourapiPlaceId, 2, 1)
+
+	//관광지
+	sights, err := place.LoadNearPlaces(acoord, 12, db)
+	AddPlaceToCourse(db, course.ID, sights[random].TourapiPlaceId, 2, 2)
 	return course
 }
