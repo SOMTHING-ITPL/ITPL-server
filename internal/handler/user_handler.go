@@ -1,14 +1,19 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
+	"mime/multipart"
 	"net/http"
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/auth"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository) *UserHandler {
@@ -47,7 +52,7 @@ func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "verification code sent"})
+		c.JSON(http.StatusOK, gin.H{"Message": "verification code sent"})
 	}
 
 }
@@ -67,13 +72,15 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 
 		savedCode, err := h.smtpRepository.GetEmailCode(c, request.Email)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "code expired or not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "code expired or not found"})
 			return
 		}
 
 		if savedCode != request.Code {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
-			return
+			c.JSON(http.StatusOK, CommonRes{
+				Message: "email is not Verified check Code ",
+				Data:    false,
+			})
 		}
 
 		if h.smtpRepository.SetVerifiedEmail(c, request.Email) != nil {
@@ -81,7 +88,10 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "email verified"})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "email is Verified",
+			Data:    true,
+		})
 	}
 }
 
@@ -92,6 +102,7 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 		Email          string `json:"email"`
 		NickName       string `json:"nick_name"`
 		SocialProvider string `json:"social_provider"`
+		Birthday       string `json:"birthday"`
 	}
 	return func(c *gin.Context) {
 
@@ -103,36 +114,47 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"data": res{
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: res{
 				CreatedAt:      user.CreatedAt.String(),
 				UpdatedAt:      user.CreatedAt.String(),
 				NickName:       user.NickName,
 				Email:          *user.Email,
 				SocialProvider: string(user.SocialProvider),
+				Birthday:       user.Birthday.Format("20060102"),
 			},
 		})
-
 	}
 }
 
 func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
-	type req struct {
-		NickName string     `json:"nickname"`
-		Photo    *string    `json:"photo,omitempty"`
-		Birthday *time.Time `json:"birthday,omitempty"`
-	}
-
 	return func(c *gin.Context) {
-		var body req
-		if err := c.ShouldBindJSON(&body); err != nil {
-			c.JSON(400, gin.H{"error": "invalid request body"})
+		userIDVal, _ := c.Get("userID")
+		userID := userIDVal.(uint)
+
+		nickName := c.PostForm("nickname")
+		birthdayStr := c.PostForm("birthday")
+
+		birthdayTime, err := time.Parse("20060102", birthdayStr)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "birthday must be in yyyymmdd format"})
 			return
 		}
 
-		userID, _ := c.Get("userID")
+		file, err := c.FormFile("profile")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "no profile file uploaded"})
+			return
+		}
 
-		if err := h.userRepository.UpdateUser(userID.(uint), body.NickName, body.Photo, body.Birthday); err != nil {
+		imageURL, err := h.uploadProfileImage(file, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload profile image"})
+			return
+		}
+
+		if err := h.userRepository.UpdateUser(userID, nickName, &imageURL, &birthdayTime); err != nil {
 			c.JSON(500, gin.H{"error": "failed to update user"})
 			return
 		}
@@ -146,6 +168,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 		NickName string `json:"nick_name" binding:"required"`
 		Pwd      string `json:"password" binding:"required"`
 		Email    string `json:"email" binding:"required,email"`
+		Birthday string `json:"birthday"` //required 아님
 	}
 	type res struct {
 		Token string `json:"token"`
@@ -155,6 +178,12 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 
 		if err := c.ShouldBindJSON(&request); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		//format check
+		birthdayTime, err := time.Parse("20060102", request.Birthday)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "birthday must be in yyyymmdd format"})
 			return
 		}
 
@@ -181,6 +210,7 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 			Email:          &request.Email,
 			SocialProvider: user.ProviderLocal,
 			EncryptPwd:     &hashedPwdStr,
+			Birthday:       &birthdayTime,
 		}
 
 		err = h.userRepository.CreateUser(&user)
@@ -199,13 +229,14 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
+func (h *UserHandler) LoginSocialUser() gin.HandlerFunc { //Access 이런 거 다 구조화 해야 하는 건가?
 	type req struct {
 		SocialProvider string `json:"social_provider" binding:"required" `
 		AccessToken    string `json:"access_token" binding:"required"`
 	}
 	type res struct {
 		Token string `json:"token"`
+		isNew bool   `json:is_new`
 	}
 	return func(c *gin.Context) {
 		var request req
@@ -228,27 +259,14 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 		}
 
 		targetUser, err := h.userRepository.GetBySocialIDAndProvider(result.ID, user.SocialProvider(request.SocialProvider))
-		if err != nil {
-			nickName := user.GenerateNanoIDNickname()
-			targetUser := user.User{
-				NickName:       nickName,
-				SocialID:       &result.ID,
-				SocialProvider: user.SocialProvider(request.SocialProvider),
-			}
-
-			err = h.userRepository.CreateUser(&targetUser)
+		if errors.Is(err, gorm.ErrRecordNotFound) { //Not found 일 경우,
+			targetUser, err = h.RegisterSocialUser(user.SocialProvider(request.SocialProvider), result.ID)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to create new user"})
 				return
 			}
-
-			jwt, err := auth.GenerateJWT(&targetUser)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate jwt"})
-				return
-			}
-
-			c.JSON(http.StatusCreated, res{Token: jwt})
+		} else if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 
@@ -258,8 +276,26 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, res{Token: jwt})
+		c.JSON(http.StatusCreated, CommonRes{
+			Message: "success",
+			Data:    res{Token: jwt},
+		})
 	}
+}
+
+func (h *UserHandler) RegisterSocialUser(provider user.SocialProvider, socialID string) (user.User, error) {
+	nickName := user.GenerateNanoIDNickname()
+	targetUser := user.User{
+		NickName:       nickName,
+		SocialID:       &socialID,
+		SocialProvider: provider,
+	}
+
+	err := h.userRepository.CreateUser(&targetUser)
+	if err != nil {
+		return user.User{}, err
+	}
+	return targetUser, nil
 }
 
 func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
@@ -301,18 +337,6 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) GetArtists() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		artist, err := h.userRepository.GetArtist()
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get artist"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"data": artist})
-	}
-}
-
 func (h *UserHandler) GetGenres() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		genres, err := h.userRepository.GetGenres()
@@ -322,28 +346,6 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"data": genres})
-	}
-}
-
-func (h *UserHandler) AddUserArtist() gin.HandlerFunc {
-	type req struct {
-		ArtistIDs []uint `json:"artist_ids" binding:"required"`
-	}
-	return func(c *gin.Context) {
-		userID, _ := c.Get("userID")
-
-		var request req
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "check request params"})
-			return
-		}
-
-		if err := h.userRepository.UpdateUserArtist(request.ArtistIDs, userID.(uint)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user artist on db"})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "User artists updated successfully"})
 	}
 }
 
@@ -360,26 +362,12 @@ func (h *UserHandler) AddUserGenre() gin.HandlerFunc {
 			return
 		}
 
-		if err := h.userRepository.UpdateUserArtist(request.GenreIDs, userID.(uint)); err != nil {
+		if err := h.userRepository.UpdateUserGenres(request.GenreIDs, userID.(uint)); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "fail to set user genre on db"})
 			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "User genre updated successfully"})
-	}
-}
-
-func (h *UserHandler) GetUserArtists() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		userID, _ := c.Get("userID")
-
-		artists, err := h.userRepository.GetUserArtists(userID.(uint))
-		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get Artist"})
-			return
-		}
-		c.JSON(http.StatusOK, gin.H{"data": artists})
-
 	}
 }
 
@@ -394,4 +382,15 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 		}
 		c.JSON(http.StatusOK, gin.H{"data": genres})
 	}
+}
+
+func (h *UserHandler) uploadProfileImage(fileHeader *multipart.FileHeader, userID uint) (string, error) {
+	key := fmt.Sprintf("profile")
+
+	uploadedKey, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, key, fileHeader)
+	if err != nil {
+		return "", fmt.Errorf("failed to upload profile image: %w", err)
+	}
+
+	return uploadedKey, nil
 }

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/artist"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
@@ -32,9 +33,9 @@ func InitMySQL(cfg config.DBConfig) (*gorm.DB, error) {
 func AutoMigrate(db *gorm.DB) {
 	err := db.AutoMigrate(
 		&user.User{},
-		&user.Artist{},
+		&artist.Artist{},
 		&user.Genre{},
-		&user.UserArtist{},
+		&artist.UserArtist{},
 		&user.UserGenre{},
 		&course.Course{},
 		&course.CourseDetail{},
