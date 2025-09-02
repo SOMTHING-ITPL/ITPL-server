@@ -38,9 +38,12 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: PerformanceListRes{
+				Performances: ToPerformanceShortList(performances),
+				Count:        len(performances),
+			},
 		})
 	}
 }
@@ -104,9 +107,12 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
 
-		c.JSON(http.StatusOK, FacilityListRes{
-			Facilities: ToFacilityShortList(facilities),
-			Count:      len(facilities),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: FacilityListRes{
+				Facilities: ToFacilityShortList(facilities),
+				Count:      len(facilities),
+			},
 		})
 	}
 }
@@ -127,9 +133,9 @@ func (p *PerformanceHandler) GetFacilityDetail() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"message":  "success",
-			"facility": ToFacilityDetail(facility),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    ToFacilityDetail(facility),
 		})
 	}
 }
@@ -158,9 +164,12 @@ func (p *PerformanceHandler) GetRecentViewPerformance() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: PerformanceListRes{
+				Performances: ToPerformanceShortList(performances),
+				Count:        len(performances),
+			},
 		})
 	}
 }
@@ -209,7 +218,7 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 			}
 		}
 
-		c.JSON(http.StatusOK, &CommonRes{
+		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
 			Data:    result,
 		})
@@ -239,7 +248,7 @@ func (p *PerformanceHandler) CreatePerformanceLike() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"message": "success",
+			"Message": "success",
 		})
 	}
 }
@@ -262,9 +271,12 @@ func (p *PerformanceHandler) GetPerformanceLike() gin.HandlerFunc {
 
 		}
 
-		c.JSON(http.StatusOK, PerformanceListRes{
-			Performances: ToPerformanceShortList(performances),
-			Count:        len(performances),
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: PerformanceListRes{
+				Performances: ToPerformanceShortList(performances),
+				Count:        len(performances),
+			},
 		})
 	}
 }
@@ -296,7 +308,7 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{
-			"message": "success",
+			"Message": "success",
 		})
 
 	}
@@ -341,7 +353,7 @@ func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "success"})
+		c.JSON(http.StatusOK, gin.H{"Message": "success"})
 		return
 	}
 }

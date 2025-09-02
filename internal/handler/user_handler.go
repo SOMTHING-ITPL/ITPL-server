@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"mime/multipart"
 	"net/http"
@@ -12,6 +13,7 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository) *UserHandler {
@@ -50,7 +52,7 @@ func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "verification code sent"})
+		c.JSON(http.StatusOK, gin.H{"Message": "verification code sent"})
 	}
 
 }
@@ -70,13 +72,15 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 
 		savedCode, err := h.smtpRepository.GetEmailCode(c, request.Email)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "code expired or not found"})
+			c.JSON(http.StatusNotFound, gin.H{"error": "code expired or not found"})
 			return
 		}
 
 		if savedCode != request.Code {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid code"})
-			return
+			c.JSON(http.StatusOK, CommonRes{
+				Message: "email is not Verified check Code ",
+				Data:    false,
+			})
 		}
 
 		if h.smtpRepository.SetVerifiedEmail(c, request.Email) != nil {
@@ -84,7 +88,10 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "email verified"})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "email is Verified",
+			Data:    true,
+		})
 	}
 }
 
@@ -107,8 +114,9 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"data": res{
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: res{
 				CreatedAt:      user.CreatedAt.String(),
 				UpdatedAt:      user.CreatedAt.String(),
 				NickName:       user.NickName,
@@ -221,13 +229,14 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
+func (h *UserHandler) LoginSocialUser() gin.HandlerFunc { //Access 이런 거 다 구조화 해야 하는 건가?
 	type req struct {
 		SocialProvider string `json:"social_provider" binding:"required" `
 		AccessToken    string `json:"access_token" binding:"required"`
 	}
 	type res struct {
 		Token string `json:"token"`
+		isNew bool   `json:is_new`
 	}
 	return func(c *gin.Context) {
 		var request req
@@ -250,27 +259,14 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 		}
 
 		targetUser, err := h.userRepository.GetBySocialIDAndProvider(result.ID, user.SocialProvider(request.SocialProvider))
-		if err != nil {
-			nickName := user.GenerateNanoIDNickname()
-			targetUser := user.User{
-				NickName:       nickName,
-				SocialID:       &result.ID,
-				SocialProvider: user.SocialProvider(request.SocialProvider),
-			}
-
-			err = h.userRepository.CreateUser(&targetUser)
+		if errors.Is(err, gorm.ErrRecordNotFound) { //Not found 일 경우,
+			targetUser, err = h.RegisterSocialUser(user.SocialProvider(request.SocialProvider), result.ID)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to create new user"})
 				return
 			}
-
-			jwt, err := auth.GenerateJWT(&targetUser)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate jwt"})
-				return
-			}
-
-			c.JSON(http.StatusCreated, res{Token: jwt})
+		} else if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 
@@ -280,8 +276,26 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, res{Token: jwt})
+		c.JSON(http.StatusCreated, CommonRes{
+			Message: "success",
+			Data:    res{Token: jwt},
+		})
 	}
+}
+
+func (h *UserHandler) RegisterSocialUser(provider user.SocialProvider, socialID string) (user.User, error) {
+	nickName := user.GenerateNanoIDNickname()
+	targetUser := user.User{
+		NickName:       nickName,
+		SocialID:       &socialID,
+		SocialProvider: provider,
+	}
+
+	err := h.userRepository.CreateUser(&targetUser)
+	if err != nil {
+		return user.User{}, err
+	}
+	return targetUser, nil
 }
 
 func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {

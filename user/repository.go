@@ -49,8 +49,7 @@ func (r *Repository) GetBySocialIDAndProvider(socialID string, provider SocialPr
 
 	result := r.db.Where("social_id = ? AND social_provider = ?", socialID, provider).First(&user)
 	if result.Error != nil {
-		fmt.Printf("get user error : %s\n", result.Error)
-		return User{}, result.Error
+		return User{}, result.Error //Error is check
 	}
 	return user, nil
 }
