@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
@@ -19,7 +20,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			return
 		}
 		placeId := uint(placeID)
-		text := c.PostForm("text")
+		text := c.PostForm("comment")
 		srating := c.PostForm("rating")
 		rating, err := strconv.ParseFloat(srating, 64)
 		if err != nil {
@@ -118,6 +119,7 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
+				CreatedAt:    r.CreatedAt.Format(time.RFC3339),
 				Images:       imgs,
 			})
 		}
@@ -160,6 +162,7 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
+				CreatedAt:    r.CreatedAt.Format(time.RFC3339),
 				Images:       imgs,
 			})
 		}
