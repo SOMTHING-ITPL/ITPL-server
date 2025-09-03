@@ -30,7 +30,7 @@ type User struct {
 	SocialID       *string        `gorm:"type:varchar(255);default:null;uniqueIndex:idx_provider_social" json:"social_id,omitempty"`
 	SocialProvider SocialProvider `gorm:"type:enum('google','kakao','local');default:'local';not null;uniqueIndex:idx_provider_social" json:"social_provider"`
 
-	Photo      *string    `gorm:"type:varchar(255);default:null" json:"photo,omitempty"`
+	Photo      *string    `gorm:"type:varchar(255);default:null" json:"photo,omitempty"` //key 저장
 	EncryptPwd *string    `gorm:"type:varchar(255);default:null" json:"encrypt_pwd,omitempty"`
 	Birthday   *time.Time `gorm:"type:date;default:null" json:"birthday,omitempty"`
 

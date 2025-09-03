@@ -64,14 +64,18 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 	if genre != 0 {
 		db = db.Where("genre = ?", genre)
 	}
-	//
+	//서울 .. 득
 	if region != "" {
-		db = db.Where("region = ?", region)
+		db = db.Where("region LIKE ?", "%"+region+"%")
 	}
-	if keyword != "" { //이거 키워드에서 찾게 해야 하나?
-		db = db.Where("title LIKE ?", "%"+keyword+"%")
+	if keyword != "" {
 		keyword = strings.TrimSpace(keyword)
+		likePattern := "%" + keyword + "%"
 
+		db = db.Where(
+			"title LIKE ? OR cast LIKE ? OR keyword LIKE ?",
+			likePattern, likePattern, likePattern,
+		)
 	}
 
 	offset := (page - 1) * limit
