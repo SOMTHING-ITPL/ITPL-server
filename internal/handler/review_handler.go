@@ -20,7 +20,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			return
 		}
 		placeId := uint(placeID)
-		text := c.PostForm("comment")
+		comment := c.PostForm("comment")
 		srating := c.PostForm("rating")
 		rating, err := strconv.ParseFloat(srating, 64)
 		if err != nil {
@@ -52,7 +52,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		if err := place.WriteReview(h.database, placeId, user, text, rating, imgUrl); err != nil {
+		if err := place.WriteReview(h.database, placeId, user, comment, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}
@@ -156,8 +156,14 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
 				imgs = append(imgs, ReviewImageResponse{URL: url})
 			}
+			placeName, err := place.GetPlaceName(h.database, r.PlaceId)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load place name"})
+			}
 			response = append(response, PlaceReviewResponse{
 				ID:           r.ID,
+				PlaceID:      r.PlaceId,
+				PlaceName:    placeName,
 				UserID:       r.UserId,
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,

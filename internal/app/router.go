@@ -26,7 +26,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
-	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo)
+	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo, bucketBasics)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo)
@@ -117,6 +117,7 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 	rg.GET("/my-courses", courseHandler.GetMyCourses())
 	rg.GET(":course_id/details", courseHandler.GetCourseDetails())
 	rg.PATCH("/:course_id/details", courseHandler.ModifyCourseHandler())
+	rg.PATCH("/:course_id/image", courseHandler.ModifyCourseImage())
 	rg.POST("/suggestion", courseHandler.CourseSuggestionHandler())
 }
 

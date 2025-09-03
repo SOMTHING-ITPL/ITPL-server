@@ -137,3 +137,13 @@ func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceWithReview, error) {
 
 	return placeWithReview, err
 }
+
+func GetPlaceName(db *gorm.DB, placeID uint) (string, error) {
+	var place Place
+	err := db.Model(&Place{}).Where("tour_api_place_id = ?", placeID).Scan(&place).Error
+	if err != nil {
+		return "", err
+	}
+
+	return place.Title, nil
+}

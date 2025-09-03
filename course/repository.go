@@ -106,3 +106,12 @@ func GetSpecificCouseDetail(db *gorm.DB, course Course, day, sequence int) Cours
 	}
 	return detail
 }
+
+func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
+	course, err := GetCourseByCourseId(db, courseId)
+	if err != nil {
+		defer log.Fatalf("course does not exist : %v", err)
+	}
+	course.ImageKey = key
+	db.Save(&course)
+}
