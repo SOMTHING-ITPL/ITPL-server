@@ -60,7 +60,7 @@ func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
 func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 	type req struct {
 		Email string `json:"email" binding:"required,email"`
-		Code  string `json:"code,binding:"required"`
+		Code  string `json:"code" binding:"required"`
 	}
 
 	return func(c *gin.Context) {
