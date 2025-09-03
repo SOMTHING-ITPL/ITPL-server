@@ -165,12 +165,9 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
 			return
 		}
-
-		//optional 1
 		nickName := c.PostForm("nickname")
 
-		//optional2
-		var birthdayTime *time.Time
+		var birthdayTime *time.Time //그냥 stirng 으로 저장하는게 정신건강에 좋을 것 같다는 생각이
 		birthdayStr := c.PostForm("birthday")
 		if birthdayStr != "" {
 			t, err := time.Parse("20060102", birthdayStr)
@@ -205,8 +202,8 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
 			return
 		}
-		var birthdayFormat *string
 
+		var birthdayFormat *string
 		if user.Birthday != nil {
 			formatted := user.Birthday.Format("20060102")
 			birthdayFormat = &formatted
