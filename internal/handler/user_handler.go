@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -16,8 +15,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository) *UserHandler {
-	return &UserHandler{userRepository: userRepository, smtpRepository: smtpRepository}
+func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository, awsBucket *aws.BucketBasics) *UserHandler {
+	return &UserHandler{userRepository: userRepository, smtpRepository: smtpRepository, BucketBasics: awsBucket}
 }
 
 func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
@@ -122,13 +121,14 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			birthday = &formatted
 		}
 
-		var url string
+		var photoURL *string
 		if user.Photo != nil {
-			url, err = aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
 				return
 			}
+			photoURL = &url
 		}
 
 		c.JSON(http.StatusOK, CommonRes{
@@ -140,7 +140,7 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 				Email:          *user.Email,
 				SocialProvider: string(user.SocialProvider),
 				Birthday:       birthday,
-				Photo:          &url,
+				Photo:          photoURL,
 			},
 		})
 	}
@@ -181,9 +181,11 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 		var imageURL *string
 		file, err := c.FormFile("profile")
 		if err == nil {
-			url, err := h.uploadProfileImage(file, userID)
+			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
 			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload profile image"})
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": fmt.Sprintf("failed to upload profile image: %v", err),
+				})
 				return
 			}
 
@@ -204,18 +206,19 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 		}
 
 		var birthdayFormat *string
-		if user.Birthday != nil {
-			formatted := user.Birthday.Format("20060102")
+		if updatedUser.Birthday != nil {
+			formatted := updatedUser.Birthday.Format("20060102")
 			birthdayFormat = &formatted
 		}
 
-		var url string
-		if user.Photo != nil {
-			url, err = aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
+		var photoURL *string
+		if updatedUser.Photo != nil {
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *updatedUser.Photo)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
 				return
 			}
+			photoURL = &url
 		}
 
 		c.JSON(http.StatusOK, CommonRes{
@@ -227,7 +230,7 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 				Email:          *updatedUser.Email,
 				SocialProvider: string(updatedUser.SocialProvider),
 				Birthday:       birthdayFormat,
-				Photo:          &url,
+				Photo:          photoURL,
 			},
 		})
 	}
@@ -309,7 +312,7 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc { //Access 이런 거 �
 	}
 	type res struct {
 		Token string `json:"token"`
-		IsNew bool   `json:is_new`
+		IsNew bool   `json:"is_new"`
 	}
 	return func(c *gin.Context) {
 		var request req
@@ -466,13 +469,13 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 	}
 }
 
-func (h *UserHandler) uploadProfileImage(fileHeader *multipart.FileHeader, userID uint) (string, error) {
-	key := fmt.Sprintf("profile")
+// func (h *UserHandler) uploadProfileImage(fileHeader *multipart.FileHeader, userID uint) (string, error) {
+// 	key := fmt.Sprintf("profile")
 
-	uploadedKey, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, key, fileHeader)
-	if err != nil {
-		return "", fmt.Errorf("failed to upload profile image: %w", err)
-	}
+// 	uploadedKey, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, key, fileHeader)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to upload profile image: %w", err)
+// 	}
 
-	return uploadedKey, nil
-}
+// 	return uploadedKey, nil
+// }

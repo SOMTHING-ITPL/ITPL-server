@@ -24,7 +24,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	calendarRepo := calendar.NewRepository(db)
 	artistRepo := artist.NewRepository(db)
 
-	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
+	userHandler := handler.NewUserHandler(userRepo, smtpRepo, bucketBasics)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)

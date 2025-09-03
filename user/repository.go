@@ -111,7 +111,7 @@ func (r *Repository) UpdateUser(userID uint, nickname *string, photo *string, bi
 	updates := map[string]interface{}{}
 
 	if nickname != nil {
-		updates["nickname"] = *nickname
+		updates["nick_name"] = *nickname
 	}
 	if photo != nil {
 		updates["photo"] = *photo
