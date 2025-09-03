@@ -3,6 +3,7 @@ package scheduler
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
@@ -84,7 +85,7 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 	if err != nil {
 		fmt.Println("last 변환 실패:", err)
 	}
-	if res.Cast == "" {
+	if strings.TrimSpace(res.Cast) == "" {
 		res.Cast = gptRes.Cast
 	}
 
@@ -199,7 +200,8 @@ func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDeta
 
 	//poster 나 예매처 변경된거에 대해서도 반영을 해줘야 하는부분 ..? 귀찮은데 ..
 	originalPerf.AgeRating = &updatePerf.Age
-	if updatePerf.Cast != "" {
+
+	if strings.TrimSpace(updatePerf.Cast) != "" {
 		originalPerf.Cast = &updatePerf.Cast
 	}
 	originalPerf.Crew = &updatePerf.Crew
