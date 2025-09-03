@@ -60,7 +60,7 @@ func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
 func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 	type req struct {
 		Email string `json:"email" binding:"required,email"`
-		Code  string `json:"code,omitempty"`
+		Code  string `json:"code,binding:"required"`
 	}
 
 	return func(c *gin.Context) {
@@ -81,6 +81,7 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 				Message: "email is not Verified check Code ",
 				Data:    false,
 			})
+			return
 		}
 
 		if h.smtpRepository.SetVerifiedEmail(c, request.Email) != nil {
