@@ -24,14 +24,14 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	calendarRepo := calendar.NewRepository(db)
 	artistRepo := artist.NewRepository(db)
 
-	userHandler := handler.NewUserHandler(userRepo, smtpRepo)
+	userHandler := handler.NewUserHandler(userRepo, smtpRepo, bucketBasics)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
 	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo)
 	//this router does not needs auth
-	public := r.Group("/")
+	public := r.Group("/api")
 	{
 		//for health check
 		registerHealthCheckRoutes(public)
@@ -77,8 +77,7 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/verify-email", userHandler.VerifyEmailCode())
 	rg.POST("/register-local", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
-
-	//user email 비밀번호 찾기 제공해줘야 함.
+	//user email 비밀번호 찾기 제공해줘야 함.d
 }
 
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
