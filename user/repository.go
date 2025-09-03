@@ -107,17 +107,26 @@ func (r *Repository) DeleteFavGenres(userID uint) error {
 	return result.Error
 }
 
-func (r *Repository) UpdateUser(userID uint, nickname string, photo *string, birthday *time.Time) error {
+func (r *Repository) UpdateUser(userID uint, nickname *string, photo *string, birthday *time.Time) (*User, error) {
+	updates := map[string]interface{}{}
 
-	updates := map[string]interface{}{
-		"nickname": nickname,
-		"photo":    photo,
-		"birthday": birthday,
+	if nickname != nil {
+		updates["nickname"] = *nickname
+	}
+	if photo != nil {
+		updates["photo"] = *photo
+	}
+	if birthday != nil {
+		updates["birthday"] = *birthday
 	}
 
-	if err := r.db.Model(&User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
-		return err
+	var updated User
+	if err := r.db.Model(&User{}).
+		Where("id = ?", userID).
+		Updates(updates).
+		First(&updated).Error; err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &updated, nil
 }

@@ -104,6 +104,7 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
 		Birthday       *string `json:"birthday"`
+		Photo          *string `json:"profile_url"`
 	}
 	return func(c *gin.Context) {
 
@@ -121,6 +122,15 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			birthday = &formatted
 		}
 
+		var url string
+		if user.Photo != nil {
+			url, err = aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
+				return
+			}
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
 			Data: res{
@@ -130,43 +140,99 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 				Email:          *user.Email,
 				SocialProvider: string(user.SocialProvider),
 				Birthday:       birthday,
+				Photo:          &url,
 			},
 		})
 	}
 }
 
 func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
+	type res struct {
+		CreatedAt      string  `json:"created_at"`
+		UpdatedAt      string  `json:"updated_at"`
+		Email          string  `json:"email"`
+		NickName       string  `json:"nick_name"`
+		SocialProvider string  `json:"social_provider"`
+		Birthday       *string `json:"birthday"`
+		Photo          *string `json:"profile_url"`
+	}
+
 	return func(c *gin.Context) {
 		userIDVal, _ := c.Get("userID")
 		userID := userIDVal.(uint)
+		user, err := h.userRepository.GetById(userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
+			return
+		}
 
+		//optional 1
 		nickName := c.PostForm("nickname")
+
+		//optional2
+		var birthdayTime *time.Time
 		birthdayStr := c.PostForm("birthday")
-
-		birthdayTime, err := time.Parse("20060102", birthdayStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "birthday must be in yyyymmdd format"})
-			return
+		if birthdayStr != "" {
+			t, err := time.Parse("20060102", birthdayStr)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "birthday must be in yyyymmdd format"})
+				return
+			}
+			birthdayTime = &t
 		}
 
+		var imageURL *string
 		file, err := c.FormFile("profile")
+		if err == nil {
+			url, err := h.uploadProfileImage(file, userID)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload profile image"})
+				return
+			}
+
+			if user.Photo != nil {
+				err = aws.DeleteImage(h.BucketBasics.S3Client, h.BucketBasics.BucketName, *user.Photo)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete old image"})
+					return
+				}
+			}
+			imageURL = &url
+		}
+
+		updatedUser, err := h.userRepository.UpdateUser(userID, &nickName, imageURL, birthdayTime)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "no profile file uploaded"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
 			return
 		}
+		var birthdayFormat *string
 
-		imageURL, err := h.uploadProfileImage(file, userID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload profile image"})
-			return
+		if user.Birthday != nil {
+			formatted := user.Birthday.Format("20060102")
+			birthdayFormat = &formatted
 		}
 
-		if err := h.userRepository.UpdateUser(userID, nickName, &imageURL, &birthdayTime); err != nil {
-			c.JSON(500, gin.H{"error": "failed to update user"})
-			return
+		var url string
+		if user.Photo != nil {
+			url, err = aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
+				return
+			}
 		}
 
-		c.JSON(200, gin.H{"message": "profile updated successfully"})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: res{
+				CreatedAt:      updatedUser.CreatedAt.Format(time.RFC3339),
+				UpdatedAt:      updatedUser.UpdatedAt.Format(time.RFC3339),
+				NickName:       updatedUser.NickName,
+				Email:          *updatedUser.Email,
+				SocialProvider: string(updatedUser.SocialProvider),
+				Birthday:       birthdayFormat,
+				Photo:          &url,
+			},
+		})
 	}
 }
 
