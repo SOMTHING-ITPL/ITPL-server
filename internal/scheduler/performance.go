@@ -236,7 +236,7 @@ func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRe
 		fmt.Printf("Scheduler: preprocess performance fail: %w", err) //log는 따로 남겨놔야 할 듯?
 		gptRes = &GPTResponse{                                        //일단 임의의 값을 채워넣는 형태
 			Keyword: res.Name,
-			Genre:   12,
+			Genre:   13,
 			Cast:    res.Cast,
 		}
 	}

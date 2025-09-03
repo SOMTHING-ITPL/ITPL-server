@@ -38,7 +38,7 @@ func main() {
 	//running
 	today := time.Now()
 
-	afterSixMonths := today.AddDate(0, 6, 0) //6으로 변경해야함.
+	afterSixMonths := today.AddDate(0, 1, 0) //6으로 변경해야함.
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
@@ -49,9 +49,9 @@ func main() {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 	//공연중
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, true, nil); err != nil {
-		fmt.Errorf("error is occur ! %s", err)
-	}
+	// if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, true, nil); err != nil {
+	// 	fmt.Errorf("error is occur ! %s", err)
+	// }
 
 	fmt.Println("Performance list updated successfully!")
 }
