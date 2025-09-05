@@ -50,11 +50,19 @@ func GetCourseDetails(db *gorm.DB, courseId uint) ([]CourseDetail, error) {
 }
 
 func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequence int) error {
+	place, err := place.GetPlaceById(db, placeId)
+	if err != nil {
+		defer log.Fatalf("place is not found")
+	}
 	courseDetail := CourseDetail{
-		CourseID: courseId,
-		PlaceID:  placeId,
-		Day:      day,
-		Sequence: sequence,
+		CourseID:   courseId,
+		PlaceID:    placeId,
+		Day:        day,
+		Sequence:   sequence,
+		PlaceTitle: place.Title,
+		Address:    place.Address,
+		Latitud:    place.Latitude,
+		Longitude:  place.Longitude,
 	}
 	if err := db.Create(&courseDetail).Error; err != nil {
 		return err
@@ -87,7 +95,7 @@ func GetLastCoordinate(db *gorm.DB, course Course) place.Coordinate {
 	if err != nil {
 		defer log.Fatalf("failed to get course detail")
 	}
-	last := details[len(details)-1]
+	last := details[len(details)]
 	lastPlace, err := place.GetPlaceById(db, last.ID)
 	if err != nil {
 		defer log.Fatalf("failed to get place")

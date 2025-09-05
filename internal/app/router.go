@@ -129,6 +129,7 @@ func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler
 	rg.POST("/review", placeHandler.WriteReviewHandler())
 	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())
 	rg.DELETE("/review/:review_id", placeHandler.DeleteReviewHandler())
+	rg.PATCH("review/:review_id", placeHandler.ModifyReviewHandler())
 }
 
 func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {

@@ -41,7 +41,7 @@ func upsertByCreatedTime(db *gorm.DB, places []Place) error {
 	return nil
 }
 
-func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) {
+func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB, radius int64) ([]Place, error) {
 	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
 	params := map[string]string{
 		"serviceKey":    os.Getenv("SERVICE_KEY"),
@@ -53,7 +53,7 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB) ([]Place, error) 
 		"arrange":       "E", // 거리순
 		"mapX":          strconv.FormatFloat(c.Longitude, 'f', -1, 64),
 		"mapY":          strconv.FormatFloat(c.Latitude, 'f', -1, 64),
-		"radius":        "3000",
+		"radius":        strconv.FormatInt(radius, 10),
 		"contentTypeId": strconv.FormatInt(category, 10),
 	}
 
@@ -140,7 +140,7 @@ func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceWithReview, error) {
 
 func GetPlaceName(db *gorm.DB, placeID uint) (string, error) {
 	var place Place
-	err := db.Model(&Place{}).Where("tour_api_place_id = ?", placeID).Scan(&place).Error
+	err := db.Model(&Place{}).Where("tourapi_place_id = ?", placeID).Scan(&place).Error
 	if err != nil {
 		return "", err
 	}

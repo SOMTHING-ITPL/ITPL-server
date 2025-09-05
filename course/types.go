@@ -16,8 +16,12 @@ type Course struct {
 
 type CourseDetail struct {
 	gorm.Model
-	CourseID uint `json:"course_id"`
-	Day      int  `json:"day"`
-	Sequence int  `json:"sequence"`
-	PlaceID  uint `json:"place_id"`
+	CourseID   uint    `json:"course_id"`
+	Day        int     `json:"day"`
+	Sequence   int     `json:"sequence"`
+	PlaceID    uint    `json:"place_id"`
+	PlaceTitle string  `json:"place_title"`
+	Address    string  `json:"address"`
+	Latitud    float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
 }
