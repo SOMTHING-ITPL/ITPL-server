@@ -111,19 +111,20 @@ func DeleteReviewImage(db *gorm.DB, bucketBasics *aws.BucketBasics, rev PlaceRev
 	return nil
 }
 
-func ModifyReview(db *gorm.DB, rev PlaceReview, placeId uint, user user.User, comment string, rating float64, imgs []ReviewImage) error {
-	var revImgs ReviewImage
-	err := db.Preload("Images").Where("review_id = ?", rev.ID).Find(&revImgs).Error
+func ModifyReview(db *gorm.DB, rev *PlaceReview, placeId uint, user user.User, comment string, rating float64, imgs []ReviewImage) error {
+	var revImgs []ReviewImage
+	err := db.Where("review_id = ?", rev.ID).Find(&revImgs).Error
 	if err != nil {
 		return err
 	}
 
-	db.First(&rev)
-	db.Save(&PlaceReview{
-		Rating:  rating,
-		Comment: &comment,
-		Images:  imgs,
-	})
+	rev.Rating = rating
+	rev.Comment = &comment
+	rev.Images = imgs
+
+	if err := db.Save(rev).Error; err != nil {
+		return err
+	}
 
 	return nil
 }
