@@ -29,6 +29,18 @@ func (r *Repository) GetFacilityById(id uint) (*Facility, error) {
 	return &facility, nil
 }
 
+func (r *Repository) GetFacilityByIdWithPerf(id uint) (*Facility, []Performance, error) {
+	var facility Facility
+
+	result := r.db.Preload("Performances").First(&facility, id)
+	if result.Error != nil {
+		fmt.Printf("get facility error %d : %s\n", id, result.Error)
+		return &Facility{}, nil, result.Error
+	}
+
+	return &facility, facility.Performances, nil
+}
+
 func (r *Repository) GetFacilityByKopisID(id string) (*Facility, error) {
 	var facility Facility
 

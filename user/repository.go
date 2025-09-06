@@ -66,21 +66,32 @@ func (r *Repository) GetGenres() ([]Genre, error) {
 }
 
 func (r *Repository) UpdateUserGenres(genresIDs []uint, userID uint) error {
+	if err := r.db.Where("user_id = ?", userID).Delete(&UserGenre{}).Error; err != nil {
+		return err
+	}
+
 	var userGenres []UserGenre
-	for _, artistID := range genresIDs {
+	for _, genreID := range genresIDs {
 		userGenres = append(userGenres, UserGenre{
 			UserID:  userID,
-			GenreID: artistID,
+			GenreID: genreID,
 		})
 	}
-	return r.db.Create(&userGenres).Error
+
+	if len(userGenres) > 0 {
+		if err := r.db.Create(&userGenres).Error; err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func (r *Repository) GetUserGenres(userID uint) ([]Genre, error) {
 	var genres []Genre
 
 	err := r.db.
-		Joins("JOIN user_genres ug ON ug.genre_id = genre.id").
+		Joins("JOIN user_genres ug ON ug.genre_id = genres.id").
 		Where("ug.user_id = ?", userID).
 		Find(&genres).Error
 
@@ -96,17 +107,26 @@ func (r *Repository) DeleteFavGenres(userID uint) error {
 	return result.Error
 }
 
-func (r *Repository) UpdateUser(userID uint, nickname string, photo *string, birthday *time.Time) error {
+func (r *Repository) UpdateUser(userID uint, nickname *string, photo *string, birthday *time.Time) (*User, error) {
+	updates := map[string]interface{}{}
 
-	updates := map[string]interface{}{
-		"nickname": nickname,
-		"photo":    photo,
-		"birthday": birthday,
+	if nickname != nil {
+		updates["nick_name"] = *nickname
+	}
+	if photo != nil {
+		updates["photo"] = *photo
+	}
+	if birthday != nil {
+		updates["birthday"] = *birthday
 	}
 
-	if err := r.db.Model(&User{}).Where("id = ?", userID).Updates(updates).Error; err != nil {
-		return err
+	var updated User
+	if err := r.db.Model(&User{}).
+		Where("id = ?", userID).
+		Updates(updates).
+		First(&updated).Error; err != nil {
+		return nil, err
 	}
 
-	return nil
+	return &updated, nil
 }

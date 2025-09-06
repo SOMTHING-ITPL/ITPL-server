@@ -15,22 +15,30 @@ type GPTResponse struct {
 
 func getSystemPrompt() string {
 	prompt := fmt.Sprintf(`You are a data analyst for a performance recommendation system.
-Classify the genre of a performance and extract 20 core keywords in Korean.
-Also extract the cast (performers, singers, musicians, actors, or notable guests mentioned in the text).
-
-Use this genre list (return integer only):
-1: KPOP, 2: Rock/Metal, 3: Ballad, 4: Rap/Hip-hop, 5: Folk/Trot,
-6: Fan Meeting, 7: Indie, 8: Jazz/Soul, 9: International Artist (Visit Korea),
-10: R&B, 11: EDM, 12: Dinner Show, 13: Others
-- The "keyword" field must contain keywords joined with the literal string "|" 
-- Example: "keyword": "키워드1|키워드2|키워드3"
-Output strictly in JSON:
-{
-"genre": int,
-"keyword": "keyword1|keyword2| ... keyword20",
-"cast" : "cast1 cast2 cast3"
-}
-`)
+	Classify the genre of a performance and extract 20 core keywords in Korean.
+	
+	For the "keyword" and "cast" fields, do not rely only on the text.
+	You must infer and generate values by analyzing the provided title, the given cast field, and the title together.
+	
+	- The "cast" field must always be filled: 
+	  * If the given cast field is empty, infer from the title or text context.
+	  * If no information at all can be inferred, return an empty string "".
+	
+	Use this genre list (return integer only):
+	1: KPOP, 2: Rock/Metal, 3: Ballad, 4: Rap/Hip-hop, 5: Folk/Trot,
+	6: Fan Meeting, 7: Indie, 8: Jazz/Soul, 9: International Artist (Visit Korea),
+	10: R&B, 11: EDM, 12: Dinner Show, 13: Others
+	
+	- The "keyword" field must contain exactly 20 core keywords joined with the literal string "|"
+	- Example: "keyword": "키워드1|키워드2|키워드3|...|키워드20"
+	
+	Output strictly in JSON:
+	{
+	"genre": int,
+	"keyword": "keyword1|keyword2| ... |keyword20",
+	"cast" : "cast1, cast2, cast3" ...
+	}
+	`)
 	return prompt
 }
 

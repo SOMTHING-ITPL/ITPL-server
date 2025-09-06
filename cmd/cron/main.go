@@ -25,7 +25,8 @@ func main() {
 
 	rdb, err := storage.InitRedis(*config.RedisCfg)
 	if err != nil {
-		panic("Failed to init redis: " + err.Error())
+		// not use redis in real code
+		// panic("Failed to init redis: " + err.Error())
 	}
 
 	repo := performance.NewRepository(db, rdb)
@@ -37,7 +38,7 @@ func main() {
 	//running
 	today := time.Now()
 
-	afterSixMonths := today.AddDate(0, 1, 0)
+	afterSixMonths := today.AddDate(0, 6, 0)
 
 	layout := "20060102"
 	todayStr := today.Format(layout)

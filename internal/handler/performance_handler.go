@@ -119,6 +119,10 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 
 // 공연 시설 상세 조회
 func (p *PerformanceHandler) GetFacilityDetail() gin.HandlerFunc {
+	type res struct {
+		Facility     FacilityDetail     `json:"facility"`
+		Performances []performanceShort `json:"related_performances"`
+	}
 	return func(c *gin.Context) {
 		idStr := c.Param("id")
 		id, err := strconv.ParseUint(idStr, 10, 64)
@@ -127,15 +131,17 @@ func (p *PerformanceHandler) GetFacilityDetail() gin.HandlerFunc {
 			return
 		}
 
-		//get facility
-		facility, err := p.performanceRepo.GetFacilityById(uint(id))
+		facility, performances, err := p.performanceRepo.GetFacilityByIdWithPerf(uint(id))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
 
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    ToFacilityDetail(facility),
+			Data: res{
+				Facility:     ToFacilityDetail(facility),
+				Performances: ToPerformanceShortList(performances),
+			},
 		})
 	}
 }

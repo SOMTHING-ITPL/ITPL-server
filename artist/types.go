@@ -12,7 +12,7 @@ type Artist struct {
 	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	Name      string    `gorm:"type:varchar(255);not null;unique" json:"name"`
 	ImageURL  *string   `gorm:"type:varchar(255);default:null" json:"image_url,omitempty"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
 
 	UserArtists []UserArtist `gorm:"foreignKey:ArtistID" json:"user_artists,omitempty"`
 }

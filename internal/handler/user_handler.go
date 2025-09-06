@@ -3,7 +3,6 @@ package handler
 import (
 	"errors"
 	"fmt"
-	"mime/multipart"
 	"net/http"
 	"time"
 
@@ -16,8 +15,8 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository) *UserHandler {
-	return &UserHandler{userRepository: userRepository, smtpRepository: smtpRepository}
+func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository, awsBucket *aws.BucketBasics) *UserHandler {
+	return &UserHandler{userRepository: userRepository, smtpRepository: smtpRepository, BucketBasics: awsBucket}
 }
 
 func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
@@ -60,7 +59,7 @@ func (h *UserHandler) SendEmailCode() gin.HandlerFunc {
 func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 	type req struct {
 		Email string `json:"email" binding:"required,email"`
-		Code  string `json:"code,omitempty"`
+		Code  string `json:"code" binding:"required"`
 	}
 
 	return func(c *gin.Context) {
@@ -81,6 +80,7 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 				Message: "email is not Verified check Code ",
 				Data:    false,
 			})
+			return
 		}
 
 		if h.smtpRepository.SetVerifiedEmail(c, request.Email) != nil {
@@ -97,12 +97,13 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 
 func (h *UserHandler) GetUser() gin.HandlerFunc {
 	type res struct {
-		CreatedAt      string `json:"created_at"`
-		UpdatedAt      string `json:"updated_at"`
-		Email          string `json:"email"`
-		NickName       string `json:"nick_name"`
-		SocialProvider string `json:"social_provider"`
-		Birthday       string `json:"birthday"`
+		CreatedAt      string  `json:"created_at"`
+		UpdatedAt      string  `json:"updated_at"`
+		Email          string  `json:"email"`
+		NickName       string  `json:"nick_name"`
+		SocialProvider string  `json:"social_provider"`
+		Birthday       *string `json:"birthday"`
+		Photo          *string `json:"profile_url"`
 	}
 	return func(c *gin.Context) {
 
@@ -113,53 +114,125 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Not found user! "})
 			return
 		}
+		var birthday *string
+
+		if user.Birthday != nil {
+			formatted := user.Birthday.Format("20060102")
+			birthday = &formatted
+		}
+
+		var photoURL *string
+		if user.Photo != nil {
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
+				return
+			}
+			photoURL = &url
+		}
 
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
 			Data: res{
-				CreatedAt:      user.CreatedAt.String(),
-				UpdatedAt:      user.CreatedAt.String(),
+				CreatedAt:      user.CreatedAt.Format(time.RFC3339),
+				UpdatedAt:      user.UpdatedAt.Format(time.RFC3339),
 				NickName:       user.NickName,
 				Email:          *user.Email,
 				SocialProvider: string(user.SocialProvider),
-				Birthday:       user.Birthday.Format("20060102"),
+				Birthday:       birthday,
+				Photo:          photoURL,
 			},
 		})
 	}
 }
 
 func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
+	type res struct {
+		CreatedAt      string  `json:"created_at"`
+		UpdatedAt      string  `json:"updated_at"`
+		Email          string  `json:"email"`
+		NickName       string  `json:"nick_name"`
+		SocialProvider string  `json:"social_provider"`
+		Birthday       *string `json:"birthday"`
+		Photo          *string `json:"profile_url"`
+	}
+
 	return func(c *gin.Context) {
 		userIDVal, _ := c.Get("userID")
 		userID := userIDVal.(uint)
-
+		user, err := h.userRepository.GetById(userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get user"})
+			return
+		}
 		nickName := c.PostForm("nickname")
+
+		var birthdayTime *time.Time //그냥 stirng 으로 저장하는게 정신건강에 좋을 것 같다는 생각이
 		birthdayStr := c.PostForm("birthday")
-
-		birthdayTime, err := time.Parse("20060102", birthdayStr)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "birthday must be in yyyymmdd format"})
-			return
+		if birthdayStr != "" {
+			t, err := time.Parse("20060102", birthdayStr)
+			if err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": "birthday must be in yyyymmdd format"})
+				return
+			}
+			birthdayTime = &t
 		}
 
+		var imageURL *string
 		file, err := c.FormFile("profile")
+		if err == nil {
+			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": fmt.Sprintf("failed to upload profile image: %v", err),
+				})
+				return
+			}
+
+			if user.Photo != nil {
+				err = aws.DeleteImage(h.BucketBasics.S3Client, h.BucketBasics.BucketName, *user.Photo)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete old image"})
+					return
+				}
+			}
+			imageURL = &url
+		}
+
+		updatedUser, err := h.userRepository.UpdateUser(userID, &nickName, imageURL, birthdayTime)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "no profile file uploaded"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to update user"})
 			return
 		}
 
-		imageURL, err := h.uploadProfileImage(file, userID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to upload profile image"})
-			return
+		var birthdayFormat *string
+		if updatedUser.Birthday != nil {
+			formatted := updatedUser.Birthday.Format("20060102")
+			birthdayFormat = &formatted
 		}
 
-		if err := h.userRepository.UpdateUser(userID, nickName, &imageURL, &birthdayTime); err != nil {
-			c.JSON(500, gin.H{"error": "failed to update user"})
-			return
+		var photoURL *string
+		if updatedUser.Photo != nil {
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *updatedUser.Photo)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
+				return
+			}
+			photoURL = &url
 		}
 
-		c.JSON(200, gin.H{"message": "profile updated successfully"})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data: res{
+				CreatedAt:      updatedUser.CreatedAt.Format(time.RFC3339),
+				UpdatedAt:      updatedUser.UpdatedAt.Format(time.RFC3339),
+				NickName:       updatedUser.NickName,
+				Email:          *updatedUser.Email,
+				SocialProvider: string(updatedUser.SocialProvider),
+				Birthday:       birthdayFormat,
+				Photo:          photoURL,
+			},
+		})
 	}
 }
 
@@ -225,7 +298,10 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusCreated, res{Token: jwt})
+		c.JSON(http.StatusCreated, CommonRes{
+			Message: "success",
+			Data:    res{Token: jwt},
+		})
 	}
 }
 
@@ -236,7 +312,7 @@ func (h *UserHandler) LoginSocialUser() gin.HandlerFunc { //Access 이런 거 �
 	}
 	type res struct {
 		Token string `json:"token"`
-		isNew bool   `json:is_new`
+		IsNew bool   `json:"is_new"`
 	}
 	return func(c *gin.Context) {
 		var request req
@@ -333,7 +409,10 @@ func (h *UserHandler) LoginLocalUser() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, res{Token: jwt})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    res{Token: jwt},
+		})
 	}
 }
 
@@ -345,7 +424,10 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"data": genres})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    genres,
+		})
 	}
 }
 
@@ -380,17 +462,20 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get genres"})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"data": genres})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    genres,
+		})
 	}
 }
 
-func (h *UserHandler) uploadProfileImage(fileHeader *multipart.FileHeader, userID uint) (string, error) {
-	key := fmt.Sprintf("profile")
+// func (h *UserHandler) uploadProfileImage(fileHeader *multipart.FileHeader, userID uint) (string, error) {
+// 	key := fmt.Sprintf("profile")
 
-	uploadedKey, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, key, fileHeader)
-	if err != nil {
-		return "", fmt.Errorf("failed to upload profile image: %w", err)
-	}
+// 	uploadedKey, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, key, fileHeader)
+// 	if err != nil {
+// 		return "", fmt.Errorf("failed to upload profile image: %w", err)
+// 	}
 
-	return uploadedKey, nil
-}
+// 	return uploadedKey, nil
+// }
