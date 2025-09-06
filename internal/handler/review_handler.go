@@ -20,7 +20,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			return
 		}
 		placeId := uint(placeID)
-		comment := c.PostForm("comment")
+		text := c.PostForm("text")
 		srating := c.PostForm("rating")
 		rating, err := strconv.ParseFloat(srating, 64)
 		if err != nil {
@@ -52,7 +52,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		if err := place.WriteReview(h.database, placeId, user, comment, rating, imgUrl); err != nil {
+		if err := place.WriteReview(h.database, placeId, user, text, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}
@@ -144,30 +144,20 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		// load my reviews
 		reviews, err := place.GetMyReviews(h.database, user.ID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get reviews: " + err.Error()})
 			return
 		}
-
 		var response []PlaceReviewResponse
 		for _, r := range reviews {
 			var imgs []ReviewImageResponse
-			//miltiple images
 			for _, img := range r.Images {
 				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
 				imgs = append(imgs, ReviewImageResponse{URL: url})
 			}
-			// place name field
-			placeName, err := place.GetPlaceName(h.database, r.PlaceId)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to load place name"})
-			}
 			response = append(response, PlaceReviewResponse{
 				ID:           r.ID,
-				PlaceID:      r.PlaceId,
-				PlaceName:    placeName,
 				UserID:       r.UserId,
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
@@ -224,16 +214,10 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-
-		if rev.UserId != userID {
-			c.JSON(http.StatusForbidden, gin.H{"error": "You can only modify your own reviews"})
-			return
-		}
-
-		if err := place.WriteReview(h.database, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
+		if err := place.ModifyReview(h.database, rev, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})
+			return
 		}
 		c.JSON(200, gin.H{"message": "Review modified successfully"})
 	}
-
 }
