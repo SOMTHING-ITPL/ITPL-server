@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -12,25 +14,23 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository) *CourseHandler {
+func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository, bucketBasics *aws.BucketBasics) *CourseHandler {
 	return &CourseHandler{
 		database:        db,
 		userRepository:  userRepo,
 		performanceRepo: pRepo,
+		BucketBasics:    bucketBasics,
 	}
 }
 
 func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
-	type req struct {
-		Title       string  `json:"title"`
-		Description *string `json:"description"`
-		FacilityID  uint    `json:"faciliry_id"`
-	}
 	return func(c *gin.Context) {
-		var request req
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-			return
+		title := c.PostForm("title")
+		description := c.PostForm("description")
+		sfacilityId := c.PostForm("facility_id")
+		facilityId, err := strconv.ParseUint(sfacilityId, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid facitity id"})
 		}
 
 		uid, ok := c.Get("userID")
@@ -44,7 +44,28 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		err = course.CreateCourse(h.database, user, request.Title, request.Description, request.FacilityID)
+
+		var imageKey *string
+		file, err := c.FormFile("image")
+		if err == nil {
+			// 업로드 처리
+			key, err := aws.UploadToS3(
+				h.BucketBasics.S3Client,
+				h.BucketBasics.BucketName,
+				fmt.Sprintf("course_image/%d/%d", userID, facilityId),
+				file,
+			)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imageKey = &key
+		} else if !errors.Is(err, http.ErrMissingFile) {
+			// 파일이 없는 경우는 무시, 그 외 에러만 처리
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image"})
+			return
+		}
+		err = course.CreateCourse(h.database, user, title, &description, imageKey, uint(facilityId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create course: " + err.Error()})
 			return
@@ -160,7 +181,7 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "course modified successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Course modified successfully"})
 	}
 }
 
@@ -192,31 +213,56 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		}
 		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
 
+		var createdCourse course.Course
 		switch req.Days {
 		case 1:
-			createdCourse := course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
-			res := response{
-				Course:        createdCourse,
-				CourseDetails: courseDetails,
-			}
-			c.JSON(http.StatusOK, CommonRes{
-				Message: "Course Created",
-				Data:    res,
-			})
+			createdCourse = course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			break
 		case 2:
-			createdCourse := course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
-			res := response{
-				Course:        createdCourse,
-				CourseDetails: courseDetails,
-			}
-			c.JSON(http.StatusOK, CommonRes{
-				Message: "Course Created",
-				Data:    res,
-			})
+			createdCourse = course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			break
+		case 3:
+			createdCourse = course.ThreeDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			break
 		default:
-			c.JSON(http.StatusOK, gin.H{"message": "default"})
+			c.JSON(http.StatusOK, gin.H{"message": "cannot generate course"})
+			return
 		}
+
+		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
+		res := response{
+			Course:        createdCourse,
+			CourseDetails: courseDetails,
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Course Created",
+			Data:    res,
+		})
+	}
+}
+
+func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// get course ID
+		courseID := c.PostForm("course_id")
+		icourseID, err := strconv.ParseUint(courseID, 10, 32)
+		ucourseID := uint(icourseID)
+
+		// Upload image to S3
+		file, err := c.FormFile("image") // images -> image (단수)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+			return
+		}
+		key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID), file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+			return
+		}
+
+		// Set image key
+		course.ModifyCourseImageKey(h.database, ucourseID, &key)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Image uploaded successfully"})
 	}
 }

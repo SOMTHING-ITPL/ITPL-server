@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
@@ -118,6 +119,7 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
+				CreatedAt:    r.CreatedAt.Format(time.RFC3339),
 				Images:       imgs,
 			})
 		}
@@ -160,11 +162,62 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
+				CreatedAt:    r.CreatedAt.Format(time.RFC3339),
 				Images:       imgs,
 			})
 		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "My Reviews",
 			Data:    response})
+	}
+}
+
+func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
+			return
+		}
+
+		comment := c.PostForm("comment")
+		srating := c.PostForm("rating")
+		rating, err := strconv.ParseFloat(srating, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating"})
+			return
+		}
+
+		rev, err := place.GetReviewByID(h.database, uint(revId))
+		place.DeleteReviewImage(h.database, h.BucketBasics, *rev)
+
+		var imgUrl []place.ReviewImage
+		// 이미지 파일 받기
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		for _, fileHeader := range files {
+			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d", rev.PlaceId), fileHeader)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+		user, err := h.userRepository.GetById(userID)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+			return
+		}
+		if err := place.ModifyReview(h.database, rev, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})
+			return
+		}
+		c.JSON(200, gin.H{"message": "Review modified successfully"})
 	}
 }
