@@ -20,7 +20,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			return
 		}
 		placeId := uint(placeID)
-		text := c.PostForm("text")
+		text := c.PostForm("comment")
 		srating := c.PostForm("rating")
 		rating, err := strconv.ParseFloat(srating, 64)
 		if err != nil {

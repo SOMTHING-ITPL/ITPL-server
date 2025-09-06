@@ -96,7 +96,10 @@ func GetLastCoordinate(db *gorm.DB, course Course) place.Coordinate {
 	if err != nil {
 		defer log.Fatalf("failed to get course detail")
 	}
+
 	last := details[len(details)]
+
+  
 	lastPlace, err := place.GetPlaceById(db, last.ID)
 	if err != nil {
 		defer log.Fatalf("failed to get place")
@@ -115,6 +118,7 @@ func GetSpecificCouseDetail(db *gorm.DB, course Course, day, sequence int) Cours
 	}
 	return detail
 }
+
 
 func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
 	course, err := GetCourseByCourseId(db, courseId)

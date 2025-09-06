@@ -219,11 +219,13 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			createdCourse = course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
 			break
 		case 2:
+
 			createdCourse = course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
 			break
 		case 3:
 			createdCourse = course.ThreeDayCourse(h.database, me, "추천 코스", &desc, *facility)
 			break
+
 		default:
 			c.JSON(http.StatusOK, gin.H{"message": "cannot generate course"})
 			return

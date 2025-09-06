@@ -93,6 +93,7 @@ func TwoDayCourse(db *gorm.DB, user user.User, title string, description *string
 	//문화시설
 	cultures, _ := place.LoadNearPlaces(coord, 14, db, 3000)
 	random = rand.Intn(len(cultures) - 1)
+  
 	AddPlaceToCourse(db, course.ID, cultures[random].TourapiPlaceId, 2, 3)
 	return course
 }
@@ -102,9 +103,11 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	course := TwoDayCourse(db, user, title, description, facility)
 	coord := GetLastCoordinate(db, course)
 
+
 	//2일차 저녁
 	dinners, _ := place.LoadNearPlaces(coord, 39, db, 3000)
 	random := rand.Intn(len(dinners) - 1)
+
 	AddPlaceToCourse(db, course.ID, dinners[random].TourapiPlaceId, 2, 4)
 
 	//2일차 숙소 - 1일차 숙소 그대로
@@ -119,6 +122,7 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 
 	//마지막으로 쇼핑
 	shoppings, _ := place.LoadNearPlaces(coord, 38, db, 3000)
+  
 	AddPlaceToCourse(db, course.ID, shoppings[random].TourapiPlaceId, 3, 2)
 	return course
 }
