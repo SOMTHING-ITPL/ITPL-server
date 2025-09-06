@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -23,16 +24,13 @@ func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance
 }
 
 func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
-	type req struct {
-		Title       string  `json:"title"`
-		Description *string `json:"description"`
-		FacilityID  uint    `json:"faciliry_id"`
-	}
 	return func(c *gin.Context) {
-		var request req
-		if err := c.ShouldBindJSON(&request); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
-			return
+		title := c.PostForm("title")
+		description := c.PostForm("description")
+		sfacilityId := c.PostForm("facility_id")
+		facilityId, err := strconv.ParseUint(sfacilityId, 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid facitity id"})
 		}
 
 		uid, ok := c.Get("userID")
@@ -46,7 +44,28 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
-		err = course.CreateCourse(h.database, user, request.Title, request.Description, request.FacilityID)
+
+		var imageKey *string
+		file, err := c.FormFile("image")
+		if err == nil {
+			// 업로드 처리
+			key, err := aws.UploadToS3(
+				h.BucketBasics.S3Client,
+				h.BucketBasics.BucketName,
+				fmt.Sprintf("course_image/%d/%d", userID, facilityId),
+				file,
+			)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imageKey = &key
+		} else if !errors.Is(err, http.ErrMissingFile) {
+			// 파일이 없는 경우는 무시, 그 외 에러만 처리
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image"})
+			return
+		}
+		err = course.CreateCourse(h.database, user, title, &description, imageKey, uint(facilityId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create course: " + err.Error()})
 			return
@@ -230,9 +249,12 @@ func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 		ucourseID := uint(icourseID)
 
 		// Upload image to S3
-		form, _ := c.MultipartForm()
-		files := form.File["images"]
-		key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID), files[0])
+		file, err := c.FormFile("image") // images -> image (단수)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+			return
+		}
+		key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID), file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 			return

@@ -8,13 +8,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateCourse(db *gorm.DB, user user.User, title string, description *string, facilityId uint) error {
+func CreateCourse(db *gorm.DB, user user.User, title string, description, imgKey *string, facilityId uint) error {
 	course := Course{
 		UserID:      user.ID,
 		Title:       title,
 		Description: description,
 		IsAICreated: false, // by default
 		FacilityID:  facilityId,
+		ImageKey:    imgKey,
 	}
 	if err := db.Create(&course).Error; err != nil {
 		return err
