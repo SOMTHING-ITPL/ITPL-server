@@ -102,5 +102,5 @@ type PlaceReviewResponse struct {
 
 type PlaceInfoResponse struct {
 	PlaceInfo place.PlaceWithReview
-	Reviews   []PlaceReviewResponse
+	Reviews   []PlaceReviewResponse `json:"reviews,omitempty"`
 }

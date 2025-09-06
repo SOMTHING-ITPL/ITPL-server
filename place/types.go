@@ -18,7 +18,7 @@ type Place struct {
 	Longitude      float64 `json:"longitude" gorm:"column:longitude"`
 	Latitude       float64 `json:"latitude" gorm:"column:latitude"`
 	PlaceImage     *string `json:"place_image,omitempty" gorm:"column:place_image"`
-	CreatedTime    string  `json:"createdtime" gorm:"column:created_time"`
+	CreatedTime    string  `json:"-" gorm:"column:created_time"`
 }
 
 type ReviewInfo struct {

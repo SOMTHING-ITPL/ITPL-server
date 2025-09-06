@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
@@ -110,6 +111,7 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 				Rating:       rev.Rating,
 				Comment:      rev.Comment,
 				Images:       imgResponses,
+				CreatedAt:    rev.CreatedAt.Format(time.RFC3339),
 			})
 		}
 
