@@ -90,12 +90,14 @@ type ReviewImageResponse struct {
 
 type PlaceReviewResponse struct {
 	ID           uint                  `json:"id"`
+	PlaceID      uint                  `json:"place_id,omitempty"`
+	PlaceName    string                `json:"place_name,omitempty"`
 	UserID       uint                  `json:"user_id"`
 	UserNickname string                `json:"user_nickname"`
 	Rating       float64               `json:"rating"`
-	Comment      *string               `json:"comment"`
+	Comment      *string               `json:"comment,omitempty"`
 	CreatedAt    string                `json:"created_at"`
-	Images       []ReviewImageResponse `json:"images"`
+	Images       []ReviewImageResponse `json:"images,omitempty"`
 }
 
 type PlaceInfoResponse struct {

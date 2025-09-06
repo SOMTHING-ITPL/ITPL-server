@@ -72,12 +72,12 @@ func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error 
 		}
 	}
 
-	// 3. Delete review image records
+	// Delete review image records
 	if err := db.Where("review_id = ?", revId).Delete(&ReviewImage{}).Error; err != nil {
 		return err
 	}
 
-	// 4. Delete review record
+	// Delete review record
 	if err := db.Where("id = ?", revId).Delete(&PlaceReview{}).Error; err != nil {
 		return err
 	}
@@ -92,4 +92,38 @@ func GetMyReviews(db *gorm.DB, userID uint) ([]PlaceReview, error) {
 		return nil, err
 	}
 	return reviews, nil
+}
+
+func DeleteReviewImage(db *gorm.DB, bucketBasics *aws.BucketBasics, rev PlaceReview) error {
+	var images []ReviewImage
+	if err := db.Where("review_id = ?", rev.ID).Find(&images).Error; err != nil {
+		return err
+	}
+
+	// Delete images from S3
+	for _, img := range images {
+		err := aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, img.Key)
+		if err != nil {
+			return err
+		}
+	}
+	db.Where("review_id = ?", rev.ID).Delete(&ReviewImage{})
+	return nil
+}
+
+func ModifyReview(db *gorm.DB, rev PlaceReview, placeId uint, user user.User, comment string, rating float64, imgs []ReviewImage) error {
+	var revImgs ReviewImage
+	err := db.Preload("Images").Where("review_id = ?", rev.ID).Find(&revImgs).Error
+	if err != nil {
+		return err
+	}
+
+	db.First(&rev)
+	db.Save(&PlaceReview{
+		Rating:  rating,
+		Comment: &comment,
+		Images:  imgs,
+	})
+
+	return nil
 }
