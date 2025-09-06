@@ -26,7 +26,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo, bucketBasics)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
-	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo)
+	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo, bucketBasics)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo)
@@ -115,6 +115,7 @@ func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHand
 	rg.GET("/my-courses", courseHandler.GetMyCourses())
 	rg.GET(":course_id/details", courseHandler.GetCourseDetails())
 	rg.PATCH("/:course_id/details", courseHandler.ModifyCourseHandler())
+	rg.PATCH("/:course_id/image", courseHandler.ModifyCourseImage())
 	rg.POST("/suggestion", courseHandler.CourseSuggestionHandler())
 }
 
@@ -126,6 +127,7 @@ func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler
 	rg.POST("/review", placeHandler.WriteReviewHandler())
 	rg.GET("/my-reviews", placeHandler.GetMyReviewsHandler())
 	rg.DELETE("/review/:review_id", placeHandler.DeleteReviewHandler())
+	rg.PATCH("review/:review_id", placeHandler.ModifyReviewHandler())
 }
 
 func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {

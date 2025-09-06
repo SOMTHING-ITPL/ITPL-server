@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -12,11 +13,12 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository) *CourseHandler {
+func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository, bucketBasics *aws.BucketBasics) *CourseHandler {
 	return &CourseHandler{
 		database:        db,
 		userRepository:  userRepo,
 		performanceRepo: pRepo,
+		BucketBasics:    bucketBasics,
 	}
 }
 
@@ -160,7 +162,7 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "course modified successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Course modified successfully"})
 	}
 }
 
@@ -192,31 +194,53 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		}
 		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
 
+		var createdCourse course.Course
 		switch req.Days {
 		case 1:
-			createdCourse := course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
-			res := response{
-				Course:        createdCourse,
-				CourseDetails: courseDetails,
-			}
-			c.JSON(http.StatusOK, CommonRes{
-				Message: "Course Created",
-				Data:    res,
-			})
+			createdCourse = course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			break
 		case 2:
-			createdCourse := course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
-			res := response{
-				Course:        createdCourse,
-				CourseDetails: courseDetails,
-			}
-			c.JSON(http.StatusOK, CommonRes{
-				Message: "Course Created",
-				Data:    res,
-			})
+			createdCourse = course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			break
+		case 3:
+			createdCourse = course.ThreeDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			break
 		default:
-			c.JSON(http.StatusOK, gin.H{"message": "default"})
+			c.JSON(http.StatusOK, gin.H{"message": "cannot generate course"})
+			return
 		}
+
+		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
+		res := response{
+			Course:        createdCourse,
+			CourseDetails: courseDetails,
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Course Created",
+			Data:    res,
+		})
+	}
+}
+
+func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// get course ID
+		courseID := c.PostForm("course_id")
+		icourseID, err := strconv.ParseUint(courseID, 10, 32)
+		ucourseID := uint(icourseID)
+
+		// Upload image to S3
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID), files[0])
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+			return
+		}
+
+		// Set image key
+		course.ModifyCourseImageKey(h.database, ucourseID, &key)
+
+		c.JSON(http.StatusOK, gin.H{"message": "Image uploaded successfully"})
 	}
 }

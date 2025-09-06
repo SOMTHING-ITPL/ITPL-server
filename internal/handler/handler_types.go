@@ -30,6 +30,7 @@ type CourseHandler struct {
 	database        *gorm.DB
 	userRepository  *user.Repository
 	performanceRepo *performance.Repository
+	BucketBasics    *aws.BucketBasics
 }
 
 type ChatRoomHandler struct {
