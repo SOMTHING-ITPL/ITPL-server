@@ -95,9 +95,9 @@ type PlaceReviewResponse struct {
 	UserID       uint                  `json:"user_id"`
 	UserNickname string                `json:"user_nickname"`
 	Rating       float64               `json:"rating"`
-	Comment      *string               `json:"comment"`
+	Comment      *string               `json:"comment,omitempty"`
 	CreatedAt    string                `json:"created_at"`
-	Images       []ReviewImageResponse `json:"images"`
+	Images       []ReviewImageResponse `json:"images,omitempty"`
 }
 
 type PlaceInfoResponse struct {

@@ -72,12 +72,12 @@ func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error 
 		}
 	}
 
-	// 3. Delete review image records
+	// Delete review image records
 	if err := db.Where("review_id = ?", revId).Delete(&ReviewImage{}).Error; err != nil {
 		return err
 	}
 
-	// 4. Delete review record
+	// Delete review record
 	if err := db.Where("id = ?", revId).Delete(&PlaceReview{}).Error; err != nil {
 		return err
 	}

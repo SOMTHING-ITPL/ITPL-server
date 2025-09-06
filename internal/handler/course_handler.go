@@ -162,7 +162,7 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "course modified successfully"})
+		c.JSON(http.StatusOK, gin.H{"message": "Course modified successfully"})
 	}
 }
 

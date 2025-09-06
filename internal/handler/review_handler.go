@@ -224,6 +224,12 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
+
+		if rev.UserId != userID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You can only modify your own reviews"})
+			return
+		}
+
 		if err := place.WriteReview(h.database, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})
 		}

@@ -14,10 +14,10 @@ type Place struct {
 	Category       int64   `json:"category" gorm:"column:category"`
 	Title          string  `json:"title" gorm:"column:title"`
 	Address        string  `json:"address" gorm:"column:address"`
-	Tel            *string `json:"tel" gorm:"column:tel"`
+	Tel            *string `json:"tel,omitempty" gorm:"column:tel"`
 	Longitude      float64 `json:"longitude" gorm:"column:longitude"`
 	Latitude       float64 `json:"latitude" gorm:"column:latitude"`
-	PlaceImage     *string `json:"place_image" gorm:"column:place_image"`
+	PlaceImage     *string `json:"place_image,omitempty" gorm:"column:place_image"`
 	CreatedTime    string  `json:"createdtime" gorm:"column:created_time"`
 }
 
@@ -44,7 +44,7 @@ type PlaceReview struct {
 	UserId       uint          `json:"user_id" gorm:"column:user_id"`
 	UserNickName string        `json:"user_nickname" gorm:"column:user_nickname"`
 	Rating       float64       `json:"rating" gorm:"column:rating"`
-	Comment      *string       `json:"comment" gorm:"column:comment"`
+	Comment      *string       `json:"comment,omitempty" gorm:"column:comment"`
 	Images       []ReviewImage `json:"images" gorm:"foreignKey:ReviewID;references:ID"`
 }
 
