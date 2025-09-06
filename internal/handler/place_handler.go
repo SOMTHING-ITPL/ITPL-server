@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
@@ -45,7 +46,7 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			Longitude: lon,
 		}
 
-		places, err := place.LoadNearPlaces(coord, category, h.database)
+		places, err := place.LoadNearPlaces(coord, category, h.database, 3000)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -110,6 +111,7 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 				Rating:       rev.Rating,
 				Comment:      rev.Comment,
 				Images:       imgResponses,
+				CreatedAt:    rev.CreatedAt.Format(time.RFC3339),
 			})
 		}
 
