@@ -181,20 +181,20 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 		var imageURL *string
 		file, err := c.FormFile("profile")
 		if err == nil {
-			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": fmt.Sprintf("failed to upload profile image: %v", err),
-				})
-				return
-			}
-
 			if user.Photo != nil {
 				err = aws.DeleteImage(h.BucketBasics.S3Client, h.BucketBasics.BucketName, *user.Photo)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete old image"})
 					return
 				}
+			}
+
+			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": fmt.Sprintf("failed to upload profile image: %v", err),
+				})
+				return
 			}
 			imageURL = &url
 		}
