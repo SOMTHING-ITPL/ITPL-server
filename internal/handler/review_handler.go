@@ -56,7 +56,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}
-		c.JSON(200, gin.H{"message": "Review added successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
 
@@ -90,7 +90,7 @@ func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Review deleted successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
 
@@ -218,6 +218,6 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})
 			return
 		}
-		c.JSON(200, gin.H{"message": "Review modified successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
