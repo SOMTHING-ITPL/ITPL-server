@@ -73,14 +73,15 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 		likePattern := "%" + keyword + "%"
 
 		db = db.Where(
-			"title LIKE ? OR cast LIKE ? OR keyword LIKE ?",
+			"title LIKE ? OR `cast` LIKE ? OR `keyword` LIKE ?",
 			likePattern, likePattern, likePattern,
 		)
 	}
 
+	db = db.Where("status IN (?)", []string{"공연중", "공연예정"})
+
 	offset := (page - 1) * limit
 	if err := db.
-		Where("status IN (?)", []string{"공연중", "공연예정"}).
 		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
