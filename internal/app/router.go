@@ -115,12 +115,16 @@ func registerUserPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *hand
 // for about course
 func registerCourseRoutes(rg *gin.RouterGroup, courseHandler *handler.CourseHandler) {
 	rg.POST("/create", courseHandler.CreateCourseHandler())
-	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
+
 	rg.GET("/my-courses", courseHandler.GetMyCourses())
 	rg.GET(":course_id/details", courseHandler.GetCourseDetails())
+
+	rg.POST("/:course_id/place", courseHandler.AddPlaceToCourseHandler())
 	rg.PATCH("/:course_id/details", courseHandler.ModifyCourseHandler())
 	rg.PATCH("/:course_id/image", courseHandler.ModifyCourseImage())
 	rg.POST("/suggestion", courseHandler.CourseSuggestionHandler())
+
+	rg.DELETE("/:course_id", courseHandler.DeleteCourseHandler())
 }
 
 // for about place

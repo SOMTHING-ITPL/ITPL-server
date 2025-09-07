@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
@@ -31,6 +32,7 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 		facilityId, err := strconv.ParseUint(sfacilityId, 10, 32)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid facitity id"})
+			return
 		}
 
 		uid, ok := c.Get("userID")
@@ -71,11 +73,7 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			return
 		}
 
-		res := CommonRes{
-			Message: "Course created successfully",
-		}
-
-		c.JSON(http.StatusOK, res)
+		c.Status(http.StatusCreated)
 	}
 }
 
@@ -102,14 +100,14 @@ func (h *CourseHandler) AddPlaceToCourseHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to add place to course: " + err.Error()})
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"message": "Place added to course successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
 
 func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 	type response struct {
-		Course  course.Course
-		Details []course.CourseDetail
+		Course  CourseInfoResponse
+		Details []CourseDetailResponse
 	}
 
 	return func(c *gin.Context) {
@@ -120,14 +118,47 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 		}
 
 		co, err := course.GetCourseByCourseId(h.database, uint(courseId))
-		details, err := course.GetCourseDetails(h.database, uint(courseId))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: " + err.Error()})
+			c.JSON(http.StatusNotFound, gin.H{"error": "course does not exist"})
 			return
 		}
+
+		courseInfo := CourseInfoResponse{
+			ID:          co.ID,
+			CreatedAt:   co.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   co.UpdatedAt.Format(time.RFC3339),
+			UserID:      co.UserID,
+			Title:       co.Title,
+			Description: co.Description,
+			IsAICreated: co.IsAICreated,
+			FacilityID:  co.FacilityID,
+			ImageKey:    co.ImageKey,
+		}
+		details, err := course.GetCourseDetails(h.database, uint(courseId))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: "})
+			return
+		}
+		var courseDetailInfos []CourseDetailResponse
+		for _, detail := range details {
+			courseDetailInfos = append(courseDetailInfos, CourseDetailResponse{
+				ID:         detail.ID,
+				CreatedAt:  detail.CreatedAt.Format(time.RFC3339),
+				UpdatedAt:  detail.UpdatedAt.Format(time.RFC3339),
+				CourseID:   detail.CourseID,
+				Day:        detail.Day,
+				Sequence:   detail.Sequence,
+				PlaceID:    detail.PlaceID,
+				PlaceTitle: detail.PlaceTitle,
+				Address:    detail.Address,
+				Latitud:    detail.Latitud,
+				Longitude:  detail.Longitude,
+			})
+		}
+
 		res := response{
-			Course:  *co,
-			Details: details,
+			Course:  courseInfo,
+			Details: courseDetailInfos,
 		}
 
 		c.JSON(http.StatusOK, CommonRes{
@@ -148,13 +179,27 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 
 		courses, err := course.GetCoursesByUserId(h.database, userID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: " + err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: "})
 			return
+		}
+		var courseInfos []CourseInfoResponse
+		for _, course := range courses {
+			courseInfos = append(courseInfos, CourseInfoResponse{
+				ID:          course.ID,
+				CreatedAt:   course.CreatedAt.Format(time.RFC3339),
+				UpdatedAt:   course.UpdatedAt.Format(time.RFC3339),
+				UserID:      userID,
+				Title:       course.Title,
+				Description: course.Description,
+				IsAICreated: course.IsAICreated,
+				FacilityID:  course.FacilityID,
+				ImageKey:    course.ImageKey,
+			})
 		}
 
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "My Courses",
-			Data:    courses,
+			Data:    courseInfos,
 		})
 	}
 }
@@ -181,7 +226,7 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Course modified successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
 
@@ -265,6 +310,22 @@ func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 		// Set image key
 		course.ModifyCourseImageKey(h.database, ucourseID, &key)
 
-		c.JSON(http.StatusOK, gin.H{"message": "Image uploaded successfully"})
+		c.Status(http.StatusNoContent)
+	}
+}
+
+func (h *CourseHandler) DeleteCourseHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+			return
+		}
+		err = course.DeleteCourse(h.database, uint(courseId))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete course"})
+			return
+		}
+		c.Status(http.StatusNoContent)
 	}
 }
