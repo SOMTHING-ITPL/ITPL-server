@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
@@ -8,9 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewArtistHandler(artistRepo *artist.Repository) *ArtistHandler {
+func NewArtistHandler(artistRepo *artist.Repository, bucket *aws.BucketBasics) *ArtistHandler {
 	return &ArtistHandler{
-		artistRepo: artistRepo,
+		artistRepo:   artistRepo,
+		BucketBasics: bucket,
 	}
 }
 
@@ -83,6 +85,40 @@ func (h *ArtistHandler) GetUserArtists() gin.HandlerFunc {
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
 			Data:    artistIDs,
+		})
+
+	}
+}
+
+func (h *ArtistHandler) PutArtist() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.PostForm("name")
+
+		file, err := c.FormFile("image")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get file "})
+			return
+		}
+		url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("artist/%s", name), file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("failed to upload profile image: %v", err),
+			})
+			return
+		}
+
+		artist := &artist.Artist{
+			Name:     name,
+			ImageKey: url,
+		}
+
+		if err = h.artistRepo.PutArtist(artist); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save artist "})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
 		})
 
 	}

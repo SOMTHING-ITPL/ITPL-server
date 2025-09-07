@@ -497,3 +497,36 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 
 // 	return uploadedKey, nil
 // }
+
+func (h *UserHandler) PutGenre() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.PostForm("name")
+
+		file, err := c.FormFile("image")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get file "})
+			return
+		}
+		url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("genre/%s", name), file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("failed to upload image: %v", err),
+			})
+			return
+		}
+
+		genre := &user.Genre{
+			Name:     name,
+			ImageKey: url,
+		}
+
+		if err = h.userRepository.PutGenre(genre); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save genre "})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+		})
+	}
+}
