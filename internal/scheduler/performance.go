@@ -78,6 +78,7 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 	if err != nil {
 		fmt.Println("to 변환 실패:", err)
 	}
+	fmt.Println("layout:", layout)
 
 	layout = "2006-01-02 15:04:05"
 
@@ -185,6 +186,7 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string, region string) (uint
 	return facilityId, nil
 }
 
+// updatedAT 데이터 넣어줘야 함.
 func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDetailRes, originalPerf *performance.Performance, facilityID uint) (uint, error) {
 	var layout = "2006-01-02 15:04:05"
 

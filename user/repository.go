@@ -107,6 +107,17 @@ func (r *Repository) DeleteFavGenres(userID uint) error {
 	return result.Error
 }
 
+func (r *Repository) PutGenre(genre *Genre) error {
+
+	result := r.db.Create(genre)
+
+	if result.Error != nil {
+		fmt.Printf("create genre error : %s\n", result.Error)
+		return result.Error
+	}
+	return nil
+}
+
 func (r *Repository) UpdateUser(userID uint, nickname *string, photo *string, birthday *time.Time) (*User, error) {
 	updates := map[string]interface{}{}
 

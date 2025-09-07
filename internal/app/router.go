@@ -29,7 +29,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	courseHandler := handler.NewCourseHandler(db, userRepo, performanceRepo, bucketBasics)
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
-	artistHandler := handler.NewArtistHandler(artistRepo)
+	artistHandler := handler.NewArtistHandler(artistRepo, bucketBasics)
 	//this router does not needs auth
 	public := r.Group("/api")
 	{
@@ -38,6 +38,10 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 
 		authGroup := public.Group("/auth")
 		registerAuthRoutes(authGroup, userHandler)
+
+		putData := public.Group("/testdata/sample")
+		putData.POST("/artist", artistHandler.PutArtist())
+		putData.POST("genre", userHandler.PutGenre())
 	}
 
 	protected := r.Group("/api")

@@ -9,10 +9,9 @@ import (
 
 // artist 데이터 담는 부분 있어야 함.
 type Artist struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string    `gorm:"type:varchar(255);not null;unique" json:"name"`
-	ImageURL  *string   `gorm:"type:varchar(255);default:null" json:"image_url,omitempty"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"-"`
+	gorm.Model
+	Name     string `gorm:"type:varchar(255);not null;unique" json:"name"`
+	ImageKey string `gorm:"type:varchar(255)" json:"image_key,omitempty"`
 
 	UserArtists []UserArtist `gorm:"foreignKey:ArtistID" json:"user_artists,omitempty"`
 }

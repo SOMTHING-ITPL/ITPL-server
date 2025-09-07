@@ -1,6 +1,10 @@
 package artist
 
-import "gorm.io/gorm"
+import (
+	"fmt"
+
+	"gorm.io/gorm"
+)
 
 func NewRepository(db *gorm.DB) *Repository {
 	return &Repository{
@@ -17,6 +21,17 @@ func (r *Repository) GetArtist() ([]Artist, error) {
 		return nil, result.Error
 	}
 	return artists, nil
+}
+
+func (r *Repository) PutArtist(artist *Artist) error {
+
+	result := r.db.Create(artist)
+
+	if result.Error != nil {
+		fmt.Printf("create artist error : %s\n", result.Error)
+		return result.Error
+	}
+	return nil
 }
 
 func (r *Repository) UpdateUserArtist(artistIDs []uint, userID uint) error {

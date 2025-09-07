@@ -45,5 +45,6 @@ type CalendarHandler struct {
 }
 
 type ArtistHandler struct {
-	artistRepo *artist.Repository
+	artistRepo   *artist.Repository
+	BucketBasics *aws.BucketBasics
 }

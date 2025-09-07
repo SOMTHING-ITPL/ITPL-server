@@ -99,11 +99,11 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 	type res struct {
 		CreatedAt      string  `json:"created_at"`
 		UpdatedAt      string  `json:"updated_at"`
-		Email          string  `json:"email"`
+		Email          string  `json:"email ,omitempty"`
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
-		Birthday       *string `json:"birthday"`
-		Photo          *string `json:"profile_url"`
+		Birthday       *string `json:"birthday ,omitempty"`
+		Photo          *string `json:"profile_url ,omitempty"`
 	}
 	return func(c *gin.Context) {
 
@@ -148,13 +148,13 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 
 func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 	type res struct {
-		CreatedAt      string  `json:"created_at"`
+		CreatedAt      string  `json:"created_at "`
 		UpdatedAt      string  `json:"updated_at"`
-		Email          string  `json:"email"`
+		Email          string  `json:"email ,omitempty"`
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
-		Birthday       *string `json:"birthday"`
-		Photo          *string `json:"profile_url"`
+		Birthday       *string `json:"birthday ,omitempty"`
+		Photo          *string `json:"profile_url ,omitempty"`
 	}
 
 	return func(c *gin.Context) {
@@ -181,20 +181,20 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 		var imageURL *string
 		file, err := c.FormFile("profile")
 		if err == nil {
-			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"error": fmt.Sprintf("failed to upload profile image: %v", err),
-				})
-				return
-			}
-
 			if user.Photo != nil {
 				err = aws.DeleteImage(h.BucketBasics.S3Client, h.BucketBasics.BucketName, *user.Photo)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete old image"})
 					return
 				}
+			}
+
+			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": fmt.Sprintf("failed to upload profile image: %v", err),
+				})
+				return
 			}
 			imageURL = &url
 		}
@@ -424,9 +424,22 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 			return
 		}
 
+		res := make([]PreferSearchResponse, 0, len(genres))
+		for _, g := range genres {
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, g.ImageKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Image URL From AWS"})
+				return
+			}
+			res = append(res, PreferSearchResponse{
+				Name:     g.Name,
+				ImageUrl: url,
+			})
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    genres,
+			Data:    res,
 		})
 	}
 }
@@ -462,9 +475,14 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get genres"})
 			return
 		}
+		genreIDs := make([]uint, 0, len(genres))
+		for _, g := range genres {
+			genreIDs = append(genreIDs, g.ID)
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    genres,
+			Data:    genreIDs,
 		})
 	}
 }
@@ -479,3 +497,36 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 
 // 	return uploadedKey, nil
 // }
+
+func (h *UserHandler) PutGenre() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.PostForm("name")
+
+		file, err := c.FormFile("image")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get file "})
+			return
+		}
+		url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("genre/%s", name), file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("failed to upload image: %v", err),
+			})
+			return
+		}
+
+		genre := &user.Genre{
+			Name:     name,
+			ImageKey: url,
+		}
+
+		if err = h.userRepository.PutGenre(genre); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save genre "})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+		})
+	}
+}
