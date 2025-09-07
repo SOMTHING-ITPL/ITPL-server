@@ -432,6 +432,7 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 				return
 			}
 			res = append(res, PreferSearchResponse{
+				ID:       g.ID,
 				Name:     g.Name,
 				ImageUrl: url,
 			})

@@ -32,6 +32,7 @@ func (h *ArtistHandler) GetArtists() gin.HandlerFunc {
 				return
 			}
 			res = append(res, PreferSearchResponse{
+				ID:       a.ID,
 				Name:     a.Name,
 				ImageUrl: url,
 			})

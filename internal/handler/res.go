@@ -131,6 +131,7 @@ type CourseDetailResponse struct {
 	Longitude  float64 `json:"longitude"`
 }
 type PreferSearchResponse struct {
+	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	ImageUrl string `json:"image_url"`
 }
