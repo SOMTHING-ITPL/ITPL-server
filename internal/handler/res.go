@@ -129,6 +129,7 @@ type CourseDetailResponse struct {
 	Address    string  `json:"address"`
 	Latitud    float64 `json:"latitude"`
 	Longitude  float64 `json:"longitude"`
+}
 type PreferSearchResponse struct {
 	Name     string `json:"name"`
 	ImageUrl string `json:"image_url"`
