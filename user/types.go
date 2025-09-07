@@ -40,8 +40,8 @@ type User struct {
 
 type Genre struct {
 	gorm.Model
-	Name     string  `gorm:"type:varchar(100);not null;unique" json:"name"`
-	ImageKey *string `gorm:"type:varchar(255);default:null" json:"image_key,omitempty"`
+	Name     string `gorm:"type:varchar(100);not null;unique" json:"name"`
+	ImageKey string `gorm:"type:varchar(255)" json:"image_key,omitempty"`
 
 	UserGenres []UserGenre `gorm:"foreignKey:GenreID" json:"user_genres,omitempty"`
 }

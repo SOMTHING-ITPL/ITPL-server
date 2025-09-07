@@ -424,9 +424,22 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 			return
 		}
 
+		res := make([]PreferSearchResponse, 0, len(genres))
+		for _, g := range genres {
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, g.ImageKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Image URL From AWS"})
+				return
+			}
+			res = append(res, PreferSearchResponse{
+				Name:     g.Name,
+				ImageUrl: url,
+			})
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    genres,
+			Data:    res,
 		})
 	}
 }
@@ -462,9 +475,14 @@ func (h *UserHandler) GetUserGenres() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get genres"})
 			return
 		}
+		genreIDs := make([]uint, 0, len(genres))
+		for _, g := range genres {
+			genreIDs = append(genreIDs, g.ID)
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    genres,
+			Data:    genreIDs,
 		})
 	}
 }

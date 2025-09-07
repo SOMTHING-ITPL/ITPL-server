@@ -104,3 +104,8 @@ type PlaceInfoResponse struct {
 	PlaceInfo place.PlaceWithReview
 	Reviews   []PlaceReviewResponse `json:"reviews,omitempty"`
 }
+
+type PreferSearchResponse struct {
+	Name     string `json:"name"`
+	ImageUrl string `json:"image_url"`
+}

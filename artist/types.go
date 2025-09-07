@@ -11,7 +11,7 @@ import (
 type Artist struct {
 	gorm.Model
 	Name     string `gorm:"type:varchar(255);not null;unique" json:"name"`
-	ImageKey string `gorm:"type:varchar(255);default:null" json:"image_key,omitempty"`
+	ImageKey string `gorm:"type:varchar(255)" json:"image_key,omitempty"`
 
 	UserArtists []UserArtist `gorm:"foreignKey:ArtistID" json:"user_artists,omitempty"`
 }
