@@ -39,9 +39,9 @@ type User struct {
 }
 
 type Genre struct {
-	ID        uint      `gorm:"primaryKey;autoIncrement" json:"id"`
-	Name      string    `gorm:"type:varchar(100);not null;unique" json:"name"`
-	CreatedAt time.Time `gorm:"autoCreateTime" json:"created_at"`
+	gorm.Model
+	Name     string `gorm:"type:varchar(100);not null;unique" json:"name"`
+	ImageKey string `gorm:"type:varchar(255)" json:"image_key,omitempty"`
 
 	UserGenres []UserGenre `gorm:"foreignKey:GenreID" json:"user_genres,omitempty"`
 }

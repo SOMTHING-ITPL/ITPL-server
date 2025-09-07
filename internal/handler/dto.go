@@ -43,10 +43,18 @@ func ToPerformanceDetail(p performance.PerformanceWithTicketsAndImage) Performan
 		Status:        p.Status,
 		IsForeign:     p.IsForeign,
 		DateGuidance:  p.DateGuidance,
-		IntroImageURL: p.PerformanceImages, // []PerformanceImage
-		TicketSite:    p.TicketSites,       // []PerformanceTicketSite
+		IntroImageURL: IntroImageUrlToString(p.PerformanceImages), // []PerformanceImage
+		TicketSite:    p.TicketSites,                              // []PerformanceTicketSite
 		LastModified:  p.LastModified,
 	}
+}
+
+func IntroImageUrlToString(urls []performance.PerformanceImage) []string {
+	res := make([]string, 0, len(urls))
+	for _, u := range urls {
+		res = append(res, u.URL)
+	}
+	return res
 }
 
 func ToFacilityShort(f *performance.Facility) FacilityShort {

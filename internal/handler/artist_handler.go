@@ -1,15 +1,18 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/gin-gonic/gin"
 )
 
-func NewArtistHandler(artistRepo *artist.Repository) *ArtistHandler {
+func NewArtistHandler(artistRepo *artist.Repository, bucket *aws.BucketBasics) *ArtistHandler {
 	return &ArtistHandler{
-		artistRepo: artistRepo,
+		artistRepo:   artistRepo,
+		BucketBasics: bucket,
 	}
 }
 
@@ -20,10 +23,22 @@ func (h *ArtistHandler) GetArtists() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get artist"})
 			return
 		}
-
+		//Get PresignedImage URL
+		res := make([]PreferSearchResponse, 0, len(artist))
+		for _, a := range artist {
+			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, a.ImageKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Image URL From AWS"})
+				return
+			}
+			res = append(res, PreferSearchResponse{
+				Name:     a.Name,
+				ImageUrl: url,
+			})
+		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    artist,
+			Data:    res,
 		})
 	}
 }
@@ -61,9 +76,49 @@ func (h *ArtistHandler) GetUserArtists() gin.HandlerFunc {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Fail to get Artist"})
 			return
 		}
+
+		artistIDs := make([]uint, 0, len(artists))
+		for _, g := range artists {
+			artistIDs = append(artistIDs, g.ID)
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    artists,
+			Data:    artistIDs,
+		})
+
+	}
+}
+
+func (h *ArtistHandler) PutArtist() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name := c.PostForm("name")
+
+		file, err := c.FormFile("image")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get file "})
+			return
+		}
+		url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("artist/%s", name), file)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": fmt.Sprintf("failed to upload profile image: %v", err),
+			})
+			return
+		}
+
+		artist := &artist.Artist{
+			Name:     name,
+			ImageKey: url,
+		}
+
+		if err = h.artistRepo.PutArtist(artist); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save artist "})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
 		})
 
 	}
