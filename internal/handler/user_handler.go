@@ -99,11 +99,11 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 	type res struct {
 		CreatedAt      string  `json:"created_at"`
 		UpdatedAt      string  `json:"updated_at"`
-		Email          string  `json:"email"`
+		Email          string  `json:"email ,omitempty"`
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
-		Birthday       *string `json:"birthday"`
-		Photo          *string `json:"profile_url"`
+		Birthday       *string `json:"birthday ,omitempty"`
+		Photo          *string `json:"profile_url ,omitempty"`
 	}
 	return func(c *gin.Context) {
 
@@ -148,13 +148,13 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 
 func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 	type res struct {
-		CreatedAt      string  `json:"created_at"`
+		CreatedAt      string  `json:"created_at "`
 		UpdatedAt      string  `json:"updated_at"`
-		Email          string  `json:"email"`
+		Email          string  `json:"email ,omitempty"`
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
-		Birthday       *string `json:"birthday"`
-		Photo          *string `json:"profile_url"`
+		Birthday       *string `json:"birthday ,omitempty"`
+		Photo          *string `json:"profile_url ,omitempty"`
 	}
 
 	return func(c *gin.Context) {
