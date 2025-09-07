@@ -55,7 +55,7 @@ type PerformanceDetail struct {
 	IsForeign    string  `json:"visit"` //내한 여부
 	DateGuidance *string `json:"date_guidance"`
 
-	IntroImageURL []performance.PerformanceImage      `json:"intro_url ,omitempty"`
+	IntroImageURL []string                            `json:"intro_url ,omitempty"`
 	TicketSite    []performance.PerformanceTicketSite `json:"ticket_site ,omitempty"`
 	LastModified  time.Time                           `json:"update_date ,omitempty"` // updatedate
 }
