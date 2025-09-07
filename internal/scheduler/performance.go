@@ -72,12 +72,15 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 	fromTime, err := time.Parse(layout, res.EndDate)
 	if err != nil {
 		fmt.Println("from 변환 실패:", err)
+		fmt.Println("layout:", layout)
 	}
 
 	toTime, err := time.Parse(layout, res.StartDate)
 	if err != nil {
 		fmt.Println("to 변환 실패:", err)
+		fmt.Println("layout:", layout)
 	}
+	fmt.Println("layout:", layout)
 
 	layout = "2006-01-02 15:04:05"
 
