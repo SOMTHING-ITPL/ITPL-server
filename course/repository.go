@@ -50,6 +50,31 @@ func GetCourseDetails(db *gorm.DB, courseId uint) ([]CourseDetail, error) {
 	return details, nil
 }
 
+func GetLastCoordinate(db *gorm.DB, course Course) place.Coordinate {
+	details, err := GetCourseDetails(db, course.ID)
+	if err != nil {
+		defer log.Fatalf("failed to get course detail")
+	}
+	last := details[len(details)]
+	lastPlace, err := place.GetPlaceById(db, last.ID)
+	if err != nil {
+		defer log.Fatalf("failed to get place")
+	}
+	return place.Coordinate{
+		Latitude:  lastPlace.Latitude,
+		Longitude: lastPlace.Longitude,
+	}
+}
+
+func GetSpecificCouseDetail(db *gorm.DB, course Course, day, sequence int) CourseDetail {
+	var detail CourseDetail
+	err := db.Where("course_id = ? AND day = ? AND sequence = ?", course.ID, day, sequence).Find(&detail).Error
+	if err != nil {
+		defer log.Printf("failed to find specific course detail")
+	}
+	return detail
+}
+
 func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequence int) error {
 	place, err := place.GetPlaceById(db, placeId)
 	if err != nil {
@@ -71,13 +96,6 @@ func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequenc
 	return nil
 }
 
-func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
-	if err := db.Where("course_id = ? AND place_id = ?", courseId, placeID).Delete(&CourseDetail{}).Error; err != nil {
-		return err
-	}
-	return nil
-}
-
 func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
 	if err := db.Where("Course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
 		return err
@@ -91,35 +109,6 @@ func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
 	return nil
 }
 
-func GetLastCoordinate(db *gorm.DB, course Course) place.Coordinate {
-	details, err := GetCourseDetails(db, course.ID)
-	if err != nil {
-		defer log.Fatalf("failed to get course detail")
-	}
-
-	last := details[len(details)]
-
-  
-	lastPlace, err := place.GetPlaceById(db, last.ID)
-	if err != nil {
-		defer log.Fatalf("failed to get place")
-	}
-	return place.Coordinate{
-		Latitude:  lastPlace.Latitude,
-		Longitude: lastPlace.Longitude,
-	}
-}
-
-func GetSpecificCouseDetail(db *gorm.DB, course Course, day, sequence int) CourseDetail {
-	var detail CourseDetail
-	err := db.Where("course_id = ? AND day = ? AND sequence = ?", course.ID, day, sequence).Find(&detail).Error
-	if err != nil {
-		defer log.Printf("failed to find specific course detail")
-	}
-	return detail
-}
-
-
 func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
 	course, err := GetCourseByCourseId(db, courseId)
 	if err != nil {
@@ -127,4 +116,21 @@ func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
 	}
 	course.ImageKey = key
 	db.Save(&course)
+}
+
+func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
+	if err := db.Where("course_id = ? AND place_id = ?", courseId, placeID).Delete(&CourseDetail{}).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func DeleteCourse(db *gorm.DB, courseId uint) error {
+	if err := db.Where("course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
+		return err
+	}
+	if err := db.Where("id = ?", courseId).Delete(&Course{}).Error; err != nil {
+		return err
+	}
+	return nil
 }

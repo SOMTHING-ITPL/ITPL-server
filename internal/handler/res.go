@@ -104,3 +104,29 @@ type PlaceInfoResponse struct {
 	PlaceInfo place.PlaceWithReview
 	Reviews   []PlaceReviewResponse `json:"reviews,omitempty"`
 }
+
+type CourseInfoResponse struct {
+	ID          uint    `json:"id"`
+	CreatedAt   string  `json:"created_at"`
+	UpdatedAt   string  `json:"updated_at"`
+	UserID      uint    `json:"user_id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	IsAICreated bool    `json:"is_ai_created"`
+	FacilityID  uint    `json:"facility_id"`
+	ImageKey    *string `json:"image_key,omitempty"`
+}
+
+type CourseDetailResponse struct {
+	ID         uint    `json:"id"`
+	CreatedAt  string  `json:"created_at"`
+	UpdatedAt  string  `json:"updated_at"`
+	CourseID   uint    `json:"course_id"`
+	Day        int     `json:"day"`
+	Sequence   int     `json:"sequence"`
+	PlaceID    uint    `json:"place_id"`
+	PlaceTitle string  `json:"place_title"`
+	Address    string  `json:"address"`
+	Latitud    float64 `json:"latitude"`
+	Longitude  float64 `json:"longitude"`
+}
