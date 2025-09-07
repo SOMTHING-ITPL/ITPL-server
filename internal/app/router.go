@@ -48,15 +48,16 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 		authGroup := public.Group("/auth")
 		registerAuthRoutes(authGroup, userHandler)
 
-		putData := public.Group("/testdata/sample")
-		putData.POST("/artist", artistHandler.PutArtist())
-		putData.POST("genre", userHandler.PutGenre())
 	}
 
 	protected := r.Group("/api")
 	protected.Use(AuthMiddleware())
 	// protected.Use(~)//should add middleWare
 	{
+		putData := protected.Group("/testdata/sample")
+		putData.POST("/artist", artistHandler.PutArtist())
+		putData.POST("genre", userHandler.PutGenre())
+
 		userGroup := protected.Group("/user")
 		registerUserRoutes(userGroup, userHandler)
 		registerArtistRoutes(userGroup, artistHandler)
