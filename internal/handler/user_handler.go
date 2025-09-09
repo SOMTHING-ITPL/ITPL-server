@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -131,18 +132,26 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			photoURL = &url
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+		_ = enc.Encode(CommonRes{
 			Message: "success",
-			Data: res{
-				CreatedAt:      user.CreatedAt.Format(time.RFC3339),
-				UpdatedAt:      user.UpdatedAt.Format(time.RFC3339),
-				NickName:       user.NickName,
-				Email:          *user.Email,
-				SocialProvider: string(user.SocialProvider),
-				Birthday:       birthday,
-				Photo:          photoURL,
+			Data: CommonRes{
+				Message: "success",
+				Data: res{
+					CreatedAt:      user.CreatedAt.Format(time.RFC3339),
+					UpdatedAt:      user.UpdatedAt.Format(time.RFC3339),
+					NickName:       user.NickName,
+					Email:          *user.Email,
+					SocialProvider: string(user.SocialProvider),
+					Birthday:       birthday,
+					Photo:          photoURL,
+				},
 			},
 		})
+
 	}
 }
 
@@ -220,19 +229,26 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 			}
 			photoURL = &url
 		}
-
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+		_ = enc.Encode(CommonRes{
 			Message: "success",
-			Data: res{
-				CreatedAt:      updatedUser.CreatedAt.Format(time.RFC3339),
-				UpdatedAt:      updatedUser.UpdatedAt.Format(time.RFC3339),
-				NickName:       updatedUser.NickName,
-				Email:          *updatedUser.Email,
-				SocialProvider: string(updatedUser.SocialProvider),
-				Birthday:       birthdayFormat,
-				Photo:          photoURL,
+			Data: CommonRes{
+				Message: "success",
+				Data: res{
+					CreatedAt:      updatedUser.CreatedAt.Format(time.RFC3339),
+					UpdatedAt:      updatedUser.UpdatedAt.Format(time.RFC3339),
+					NickName:       updatedUser.NickName,
+					Email:          *updatedUser.Email,
+					SocialProvider: string(updatedUser.SocialProvider),
+					Birthday:       birthdayFormat,
+					Photo:          photoURL,
+				},
 			},
 		})
+
 	}
 }
 
@@ -432,12 +448,17 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 				return
 			}
 			res = append(res, PreferSearchResponse{
+				ID:       g.ID,
 				Name:     g.Name,
 				ImageUrl: url,
 			})
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+		_ = enc.Encode(CommonRes{
 			Message: "success",
 			Data:    res,
 		})
