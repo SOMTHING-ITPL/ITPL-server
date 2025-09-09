@@ -126,6 +126,7 @@ type CourseDetailResponse struct {
 	Sequence   int     `json:"sequence"`
 	PlaceID    uint    `json:"place_id"`
 	PlaceTitle string  `json:"place_title"`
+	PlaceImage string  `json:"place_image,omitempty"`
 	Address    string  `json:"address"`
 	Latitud    float64 `json:"latitude"`
 	Longitude  float64 `json:"longitude"`

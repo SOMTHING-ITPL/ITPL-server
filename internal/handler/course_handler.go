@@ -140,21 +140,10 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: "})
 			return
 		}
-		var courseDetailInfos []CourseDetailResponse
-		for _, detail := range details {
-			courseDetailInfos = append(courseDetailInfos, CourseDetailResponse{
-				ID:         detail.ID,
-				CreatedAt:  detail.CreatedAt.Format(time.RFC3339),
-				UpdatedAt:  detail.UpdatedAt.Format(time.RFC3339),
-				CourseID:   detail.CourseID,
-				Day:        detail.Day,
-				Sequence:   detail.Sequence,
-				PlaceID:    detail.PlaceID,
-				PlaceTitle: detail.PlaceTitle,
-				Address:    detail.Address,
-				Latitud:    detail.Latitud,
-				Longitude:  detail.Longitude,
-			})
+		courseDetailInfos, err := ToCourseDetails(h.database, details)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
 		}
 
 		res := response{
@@ -266,6 +255,7 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		facility, err := h.performanceRepo.GetFacilityById(req.FacilityID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
 
@@ -289,9 +279,14 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 
 		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
 
+		courseDetailsResponse, err := ToCourseDetails(h.database, courseDetails)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
 		res := response{
 			Course:        ToCourseInfo(createdCourse),
-			CourseDetails: ToCourseDetails(courseDetails),
+			CourseDetails: courseDetailsResponse,
 		}
 
 		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")

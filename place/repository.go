@@ -147,3 +147,11 @@ func GetPlaceName(db *gorm.DB, placeID uint) (string, error) {
 
 	return place.Title, nil
 }
+
+func GetImageByPlaceID(db *gorm.DB, placeID uint) string {
+	place, err := GetPlaceById(db, placeID)
+	if err != nil {
+		defer log.Printf("Place does not exist")
+	}
+	return *place.PlaceImage
+}

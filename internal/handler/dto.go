@@ -5,6 +5,8 @@ import (
 
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"gorm.io/gorm"
 )
 
 // derefString safely dereferences a string pointer, returning empty string if nil
@@ -110,7 +112,7 @@ func ToCourseInfo(course course.Course) CourseInfoResponse {
 	}
 }
 
-func ToCourseDetails(details []course.CourseDetail) []CourseDetailResponse {
+func ToCourseDetails(db *gorm.DB, details []course.CourseDetail) ([]CourseDetailResponse, error) {
 	var courseDetailResponse []CourseDetailResponse
 	for _, detail := range details {
 		res := CourseDetailResponse{
@@ -122,11 +124,12 @@ func ToCourseDetails(details []course.CourseDetail) []CourseDetailResponse {
 			Sequence:   detail.Sequence,
 			PlaceID:    detail.PlaceID,
 			PlaceTitle: detail.PlaceTitle,
+			PlaceImage: place.GetImageByPlaceID(db, detail.PlaceID),
 			Address:    detail.Address,
 			Latitud:    detail.Latitud,
 			Longitude:  detail.Longitude,
 		}
 		courseDetailResponse = append(courseDetailResponse, res)
 	}
-	return courseDetailResponse
+	return courseDetailResponse, nil
 }
