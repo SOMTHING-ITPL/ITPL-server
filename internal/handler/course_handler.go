@@ -247,8 +247,8 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		Days       uint `json:"days"`
 	}
 	type response struct {
-		Course        course.Course
-		CourseDetails []course.CourseDetail
+		Course        CourseInfoResponse
+		CourseDetails []CourseDetailResponse
 	}
 	return func(c *gin.Context) {
 		var req request
@@ -288,11 +288,18 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		}
 
 		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
+
 		res := response{
-			Course:        createdCourse,
-			CourseDetails: courseDetails,
+			Course:        ToCourseInfo(createdCourse),
+			CourseDetails: ToCourseDetails(courseDetails),
 		}
-		c.JSON(http.StatusOK, CommonRes{
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Course Created",
 			Data:    res,
 		})
