@@ -69,6 +69,9 @@ func (s *PerformanceScheduler) BuilderPerformanceTicketSite(perfID uint, urls []
 func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes, gptRes *GPTResponse, facilityId uint) (*performance.Performance, error) {
 	layout := "2006.01.02"
 
+	res.StartDate = strings.ReplaceAll(res.StartDate, "-", ".")
+	res.EndDate = strings.ReplaceAll(res.EndDate, "-", ".")
+
 	fromTime, err := time.Parse(layout, res.EndDate)
 	if err != nil {
 		fmt.Println("from 변환 실패:", err)
@@ -189,6 +192,9 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string, region string) (uint
 // updatedAT 데이터 넣어줘야 함.
 func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDetailRes, originalPerf *performance.Performance, facilityID uint) (uint, error) {
 	var layout = "2006-01-02 15:04:05"
+
+	updatePerf.StartDate = strings.ReplaceAll(updatePerf.StartDate, "-", ".")
+	updatePerf.EndDate = strings.ReplaceAll(updatePerf.EndDate, "-", ".")
 
 	fromTime, err := time.Parse(layout, updatePerf.EndDate)
 	if err != nil {

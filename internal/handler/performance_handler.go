@@ -332,7 +332,7 @@ func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 
 		perfIdStr := c.Query("perfId")
 		if perfIdStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Top num is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "perfID is required"})
 			return
 		}
 
