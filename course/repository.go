@@ -3,6 +3,7 @@ package course
 import (
 	"log"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/gorm"
@@ -125,12 +126,21 @@ func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
 	return nil
 }
 
-func DeleteCourse(db *gorm.DB, courseId uint) error {
+func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) error {
 	if err := db.Where("course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
 		return err
 	}
 	if err := db.Where("id = ?", courseId).Delete(&Course{}).Error; err != nil {
 		return err
 	}
+
+	deleteCourse, err := GetCourseByCourseId(db, courseId)
+	if err != nil {
+		return err
+	}
+	if err = aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *deleteCourse.ImageKey); err != nil {
+		return err
+	}
+
 	return nil
 }

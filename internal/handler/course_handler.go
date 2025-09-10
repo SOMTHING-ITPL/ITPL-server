@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -107,7 +108,7 @@ func (h *CourseHandler) AddPlaceToCourseHandler() gin.HandlerFunc {
 func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 	type response struct {
 		Course  CourseInfoResponse
-		Details []CourseDetailResponse
+		Details []CourseDetailResponse `json:"details,omitempty"`
 	}
 
 	return func(c *gin.Context) {
@@ -139,21 +140,10 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: "})
 			return
 		}
-		var courseDetailInfos []CourseDetailResponse
-		for _, detail := range details {
-			courseDetailInfos = append(courseDetailInfos, CourseDetailResponse{
-				ID:         detail.ID,
-				CreatedAt:  detail.CreatedAt.Format(time.RFC3339),
-				UpdatedAt:  detail.UpdatedAt.Format(time.RFC3339),
-				CourseID:   detail.CourseID,
-				Day:        detail.Day,
-				Sequence:   detail.Sequence,
-				PlaceID:    detail.PlaceID,
-				PlaceTitle: detail.PlaceTitle,
-				Address:    detail.Address,
-				Latitud:    detail.Latitud,
-				Longitude:  detail.Longitude,
-			})
+		courseDetailInfos, err := ToCourseDetails(h.database, details)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
 		}
 
 		res := response{
@@ -161,7 +151,12 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			Details: courseDetailInfos,
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Course Details",
 			Data:    res,
 		})
@@ -197,7 +192,12 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "My Courses",
 			Data:    courseInfos,
 		})
@@ -236,8 +236,8 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		Days       uint `json:"days"`
 	}
 	type response struct {
-		Course        course.Course
-		CourseDetails []course.CourseDetail
+		Course        CourseInfoResponse
+		CourseDetails []CourseDetailResponse
 	}
 	return func(c *gin.Context) {
 		var req request
@@ -255,6 +255,7 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		facility, err := h.performanceRepo.GetFacilityById(req.FacilityID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
 		}
 		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
 
@@ -277,11 +278,23 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		}
 
 		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
-		res := response{
-			Course:        createdCourse,
-			CourseDetails: courseDetails,
+
+		courseDetailsResponse, err := ToCourseDetails(h.database, courseDetails)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
 		}
-		c.JSON(http.StatusOK, CommonRes{
+		res := response{
+			Course:        ToCourseInfo(createdCourse),
+			CourseDetails: courseDetailsResponse,
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Course Created",
 			Data:    res,
 		})
@@ -321,7 +334,7 @@ func (h *CourseHandler) DeleteCourseHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
 			return
 		}
-		err = course.DeleteCourse(h.database, uint(courseId))
+		err = course.DeleteCourse(h.database, h.BucketBasics, uint(courseId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete course"})
 			return

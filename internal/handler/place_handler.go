@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -62,7 +63,12 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Place Loaded Successfully",
 			Data:    result,
 		})
@@ -120,8 +126,14 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 			Reviews:   reviews,
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Place Info",
-			Data:    placeInfoResponse})
+			Data:    placeInfoResponse,
+		})
 	}
 }

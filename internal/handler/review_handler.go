@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -124,14 +125,21 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Place Reviews",
-			Data:    response})
+			Data:    response,
+		})
 	}
 }
 
 func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -166,9 +174,16 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				Images:       imgs,
 			})
 		}
-		c.JSON(http.StatusOK, CommonRes{
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "My Reviews",
-			Data:    response})
+			Data:    response,
+		})
 	}
 }
 
