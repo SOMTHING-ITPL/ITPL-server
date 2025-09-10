@@ -20,7 +20,7 @@ type PerformanceListRes struct {
 }
 
 type FacilityListRes struct {
-	Facilities []FacilityShort `json:"facility ,omitempty"`
+	Facilities []FacilityShort `json:"facility,omitempty"`
 	Count      int             `json:"count"`
 }
 
@@ -32,7 +32,7 @@ type performanceShort struct {
 	PosterURL    string `json:"poster_url"`
 	FacilityName string `json:"facility_name"`
 	StartDate    string `json:"start_date"`
-	EndDate      string `json:"end_date "`
+	EndDate      string `json:"end_date"`
 }
 
 // detail
@@ -46,42 +46,42 @@ type PerformanceDetail struct {
 	FacilityID   uint   `json:"facility_id"`
 	FacilityName string `json:"facility_name"`
 
-	AgeRating string `json:"age ,omitempty"`
+	AgeRating string `json:"age,omitempty"`
 
-	TicketPrice string `json:"price ,omitempty"`
-	PosterURL   string `json:"poster ,omitempty"`
+	TicketPrice string `json:"price,omitempty"`
+	PosterURL   string `json:"poster,omitempty"`
 
-	Status       string  ` json:"state "`
+	Status       string  ` json:"state"`
 	IsForeign    string  `json:"visit"` //내한 여부
 	DateGuidance *string `json:"date_guidance"`
 
-	IntroImageURL []string                            `json:"intro_url ,omitempty"`
+	IntroImageURL []string                            `json:"intro_url,omitempty"`
 	TicketSite    []performance.PerformanceTicketSite `json:"ticket_site ,omitempty"`
-	LastModified  time.Time                           `json:"update_date ,omitempty"` // updatedate
+	LastModified  time.Time                           `json:"update_date,omitempty"` // updatedate
 }
 
 // 공연 시설 목록
 type FacilityShort struct {
 	Id        uint   `json:"id"`
 	Name      string `json:"name"`
-	SeatCount string `json:"seat_count ,omitempty"` //없을 수도 있나?
+	SeatCount string `json:"seat_count,omitempty"` //없을 수도 있나?
 }
 
 type FacilityDetail struct {
 	Id         uint    `json:"id"`
 	Name       string  `json:"name"`
-	OpenedYear *string `json:"open_year ,omitempty"`
-	SeatCount  string  `json:"seat_count ,omitempty"`
-	Phone      *string `json:"phone ,omitempty"`     // 전화번호
-	Homepage   *string `json:"homepage ,omitempty" ` // 홈페이지
-	Address    string  `json:"addree"`               // 주소
-	Latitude   float64 `json:"latitude"`             // 위도
-	Longitude  float64 `json:"longitude"`            // 경도
+	OpenedYear *string `json:"open_year,omitempty"`
+	SeatCount  string  `json:"seat_count,omitempty"`
+	Phone      *string `json:"phone,omitempty"`     // 전화번호
+	Homepage   *string `json:"homepage,omitempty" ` // 홈페이지
+	Address    string  `json:"addree"`              // 주소
+	Latitude   float64 `json:"latitude"`            // 위도
+	Longitude  float64 `json:"longitude"`           // 경도
 
-	Restaurant string `json:"restaurant ,omitempty"`  // 음식점 유무
-	Cafe       string `json:"cafe ,omitempty"`        // 카페 유무
-	Store      string `json:"store ,omitempty"`       // 상점 유무
-	ParkingLot string `json:"parking_lot ,omitempty"` // 주차시설
+	Restaurant string `json:"restaurant,omitempty"`  // 음식점 유무
+	Cafe       string `json:"cafe,omitempty"`        // 카페 유무
+	Store      string `json:"store,omitempty"`       // 상점 유무
+	ParkingLot string `json:"parking_lot,omitempty"` // 주차시설
 }
 
 type ReviewImageResponse struct {

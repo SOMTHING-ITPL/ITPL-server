@@ -35,18 +35,19 @@ func main() {
 		PerformanceRepo: repo,
 	}
 	//start Date + 6month
-	//running 하루 전 업데이트 된 거
-	today := time.Now().AddDate(0, 0, -1)
+	//running 3일 전 업데이트 된 거
+	today := time.Now()
+	startDate := today.AddDate(0, 0, -3)
 
 	afterSixMonths := today.AddDate(0, 6, 0)
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
-
+	startDayStr := startDate.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
 
 	//걍 자정 이후로 추가되는 데이터 있으면 가져오면 될 것 같은데? 추가로 공연중 / 공연예정도 다 담아야함.
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, false, &todayStr); err != nil {
+	if err := scheduler.PutPerformanceList(startDayStr, afterSixMonthsStr, false, &todayStr); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 }
