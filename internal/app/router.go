@@ -149,7 +149,7 @@ func registerPlaceRoutes(rg *gin.RouterGroup, placeHandler *handler.PlaceHandler
 }
 
 func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {
-	rg.GET("/", performanceHandler.GetPerformanceShortList()) //목록조회
+	rg.GET("", performanceHandler.GetPerformanceShortList())  //목록조회
 	rg.GET("/:id", performanceHandler.GetPerformanceDetail()) //공연 상세 조회
 
 	rg.GET("/facility", performanceHandler.GetFacilityList())       //공연 시설 목록 조회
