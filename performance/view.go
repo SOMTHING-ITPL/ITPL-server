@@ -46,7 +46,7 @@ func (r *Repository) GetRecentViews(userID uint, ctx context.Context) ([]uint, e
 
 // 현재 가장 조회가 많은 공연 조회하는 부분
 func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]PerformanceScore, error) {
-	zs, err := r.rdb.ZRevRangeWithScores(ctx, "performance_views", 0, topN-1).Result()
+	zs, err := r.rdb.ZRevRangeWithScores(ctx, "performance_views", 0, topN-1).Result() // 0~topN-1 개만 가져옴.
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (r *Repository) GetTopPerformances(topN int64, ctx context.Context) ([]Perf
 
 func (r *Repository) IncrementPerformanceScore(perfID uint, score float64, ctx context.Context) error {
 	key := "performance_views"
-	ttl := 3 * 24 * 60 * 60
+	ttl := 3 * 24 * 60 * 60 //3일
 
 	//점수 증가 시키는 부분
 	if err := r.rdb.ZIncrBy(ctx, key, score, fmt.Sprintf("%d", perfID)).Err(); err != nil {
