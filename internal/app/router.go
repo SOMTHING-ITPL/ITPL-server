@@ -156,5 +156,7 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 	rg.GET("/facility/:id", performanceHandler.GetFacilityDetail()) //공연 시설 상세 조회
 
 	rg.GET("/top", performanceHandler.GetTopPerformances()) //topN 공연 조회
-	rg.POST("/view", performanceHandler.IncrementPerformanceView())
+	rg.GET("/near", performanceHandler.GetCommingPerformances())
+
+	// rg.POST("/view", performanceHandler.IncrementPerformanceView())
 }
