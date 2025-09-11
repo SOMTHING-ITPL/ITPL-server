@@ -44,7 +44,7 @@ func main() {
 	todayStr := today.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
 
-	//공연예정
+	//공연예정 -> 잠시
 	if err := scheduler.PutPerformanceList(afterSixMonthsStr, todayStr, false, nil); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}

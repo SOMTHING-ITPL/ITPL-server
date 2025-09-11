@@ -32,7 +32,7 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 			return
 		}
 
-		performances, err := p.performanceRepo.FindPerformances(req.Page, req.Limit, req.Genre, req.Region, req.Keyword)
+		performances, total, err := p.performanceRepo.FindPerformances(req.Page, req.Limit, req.Genre, req.Region, req.Keyword)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to findPerformances"})
 			return
@@ -42,7 +42,7 @@ func (p *PerformanceHandler) GetPerformanceShortList() gin.HandlerFunc {
 			Message: "success",
 			Data: PerformanceListRes{
 				Performances: ToPerformanceShortList(performances),
-				Count:        len(performances),
+				Count:        int(total),
 			},
 		})
 	}
@@ -332,7 +332,7 @@ func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 
 		perfIdStr := c.Query("perfId")
 		if perfIdStr == "" {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "perfID is required"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": " is required"})
 			return
 		}
 
