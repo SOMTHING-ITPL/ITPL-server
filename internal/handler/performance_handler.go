@@ -205,6 +205,7 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 			return
 		}
 
+		//여기 잘못 짠 듯
 		perfIDs := make([]uint, len(perfScores))
 		for i, score := range perfScores {
 			perfIDs[i] = score.ID
@@ -216,11 +217,18 @@ func (p *PerformanceHandler) GetTopPerformances() gin.HandlerFunc {
 			return
 		}
 
-		result := make([]res, len(perfScores))
-		for i, _ := range perfScores {
-			result[i] = res{
-				Performance: ToPerformanceShort(performances[i]),
-				Score:       perfScores[i].Score,
+		result := make([]res, 0, len(perfScores))
+		performanceMap := make(map[uint]performance.Performance)
+		for _, p := range performances {
+			performanceMap[p.ID] = p
+		}
+
+		for _, score := range perfScores {
+			if perf, ok := performanceMap[score.ID]; ok {
+				result = append(result, res{
+					Performance: ToPerformanceShort(perf),
+					Score:       score.Score,
+				})
 			}
 		}
 
