@@ -10,6 +10,7 @@ import (
 func CreateChatRoom(
 	r *user.Repository,
 	title string,
+	imgKey *string,
 	myId uint,
 	performanceDay int64,
 	maxMembers int,
@@ -28,6 +29,7 @@ func CreateChatRoom(
 	}
 	return &ChatRoom{
 		Title:          title,
+		ImageKey:       imgKey,
 		Members:        []*ChatRoomMember{creater},
 		PerformanceDay: performanceDay,
 		MaxMembers:     maxMembers,
@@ -66,7 +68,7 @@ func JoinChatRoom(r *user.Repository, db *gorm.DB, userId uint, roomId uint) err
 	return nil
 }
 
-func GetCurrentMembers(db *gorm.DB, room ChatRoom) (int, error) {
+func GetNumOfMembers(db *gorm.DB, room ChatRoom) (int, error) {
 	var count int64
 	err := db.Model(&ChatRoomMember{}).
 		Where("chat_room_id = ?", room.ID).
@@ -78,7 +80,7 @@ func GetCurrentMembers(db *gorm.DB, room ChatRoom) (int, error) {
 }
 
 func IsFull(db *gorm.DB, room ChatRoom) (bool, error) {
-	numOfMembers, err := GetCurrentMembers(db, room)
+	numOfMembers, err := GetNumOfMembers(db, room)
 	if err != nil {
 		return false, err
 	}
@@ -88,14 +90,7 @@ func IsFull(db *gorm.DB, room ChatRoom) (bool, error) {
 	return false, nil
 }
 
-/*
-func GetChatRoomsByRegion(
-	db *gorm.DB,
-	text string,
-	performanceDay int64,
-	departure Region,
-	arrival Region,
-) ([]ChatRoom, error) {
+func GetChatRoomsByCoordinate(db *gorm.DB, text string, performanceDay int64, departure Region, arrival Region) ([]ChatRoom, error) {
 	var rooms []ChatRoom
 
 	query := db.Model(&ChatRoom{}).
@@ -112,4 +107,17 @@ func GetChatRoomsByRegion(
 
 	return rooms, nil
 }
-*/
+
+func GetMembers(db *gorm.DB, room ChatRoom) ([]ChatRoomMember, error) {
+	var members []ChatRoomMember
+	err := db.Where("chat_room_id = ?", room.ID).Preload("User").Find(&members).Error
+	if err != nil {
+		return nil, err
+	}
+	return members, nil
+}
+
+func LeaveChatRoom(db *gorm.DB, userId uint, roomId uint) error{
+	return db.Where("chat_room_id = ? AND user_id = ?", roomId, userId).Delete(&ChatRoomMember{}).Error
+}
+

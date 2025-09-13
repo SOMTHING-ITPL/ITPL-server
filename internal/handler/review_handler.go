@@ -61,40 +61,6 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 	}
 }
 
-func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
-			return
-		}
-		uid, ok := c.Get("userID")
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		userID, _ := uid.(uint)
-
-		rev, err := place.GetReviewByID(h.database, uint(revId))
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Review not found"})
-			return
-		}
-
-		if rev.UserId != userID {
-			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own reviews"})
-			return
-		}
-
-		err = place.DeleteReview(h.database, uint(revId), *h.BucketBasics)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
-			return
-		}
-		c.Status(http.StatusNoContent)
-	}
-}
-
 func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		placeID, err := strconv.ParseUint(c.Param("place_id"), 10, 32)
@@ -231,6 +197,40 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 		}
 		if err := place.ModifyReview(h.database, rev, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})
+			return
+		}
+		c.Status(http.StatusNoContent)
+	}
+}
+
+func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+
+		rev, err := place.GetReviewByID(h.database, uint(revId))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Review not found"})
+			return
+		}
+
+		if rev.UserId != userID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own reviews"})
+			return
+		}
+
+		err = place.DeleteReview(h.database, uint(revId), *h.BucketBasics)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
 			return
 		}
 		c.Status(http.StatusNoContent)

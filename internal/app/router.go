@@ -30,6 +30,8 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo, bucketBasics)
+	chatRoomHandler := handler.NewChatRoomHandler(db, userRepo, bucketBasics)
+
 	//this router does not needs auth
 	public := r.Group("/api")
 	{
@@ -62,6 +64,9 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 
 		performanceGroup := protected.Group("/performance")
 		registerPerformanceRoutes(performanceGroup, performanceHandler)
+
+		chatGroup := protected.Group("/chat")
+		registerChatRoutes(chatGroup, chatRoomHandler)
 	}
 
 	return r
@@ -147,4 +152,9 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 
 	rg.GET("/top", performanceHandler.GetTopPerformances()) //topN 공연 조회
 	rg.POST("/view", performanceHandler.IncrementPerformanceView())
+}
+
+func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
+	rg.POST("/room", chatRoomHandler.CreateChatRoom())
+	rg.POST("/join-room", chatRoomHandler.JoinChatRoom())
 }

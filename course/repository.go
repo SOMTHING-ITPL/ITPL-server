@@ -54,12 +54,12 @@ func GetCourseDetails(db *gorm.DB, courseId uint) ([]CourseDetail, error) {
 func GetLastCoordinate(db *gorm.DB, course Course) place.Coordinate {
 	details, err := GetCourseDetails(db, course.ID)
 	if err != nil {
-		defer log.Fatalf("failed to get course detail")
+		defer log.Printf("failed to get course detail")
 	}
 	last := details[len(details)]
 	lastPlace, err := place.GetPlaceById(db, last.ID)
 	if err != nil {
-		defer log.Fatalf("failed to get place")
+		defer log.Printf("failed to get place")
 	}
 	return place.Coordinate{
 		Latitude:  lastPlace.Latitude,
@@ -79,7 +79,7 @@ func GetSpecificCouseDetail(db *gorm.DB, course Course, day, sequence int) Cours
 func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequence int) error {
 	place, err := place.GetPlaceById(db, placeId)
 	if err != nil {
-		defer log.Fatalf("place is not found")
+		defer log.Printf("place is not found")
 	}
 	courseDetail := CourseDetail{
 		CourseID:   courseId,
@@ -113,7 +113,7 @@ func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
 func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
 	course, err := GetCourseByCourseId(db, courseId)
 	if err != nil {
-		defer log.Fatalf("course does not exist : %v", err)
+		defer log.Printf("course does not exist : %v", err)
 	}
 	course.ImageKey = key
 	db.Save(&course)
