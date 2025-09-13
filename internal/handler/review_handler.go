@@ -14,6 +14,7 @@ import (
 
 func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		splaceId := c.PostForm("place_id")
 		placeID, err := strconv.ParseUint(splaceId, 10, 32)
 		if err != nil {
@@ -28,19 +29,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating"})
 			return
 		}
-		var imgUrl []place.ReviewImage
 
-		// 이미지 파일 받기
-		form, _ := c.MultipartForm()
-		files := form.File["images"]
-		for _, fileHeader := range files {
-			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d", placeId), fileHeader)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
-				return
-			}
-			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
-		}
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -48,11 +37,25 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 		}
 		userID, _ := uid.(uint)
 		user, err := h.userRepository.GetById(userID)
-
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
+
+		var imgUrl []place.ReviewImage
+
+		// 이미지 파일 받기
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		for _, fileHeader := range files {
+			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", placeId, userID) /*prefix*/, fileHeader)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
+		}
+
 		if err := place.WriteReview(h.database, placeId, user, text, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
@@ -172,18 +175,6 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 		rev, err := place.GetReviewByID(h.database, uint(revId))
 		place.DeleteReviewImage(h.database, h.BucketBasics, *rev)
 
-		var imgUrl []place.ReviewImage
-		// 이미지 파일 받기
-		form, _ := c.MultipartForm()
-		files := form.File["images"]
-		for _, fileHeader := range files {
-			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d", rev.PlaceId), fileHeader)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
-				return
-			}
-			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
-		}
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -194,6 +185,19 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
+		}
+
+		var imgUrl []place.ReviewImage
+		// 이미지 파일 받기
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		for _, fileHeader := range files {
+			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", rev.PlaceId, userID) /*prefix*/, fileHeader)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
 		}
 		if err := place.ModifyReview(h.database, rev, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})

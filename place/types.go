@@ -28,32 +28,36 @@ type ReviewInfo struct {
 
 type PlaceWithReview struct {
 	Place
+
 	ReviewCount int64   `json:"review_count"`
 	ReviewAvg   float64 `json:"review_avg"`
 }
 
 type ReviewImage struct {
 	gorm.Model
+
 	ReviewID uint   `json:"review_id" gorm:"column:review_id"`
 	Key      string `json:"key" gorm:"column:key"`
 }
 
 type PlaceReview struct {
 	gorm.Model
-	PlaceId      uint          `json:"place_id" gorm:"column:place_id"`
-	UserId       uint          `json:"user_id" gorm:"column:user_id"`
-	UserNickName string        `json:"user_nickname" gorm:"column:user_nickname"`
-	Rating       float64       `json:"rating" gorm:"column:rating"`
-	Comment      *string       `json:"comment,omitempty" gorm:"column:comment"`
-	Images       []ReviewImage `json:"images" gorm:"foreignKey:ReviewID;references:ID"`
+	Images []ReviewImage `json:"images" gorm:"foreignKey:ReviewID;references:ID"`
+
+	PlaceId      uint    `json:"place_id" gorm:"column:place_id"`
+	UserId       uint    `json:"user_id" gorm:"column:user_id"`
+	UserNickName string  `json:"user_nickname" gorm:"column:user_nickname"`
+	Rating       float64 `json:"rating" gorm:"column:rating"`
+	Comment      *string `json:"comment,omitempty" gorm:"column:comment"`
 }
 
 type review struct {
-	userId     uint
-	nickname   string
-	rating     float64
-	comment    *string
 	reviewImgs []ReviewImage
+
+	userId   uint
+	nickname string
+	rating   float64
+	comment  *string
 }
 
 type PlaceInfo struct {

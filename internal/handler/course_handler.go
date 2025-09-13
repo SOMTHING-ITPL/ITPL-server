@@ -59,7 +59,7 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			key, err := aws.UploadToS3(
 				h.bucketBasics.S3Client,
 				h.bucketBasics.BucketName,
-				fmt.Sprintf("course_image/%d/%d", userID, facilityId),
+				fmt.Sprintf("course_image/%d/%d", userID, facilityId), /*prefix*/
 				file,
 			)
 			if err != nil {
