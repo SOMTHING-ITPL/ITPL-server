@@ -257,7 +257,12 @@ func (h *UserHandler) RegisterLocalUser() gin.HandlerFunc {
 		NickName string `json:"nick_name" binding:"required"`
 		Pwd      string `json:"password" binding:"required"`
 		Email    string `json:"email" binding:"required,email"`
-		Birthday string `json:"birthday"` //required 아님
+		Birthday string `json:"birthday"`               //required 아님
+		Agree1   bool   `json:"agree_personal_info"`    // 필수 동의
+		Agree2   bool   `json:"agree_marketing"`        // 마케팅 동의
+		Agree3   bool   `json:"agree_terms_of_service"` // 서비스 약관 동의
+		Agree4   bool   `json:"agree_privacy_policy"`   // 개인정보 처리방침 동의
+
 	}
 	type res struct {
 		Token string `json:"token"`
