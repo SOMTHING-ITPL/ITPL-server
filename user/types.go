@@ -34,6 +34,12 @@ type User struct {
 	EncryptPwd *string    `gorm:"type:varchar(255);default:null" json:"encrypt_pwd,omitempty"`
 	Birthday   *time.Time `gorm:"type:date;default:null" json:"birthday,omitempty"`
 
+	//개인정보 약관
+	Agree1 bool `gorm:"type:boolean;not null;default:false" json:"agree_personal_info,omitempty"`    // 필수 동의
+	Agree2 bool `gorm:"type:boolean;not null;default:false" json:"agree_marketing,omitempty"`        // 마케팅 동의
+	Agree3 bool `gorm:"type:boolean;not null;default:false" json:"agree_terms_of_service,omitempty"` // 서비스 약관 동의
+	Agree4 bool `gorm:"type:boolean;not null;default:false" json:"agree_privacy_policy,omitempty"`   // 개인정보 처리방침 동의
+
 	// UserArtists []UserArtist `gorm:"foreignKey:UserID" json:"user_artists,omitempty"`
 	// UserGenres  []UserGenre  `gorm:"foreignKey:UserID" json:"user_genres,omitempty"`
 }
