@@ -47,6 +47,7 @@ func (r *Repository) GetPerformanceById(id uint) (*Performance, error) {
 	return performance, nil
 }
 
+// use This function when server recommend performance to user.
 func (r *Repository) GetPerformancesByIDs(ids []uint) ([]Performance, error) {
 	var performances []Performance
 	err := r.db.Where("id IN ?", ids).Find(&performances).Error
