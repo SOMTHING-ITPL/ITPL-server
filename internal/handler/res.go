@@ -56,7 +56,7 @@ type PerformanceDetail struct {
 	DateGuidance *string `json:"date_guidance"`
 
 	IntroImageURL []string                            `json:"intro_url,omitempty"`
-	TicketSite    []performance.PerformanceTicketSite `json:"ticket_site ,omitempty"`
+	TicketSite    []performance.PerformanceTicketSite `json:"ticket_site,omitempty"`
 	LastModified  time.Time                           `json:"update_date,omitempty"` // updatedate
 }
 
