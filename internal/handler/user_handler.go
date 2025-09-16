@@ -100,11 +100,11 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 	type res struct {
 		CreatedAt      string  `json:"created_at"`
 		UpdatedAt      string  `json:"updated_at"`
-		Email          string  `json:"email ,omitempty"`
+		Email          string  `json:"email,omitempty"`
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
-		Birthday       *string `json:"birthday ,omitempty"`
-		Photo          *string `json:"profile_url ,omitempty"`
+		Birthday       *string `json:"birthday,omitempty"`
+		Photo          *string `json:"profile_url,omitempty"`
 	}
 	return func(c *gin.Context) {
 
@@ -159,11 +159,11 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 	type res struct {
 		CreatedAt      string  `json:"created_at "`
 		UpdatedAt      string  `json:"updated_at"`
-		Email          string  `json:"email ,omitempty"`
+		Email          string  `json:"email,omitempty"`
 		NickName       string  `json:"nick_name"`
 		SocialProvider string  `json:"social_provider"`
-		Birthday       *string `json:"birthday ,omitempty"`
-		Photo          *string `json:"profile_url ,omitempty"`
+		Birthday       *string `json:"birthday,omitempty"`
+		Photo          *string `json:"profile_url,omitempty"`
 	}
 
 	return func(c *gin.Context) {
@@ -176,7 +176,7 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 		}
 		nickName := c.PostForm("nickname")
 
-		var birthdayTime *time.Time //그냥 stirng 으로 저장하는게 정신건강에 좋을 것 같다는 생각이
+		var birthdayTime *time.Time
 		birthdayStr := c.PostForm("birthday")
 		if birthdayStr != "" {
 			t, err := time.Parse("20060102", birthdayStr)
@@ -214,10 +214,11 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 			return
 		}
 
-		var birthdayFormat *string
-		if updatedUser.Birthday != nil {
-			formatted := updatedUser.Birthday.Format("20060102")
-			birthdayFormat = &formatted
+		var birthday *string
+
+		if user.Birthday != nil {
+			formatted := user.Birthday.Format("20060102")
+			birthday = &formatted
 		}
 
 		var photoURL *string
@@ -243,7 +244,7 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 					NickName:       updatedUser.NickName,
 					Email:          *updatedUser.Email,
 					SocialProvider: string(updatedUser.SocialProvider),
-					Birthday:       birthdayFormat,
+					Birthday:       birthday,
 					Photo:          photoURL,
 				},
 			},

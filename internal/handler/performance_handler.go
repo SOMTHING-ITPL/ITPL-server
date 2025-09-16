@@ -339,6 +339,27 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 	}
 }
 
+func (p *PerformanceHandler) AiRecommendation() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// userIDStr, exists := c.Get("userID") //getUserId
+		// userID, ok := userIDStr.(uint)
+
+		perfIds := make([]uint, 3)
+
+		perf, err := p.performanceRepo.GetPerformancesByIDs(perfIds)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "gail to get perfs"})
+			return
+		}
+
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    ToPerformanceShortList(perf),
+		})
+		return
+	}
+}
+
 // func (p *PerformanceHandler) IncrementPerformanceView() gin.HandlerFunc {
 // 	return func(c *gin.Context) {
 // 		userIDStr, _ := c.Get("userID")
