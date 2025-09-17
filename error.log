@@ -4,3 +4,4 @@
 2025-09-17T20:09:24.750+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 400, "method": "PATCH", "path": "/api/course/14/details", "client_ip": "::1", "response": "{\"error\":\"invalid character '-' in numeric literal\"}"}
 2025-09-17T20:29:09.598+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/course/4/details", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
 2025-09-17T20:31:18.110+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/place/list", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
+2025-09-17T20:48:02.440+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "PATCH", "path": "/api/course/14/details", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}

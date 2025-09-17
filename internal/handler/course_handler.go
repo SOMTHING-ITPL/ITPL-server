@@ -254,10 +254,6 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 				}
 				imageURL = &URL
 			}
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
-				return
-			}
 			courseInfos = append(courseInfos, CourseInfoResponse{
 				ID:          course.ID,
 				CreatedAt:   course.CreatedAt.Format(time.RFC3339),

@@ -112,6 +112,15 @@ func ModifyCourseDetails(db *gorm.DB, courseId uint, details []CourseDetail) err
 	}
 	for _, detail := range details {
 		detail.CourseID = courseId
+		p, err := place.GetPlaceById(db, detail.PlaceID)
+		if err != nil {
+			return fmt.Errorf("place does not exist: %w", err)
+		}
+		detail.PlaceTitle = p.Title
+		detail.Address = p.Address
+		detail.Latitud = p.Latitude
+		detail.Longitude = p.Longitude
+
 		if err := db.Create(&detail).Error; err != nil {
 			return err
 		}
