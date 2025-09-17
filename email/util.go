@@ -31,8 +31,55 @@ func SendMail(targetMail string, code string) error {
 		"From: " + cfg.From + "\r\n" +
 			"To: " + targetMail + "\r\n" +
 			"Subject: ITPL 이메일 인증 코드\r\n" +
-			"Content-Type: text/plain; charset=\"UTF-8\"\r\n\r\n" +
-			fmt.Sprintf("인증 코드: %s\r\n", code),
+			"MIME-Version: 1.0\r\n" +
+			"Content-Type: text/html; charset=\"UTF-8\"\r\n\r\n" +
+			fmt.Sprintf(`
+				<!DOCTYPE html>
+				<html lang="ko">
+				<head>
+					<meta charset="UTF-8">
+					<style>
+						body {
+							font-family: Arial, Helvetica, sans-serif;
+							background-color: #f9f9f9;
+							padding: 20px;
+						}
+						.container {
+							background-color: #ffffff;
+							border-radius: 10px;
+							padding: 20px;
+							box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+							max-width: 400px;
+							margin: auto;
+						}
+						.code {
+							font-size: 24px;
+							font-weight: bold;
+							color: #2c3e50;
+							background: #f0f0f0;
+							padding: 10px 20px;
+							border-radius: 6px;
+							letter-spacing: 3px;
+							text-align: center;
+						}
+						.footer {
+							font-size: 12px;
+							color: #888;
+							margin-top: 20px;
+							text-align: center;
+						}
+					</style>
+				</head>
+				<body>
+					<div class="container">
+						<h2>ITPL 이메일 인증</h2>
+						<p>아래 인증 코드를 입력해주세요:</p>
+						<div class="code">%s</div>
+						<p class="footer">본 메일은 자동 발송되었습니다.</p>
+					</div>
+				</body>
+				</html>
+			`, code),
 	)
 
 	// google auth
