@@ -1,6 +1,7 @@
 package course
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
@@ -118,13 +119,17 @@ func ModifyCourseDetails(db *gorm.DB, courseId uint, details []CourseDetail) err
 	return nil
 }
 
-func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
+func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) error {
 	course, err := GetCourseByCourseId(db, courseId)
 	if err != nil {
-		defer log.Printf("course does not exist : %v", err)
+		return fmt.Errorf("course does not exist: %w", err)
 	}
+
 	course.ImageKey = key
-	db.Save(&course)
+	if err := db.Save(&course).Error; err != nil {
+		return fmt.Errorf("failed to save course image key: %w", err)
+	}
+	return nil
 }
 
 func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
@@ -146,6 +151,10 @@ func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) er
 	}
 	if err := db.Where("id = ?", courseId).Delete(&Course{}).Error; err != nil {
 		return err
+	}
+
+	if deleteCourse.ImageKey == nil {
+		return nil
 	}
 
 	if err = aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *deleteCourse.ImageKey); err != nil {

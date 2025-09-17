@@ -1,1 +1,6 @@
 2025-09-17T19:33:12.740+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/place/2384290/info", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
+2025-09-17T20:03:51.968+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "DELETE", "path": "/api/course/3", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
+2025-09-17T20:05:23.885+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "DELETE", "path": "/api/course/15", "client_ip": "::1", "response": "{\"error\":\"failed to delete course\"}"}
+2025-09-17T20:09:24.750+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 400, "method": "PATCH", "path": "/api/course/14/details", "client_ip": "::1", "response": "{\"error\":\"invalid character '-' in numeric literal\"}"}
+2025-09-17T20:29:09.598+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/course/4/details", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
+2025-09-17T20:31:18.110+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/place/list", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}

@@ -114,7 +114,7 @@ type CourseInfoResponse struct {
 	Description *string `json:"description,omitempty"`
 	IsAICreated bool    `json:"is_ai_created"`
 	FacilityID  uint    `json:"facility_id"`
-	ImageKey    *string `json:"image_key,omitempty"`
+	ImageURL    *string `json:"image_url,omitempty"`
 }
 
 type CourseDetailResponse struct {
