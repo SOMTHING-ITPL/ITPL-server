@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+service Recommender {
+  rpc Recommend (UserRequest) returns (RecommendResponse);
+}
+
+message UserRequest {
+  int32 user_id = 1;
+  repeated string genres = 2;
+  repeated string artists = 3;
+  repeated string fav_ids = 4;
+  int32 topk = 5;
+}
+
+message Concert {
+  string id = 1;
+  string name = 2;
+  float score = 3;
+}
+
+message RecommendResponse {
+  repeated Concert concerts = 1;
+}
