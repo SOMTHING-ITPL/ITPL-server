@@ -46,7 +46,7 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			Longitude: lon,
 		}
 
-		places, err := place.LoadNearPlaces(coord, &category, h.database, 3000)
+		places, err := place.LoadNearPlaces(coord, category, h.database, 3000)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -54,8 +54,12 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 
 		if keyword != "" {
 			filtered := []place.Place{}
+			trimmedKeyword := strings.TrimSpace(keyword)
+
 			for _, p := range places {
-				if strings.Contains(p.Title, keyword) {
+				trimmedTitle := strings.TrimSpace(p.Title)
+
+				if strings.Contains(trimmedTitle, trimmedKeyword) {
 					filtered = append(filtered, p)
 				}
 			}

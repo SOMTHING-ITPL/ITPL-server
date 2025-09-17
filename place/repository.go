@@ -41,7 +41,7 @@ func upsertByCreatedTime(db *gorm.DB, places []Place) error {
 	return nil
 }
 
-func LoadNearPlaces(c Coordinate, category *string, db *gorm.DB, radius int64) ([]Place, error) {
+func LoadNearPlaces(c Coordinate, category string, db *gorm.DB, radius int64) ([]Place, error) {
 	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
 	params := map[string]string{
 		"serviceKey": os.Getenv("SERVICE_KEY"),
@@ -56,8 +56,8 @@ func LoadNearPlaces(c Coordinate, category *string, db *gorm.DB, radius int64) (
 		"radius":     strconv.FormatInt(radius, 10),
 	}
 
-	if category != nil && *category != "" { //category
-		params["contentTypeId"] = *category
+	if category != "" { //category
+		params["contentTypeId"] = category
 	}
 
 	finalurl, err := api.BuildURL(api_url, params)

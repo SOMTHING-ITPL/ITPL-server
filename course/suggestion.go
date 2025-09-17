@@ -27,7 +27,7 @@ func OneDayCourse(db *gorm.DB, user user.User, title string, description *string
 		Longitude: facility.Longitude,
 	}
 
-	restaurants, err := place.LoadNearPlaces(coord, 39, db, 3000)
+	restaurants, err := place.LoadNearPlaces(coord, "39", db, 3000)
 	if err != nil {
 		log.Printf("failed to load places")
 	}
@@ -55,7 +55,7 @@ func TwoDayCourse(db *gorm.DB, user user.User, title string, description *string
 		Longitude: facility.Longitude,
 	}
 
-	restaurants, err := place.LoadNearPlaces(coord, 39, db, 3000)
+	restaurants, err := place.LoadNearPlaces(coord, "39", db, 3000)
 	if err != nil {
 		log.Printf("failed to load places")
 	}
@@ -68,7 +68,7 @@ func TwoDayCourse(db *gorm.DB, user user.User, title string, description *string
 	AddPlaceToCourse(db, course.ID, restaurant.TourapiPlaceId, 1, 1)
 
 	//숙소
-	accommodations, err := place.LoadNearPlaces(coord, 32, db, 3000)
+	accommodations, err := place.LoadNearPlaces(coord, "32", db, 3000)
 	if err != nil {
 		log.Printf("failed to load places")
 	}
@@ -86,21 +86,21 @@ func TwoDayCourse(db *gorm.DB, user user.User, title string, description *string
 	}
 
 	//아점... ㅋㅋ
-	restaurants, err = place.LoadNearPlaces(acoord, 39, db, 3000)
+	restaurants, err = place.LoadNearPlaces(acoord, "39", db, 3000)
 	//log
 	log.Printf("len: %d", len(restaurants))
 	random = rand.Intn(len(restaurants))
 	AddPlaceToCourse(db, course.ID, restaurants[random].TourapiPlaceId, 2, 1)
 
 	//관광지
-	sights, err := place.LoadNearPlaces(acoord, 12, db, 3000)
+	sights, err := place.LoadNearPlaces(acoord, "12", db, 3000)
 	//log
 	log.Printf("len: %d", len(sights))
 	random = rand.Intn(len(sights))
 	AddPlaceToCourse(db, course.ID, sights[random].TourapiPlaceId, 2, 2)
 
 	//문화시설
-	cultures, _ := place.LoadNearPlaces(coord, 14, db, 3000)
+	cultures, _ := place.LoadNearPlaces(coord, "14", db, 3000)
 	//log
 	log.Printf("len: %d", len(cultures))
 	random = rand.Intn(len(cultures))
@@ -126,7 +126,7 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 		Longitude: facility.Longitude,
 	}
 
-	restaurants, err := place.LoadNearPlaces(coord, 39, db, 3000)
+	restaurants, err := place.LoadNearPlaces(coord, "39", db, 3000)
 	if err != nil {
 		log.Printf("failed to load places")
 	}
@@ -139,7 +139,7 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	AddPlaceToCourse(db, course.ID, restaurant.TourapiPlaceId, 1, 1)
 
 	//숙소
-	accommodations, err := place.LoadNearPlaces(coord, 32, db, 3000)
+	accommodations, err := place.LoadNearPlaces(coord, "32", db, 3000)
 	if err != nil {
 		log.Printf("failed to load places")
 	}
@@ -157,21 +157,21 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	}
 
 	//아점... ㅋㅋ
-	restaurants, err = place.LoadNearPlaces(acoord, 39, db, 3000)
+	restaurants, err = place.LoadNearPlaces(acoord, "39", db, 3000)
 	//log
 	log.Printf("len: %d", len(restaurants))
 	random = rand.Intn(len(restaurants))
 	AddPlaceToCourse(db, course.ID, restaurants[random].TourapiPlaceId, 2, 1)
 
 	//관광지
-	sights, err := place.LoadNearPlaces(acoord, 12, db, 3000)
+	sights, err := place.LoadNearPlaces(acoord, "12", db, 3000)
 	//log
 	log.Printf("len: %d", len(sights))
 	random = rand.Intn(len(sights))
 	AddPlaceToCourse(db, course.ID, sights[random].TourapiPlaceId, 2, 2)
 
 	//문화시설
-	cultures, _ := place.LoadNearPlaces(coord, 14, db, 3000)
+	cultures, _ := place.LoadNearPlaces(coord, "14", db, 3000)
 	//log
 	log.Printf("len: %d", len(cultures))
 	random = rand.Intn(len(cultures))
@@ -184,7 +184,7 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	}
 
 	//2일차 저녁
-	dinners, _ := place.LoadNearPlaces(coord, 39, db, 3000)
+	dinners, _ := place.LoadNearPlaces(coord, "39", db, 3000)
 	//log
 	log.Printf("len: %d", len(dinners))
 	random = rand.Intn(len(dinners))
@@ -200,14 +200,14 @@ func ThreeDayCourse(db *gorm.DB, user user.User, title string, description *stri
 	}
 
 	//3일차 아점
-	brunchs, _ := place.LoadNearPlaces(coord, 39, db, 3000)
+	brunchs, _ := place.LoadNearPlaces(coord, "39", db, 3000)
 	//log
 	log.Printf("len: %d", len(brunchs))
 	random = rand.Intn(len(brunchs))
 	AddPlaceToCourse(db, course.ID, brunchs[random].TourapiPlaceId, 3, 1)
 
 	//마지막으로 쇼핑
-	shoppings, _ := place.LoadNearPlaces(coord, 38, db, 3000)
+	shoppings, _ := place.LoadNearPlaces(coord, "38", db, 3000)
 	//log
 	log.Printf("len: %d", len(shoppings))
 	random = rand.Intn(len(shoppings))
