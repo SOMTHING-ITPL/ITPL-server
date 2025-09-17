@@ -30,13 +30,13 @@ type CourseHandler struct {
 	database        *gorm.DB
 	userRepository  *user.Repository
 	performanceRepo *performance.Repository
-	BucketBasics    *aws.BucketBasics
+	bucketBasics    *aws.BucketBasics
 }
 
 type ChatRoomHandler struct {
 	database       *gorm.DB
 	userRepository *user.Repository
-	smtpRepository *email.Repository
+	bucketBasics   *aws.BucketBasics
 }
 
 type CalendarHandler struct {

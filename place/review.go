@@ -57,6 +57,33 @@ func GetPlaceReviews(db *gorm.DB, placeID uint) ([]PlaceReview, error) {
 	return reviews, nil
 }
 
+func GetMyReviews(db *gorm.DB, userID uint) ([]PlaceReview, error) {
+	var reviews []PlaceReview
+	err := db.Preload("Images").Where("user_id = ?", userID).Find(&reviews).Error
+	if err != nil {
+		return nil, err
+	}
+	return reviews, nil
+}
+
+func ModifyReview(db *gorm.DB, rev *PlaceReview, placeId uint, user user.User, comment string, rating float64, imgs []ReviewImage) error {
+	var revImgs []ReviewImage
+	err := db.Where("review_id = ?", rev.ID).Find(&revImgs).Error
+	if err != nil {
+		return err
+	}
+
+	rev.Rating = rating
+	rev.Comment = &comment
+	rev.Images = imgs
+
+	if err := db.Save(rev).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error {
 	// Load images
 	var images []ReviewImage
@@ -85,15 +112,6 @@ func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error 
 	return nil
 }
 
-func GetMyReviews(db *gorm.DB, userID uint) ([]PlaceReview, error) {
-	var reviews []PlaceReview
-	err := db.Preload("Images").Where("user_id = ?", userID).Find(&reviews).Error
-	if err != nil {
-		return nil, err
-	}
-	return reviews, nil
-}
-
 func DeleteReviewImage(db *gorm.DB, bucketBasics *aws.BucketBasics, rev PlaceReview) error {
 	var images []ReviewImage
 	if err := db.Where("review_id = ?", rev.ID).Find(&images).Error; err != nil {
@@ -108,23 +126,5 @@ func DeleteReviewImage(db *gorm.DB, bucketBasics *aws.BucketBasics, rev PlaceRev
 		}
 	}
 	db.Where("review_id = ?", rev.ID).Delete(&ReviewImage{})
-	return nil
-}
-
-func ModifyReview(db *gorm.DB, rev *PlaceReview, placeId uint, user user.User, comment string, rating float64, imgs []ReviewImage) error {
-	var revImgs []ReviewImage
-	err := db.Where("review_id = ?", rev.ID).Find(&revImgs).Error
-	if err != nil {
-		return err
-	}
-
-	rev.Rating = rating
-	rev.Comment = &comment
-	rev.Images = imgs
-
-	if err := db.Save(rev).Error; err != nil {
-		return err
-	}
-
 	return nil
 }
