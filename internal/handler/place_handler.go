@@ -66,7 +66,7 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			places = filtered
 		}
 
-		var result []place.PlaceWithReview
+		result := make([]place.PlaceWithReview, 0)
 		for _, p := range places {
 			reviewInfo, _ := place.GetReviewInfo(h.database, p.TourapiPlaceId)
 			result = append(result, place.PlaceWithReview{

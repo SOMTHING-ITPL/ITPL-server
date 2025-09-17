@@ -74,7 +74,7 @@ type FacilityDetail struct {
 	SeatCount  string  `json:"seat_count,omitempty"`
 	Phone      *string `json:"phone,omitempty"`     // 전화번호
 	Homepage   *string `json:"homepage,omitempty" ` // 홈페이지
-	Address    string  `json:"address"`              // 주소
+	Address    string  `json:"address"`             // 주소
 	Latitude   float64 `json:"latitude"`            // 위도
 	Longitude  float64 `json:"longitude"`           // 경도
 

@@ -1,5 +1,9 @@
 syntax = "proto3";
 
+package update;
+
+option go_package = "ITPL-server/grpc_client/update_client";
+
 service ConcertUpdater {
   rpc UpdateConcerts (UpdateRequest) returns (UpdateResponse);
 }
