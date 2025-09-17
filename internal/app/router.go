@@ -54,9 +54,9 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	protected.Use(AuthMiddleware())
 	// protected.Use(~)//should add middleWare
 	{
-		putData := protected.Group("/testdata/sample")
-		putData.POST("/artist", artistHandler.PutArtist())
-		putData.POST("genre", userHandler.PutGenre())
+		// putData := protected.Group("/testdata/sample")
+		// putData.POST("/artist", artistHandler.PutArtist())
+		// putData.POST("genre", userHandler.PutGenre())
 
 		userGroup := protected.Group("/user")
 		registerUserRoutes(userGroup, userHandler)
@@ -91,7 +91,6 @@ func registerAuthRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
 	rg.POST("/verify-email", userHandler.VerifyEmailCode())
 	rg.POST("/register-local", userHandler.RegisterLocalUser())
 	rg.POST("/social-login", userHandler.LoginSocialUser())
-	//user email 비밀번호 찾기 제공해줘야 함.d
 }
 
 func registerUserRoutes(rg *gin.RouterGroup, userHandler *handler.UserHandler) {
@@ -113,6 +112,7 @@ func registerCalendarRoutes(rg *gin.RouterGroup, calendarHandler *handler.Calend
 	rg.POST("/calendar", calendarHandler.CreateCalendarData())
 	rg.DELETE("/calendar/:id", calendarHandler.DeleteCalendarData())
 }
+
 func registerUserPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.PerformanceHandler) {
 	rg.GET("/performance/", performanceHandler.GetPerformanceLike()) //유저 Performance 조회
 	rg.POST("/performance/:id", performanceHandler.CreatePerformanceLike())
