@@ -41,20 +41,23 @@ func upsertByCreatedTime(db *gorm.DB, places []Place) error {
 	return nil
 }
 
-func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB, radius int64) ([]Place, error) {
+func LoadNearPlaces(c Coordinate, category *string, db *gorm.DB, radius int64) ([]Place, error) {
 	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
 	params := map[string]string{
-		"serviceKey":    os.Getenv("SERVICE_KEY"),
-		"numOfRows":     "30",
-		"pageNo":        "1",
-		"MobileOS":      "ETC",
-		"MobileApp":     "AppTest",
-		"_type":         "json",
-		"arrange":       "E", // 거리순
-		"mapX":          strconv.FormatFloat(c.Longitude, 'f', -1, 64),
-		"mapY":          strconv.FormatFloat(c.Latitude, 'f', -1, 64),
-		"radius":        strconv.FormatInt(radius, 10),
-		"contentTypeId": strconv.FormatInt(category, 10),
+		"serviceKey": os.Getenv("SERVICE_KEY"),
+		"numOfRows":  "30",
+		"pageNo":     "1",
+		"MobileOS":   "ETC",
+		"MobileApp":  "AppTest",
+		"_type":      "json",
+		"arrange":    "E", // 거리순
+		"mapX":       strconv.FormatFloat(c.Longitude, 'f', -1, 64),
+		"mapY":       strconv.FormatFloat(c.Latitude, 'f', -1, 64),
+		"radius":     strconv.FormatInt(radius, 10),
+	}
+
+	if category != nil && *category != "" { //category
+		params["contentTypeId"] = *category
 	}
 
 	finalurl, err := api.BuildURL(api_url, params)
@@ -75,11 +78,12 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB, radius int64) ([]
 		// Convert item to Place
 		placeId, _ := strconv.ParseInt(item.ContentId, 10, 64)
 		uPlaceId := uint(placeId)
+		categoryID, _ := strconv.ParseInt(item.CategoryID, 10, 64)
 		longitude, _ := strconv.ParseFloat(item.MapX, 64)
 		latitude, _ := strconv.ParseFloat(item.MapY, 64)
 		place := Place{
 			TourapiPlaceId: uPlaceId,
-			Category:       category,
+			Category:       categoryID,
 			Title:          item.Title,
 			Address:        item.Addr1 + " " + item.Addr2,
 			Tel:            &item.Tel,
