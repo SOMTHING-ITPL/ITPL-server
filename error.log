@@ -1,0 +1,1 @@
+2025-09-17T19:33:12.740+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/place/2384290/info", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}

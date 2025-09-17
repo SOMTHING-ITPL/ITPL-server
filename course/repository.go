@@ -97,7 +97,15 @@ func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequenc
 	return nil
 }
 
-func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
+func ModifyCourse(db *gorm.DB, title string, description *string, courseID uint) error {
+	err := db.Model(&Course{}).Where("id = ?", courseID).Updates(Course{
+		Title:       title,
+		Description: description,
+	}).Error
+	return err
+}
+
+func ModifyCourseDetails(db *gorm.DB, courseId uint, details []CourseDetail) error {
 	if err := db.Where("Course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
 		return err
 	}

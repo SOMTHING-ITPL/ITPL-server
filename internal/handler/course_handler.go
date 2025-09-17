@@ -122,10 +122,10 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			break
 		case 2:
 
-			createdCourse = course.TwoDayCourse(h.database, me/*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.TwoDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
 			break
 		case 3:
-			createdCourse = course.ThreeDayCourse(h.database, me/*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.ThreeDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
 			break
 
 		default:
@@ -289,7 +289,9 @@ func (h *CourseHandler) AddPlaceToCourseHandler() gin.HandlerFunc {
 
 func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 	type request struct {
-		Details []course.CourseDetail `json:"details" binding:"required"`
+		Title       string                `json:"title" binding:"required"`
+		Description *string               `json:"description"`
+		Details     []course.CourseDetail `json:"details" binding:"required"`
 	}
 	return func(c *gin.Context) {
 		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
@@ -304,7 +306,12 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 			return
 		}
 
-		if err := course.ModifyCourse(h.database, uint(courseId), req.Details); err != nil {
+		if err := course.ModifyCourseDetails(h.database, uint(courseId), req.Details); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := course.ModifyCourse(h.database, req.Title, req.Description, uint(courseId)); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
