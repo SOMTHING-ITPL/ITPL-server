@@ -113,7 +113,7 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 			return
 		}
 
-		facilities, err := p.performanceRepo.FindFacilities(req.Page, req.Limit, req.Region)
+		facilities, total, err := p.performanceRepo.FindFacilities(req.Page, req.Limit, req.Region)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
@@ -122,7 +122,7 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 			Message: "success",
 			Data: FacilityListRes{
 				Facilities: ToFacilityShortList(facilities),
-				Count:      len(facilities),
+				Count:      int(total), // 이러면 안되는게 맞긴 한데 .. ㅋㅋ 64비트 꽉 차겠음?
 			},
 		})
 	}
@@ -340,11 +340,16 @@ func (p *PerformanceHandler) DeletePerformanceLike() gin.HandlerFunc {
 }
 
 func (p *PerformanceHandler) AiRecommendation() gin.HandlerFunc {
+	type res struct {
+		Performance performanceShort `json:"performance"`
+		Score       float64          `json:"score"`
+	}
+
 	return func(c *gin.Context) {
 		// userIDStr, exists := c.Get("userID") //getUserId
 		// userID, ok := userIDStr.(uint)
 
-		perfIds := make([]uint, 3)
+		perfIds := []uint{200, 201, 203}
 
 		perf, err := p.performanceRepo.GetPerformancesByIDs(perfIds)
 		if err != nil {
@@ -352,11 +357,27 @@ func (p *PerformanceHandler) AiRecommendation() gin.HandlerFunc {
 			return
 		}
 
+		result := make([]res, 0, 3)
+		performanceMap := make(map[uint]performance.Performance)
+		for _, p := range perf {
+			performanceMap[p.ID] = p
+		}
+
+		for idx, score := range perf {
+			idx++
+
+			if perf, ok := performanceMap[score.ID]; ok {
+				result = append(result, res{
+					Performance: ToPerformanceShort(perf),
+					Score:       float64(idx),
+				})
+			}
+		}
+
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    ToPerformanceShortList(perf),
+			Data:    result,
 		})
-		return
 	}
 }
 

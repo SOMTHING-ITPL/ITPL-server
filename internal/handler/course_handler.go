@@ -355,7 +355,7 @@ func (h *CourseHandler) DeleteCourseHandler() gin.HandlerFunc {
 		}
 		err = course.DeleteCourse(h.database, h.bucketBasics, uint(courseId))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete course"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return
 		}
 		c.Status(http.StatusNoContent)
