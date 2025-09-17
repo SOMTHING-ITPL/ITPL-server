@@ -109,6 +109,27 @@ func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
 	return nil
 }
 
+func ModifyCourseDesc(db *gorm.DB, courseId uint, title *string, describ *string) error {
+	updates := map[string]interface{}{}
+
+	if title != nil {
+		updates["title"] = *title
+	}
+	if describ != nil {
+		updates["describ"] = *describ
+	}
+
+	if len(updates) == 0 {
+		return nil
+	}
+
+	if err := db.Model(&Course{}).Where("id = ?", courseId).Updates(updates).Error; err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
 	course, err := GetCourseByCourseId(db, courseId)
 	if err != nil {
