@@ -65,8 +65,11 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 	db := r.db.Model(&Performance{})
 
 	//this should be code 01 02 03 04 ...
-	if genre != 0 {
+	if genre != 0 && genre != 9 {
 		db = db.Where("genre = ?", genre)
+	}
+	if genre == 9 { //내한 여부
+		db = db.Where("is_foreign = ?", "Y")
 	}
 	//서울 .. 득
 	if region != "" {

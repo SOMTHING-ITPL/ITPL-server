@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+service ConcertUpdater {
+  rpc UpdateConcerts (UpdateRequest) returns (UpdateResponse);
+}
+
+message Concert {
+  string id = 1;
+  int32 genre = 2;             // bigint 매핑
+  repeated string cast = 3;
+  repeated string keyword = 4; // 20개
+  string title = 5;            // 공연 이름
+  string updated_at = 6;       // ISO datetime
+}
+
+message UpdateRequest {
+  repeated Concert concerts = 1;
+}
+
+message UpdateResponse {
+  bool success = 1;
+  string message = 2;
+}
