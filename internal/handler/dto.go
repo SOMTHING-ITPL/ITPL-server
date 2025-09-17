@@ -108,7 +108,6 @@ func ToCourseInfo(course course.Course) CourseInfoResponse {
 		Description: course.Description,
 		IsAICreated: course.IsAICreated,
 		FacilityID:  course.FacilityID,
-		ImageKey:    course.ImageKey,
 	}
 }
 

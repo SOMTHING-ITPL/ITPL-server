@@ -175,6 +175,15 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "course does not exist"})
 			return
 		}
+		var imageURL *string
+		if co.ImageKey != nil {
+			URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *co.ImageKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
+				return
+			}
+			imageURL = &URL
+		}
 
 		courseInfo := CourseInfoResponse{
 			ID:          co.ID,
@@ -185,7 +194,7 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			Description: co.Description,
 			IsAICreated: co.IsAICreated,
 			FacilityID:  co.FacilityID,
-			ImageKey:    co.ImageKey,
+			ImageURL:    imageURL,
 		}
 		details, err := course.GetCourseDetails(h.database, uint(courseId))
 		if err != nil {
@@ -233,8 +242,18 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: "})
 			return
 		}
+
 		var courseInfos []CourseInfoResponse
 		for _, course := range courses {
+			var imageURL *string
+			if course.ImageKey != nil {
+				URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *course.ImageKey)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
+					return
+				}
+				imageURL = &URL
+			}
 			courseInfos = append(courseInfos, CourseInfoResponse{
 				ID:          course.ID,
 				CreatedAt:   course.CreatedAt.Format(time.RFC3339),
@@ -244,7 +263,7 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 				Description: course.Description,
 				IsAICreated: course.IsAICreated,
 				FacilityID:  course.FacilityID,
-				ImageKey:    course.ImageKey,
+				ImageURL:    imageURL,
 			})
 		}
 
@@ -323,12 +342,12 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get course ID
-		courseID := c.PostForm("course_id")
+		courseID := c.Param("course_id")
 		icourseID, err := strconv.ParseUint(courseID, 10, 32)
 		ucourseID := uint(icourseID)
 
 		// Upload image to S3
-		file, err := c.FormFile("image") // images -> image (단수)
+		file, err := c.FormFile("image")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
 			return
