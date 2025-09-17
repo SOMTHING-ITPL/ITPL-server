@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws"
@@ -36,21 +37,29 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			return
 		}
 
-		category, err := strconv.ParseInt(c.Query("category"), 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"invalid category": err})
-			return
-		}
+		// category, err := strconv.ParseInt(c.Query("category"), 10, 64)
+		category := c.Query("category")
+		keyword := c.Query("keyword")
 
 		coord := place.Coordinate{
 			Latitude:  lat,
 			Longitude: lon,
 		}
 
-		places, err := place.LoadNearPlaces(coord, category, h.database, 3000 /* radius in meters, default:3km */)
+		places, err := place.LoadNearPlaces(coord, &category, h.database, 3000)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
+		}
+
+		if keyword != "" {
+			filtered := []place.Place{}
+			for _, p := range places {
+				if strings.Contains(p.Title, keyword) {
+					filtered = append(filtered, p)
+				}
+			}
+			places = filtered
 		}
 
 		var result []place.PlaceWithReview

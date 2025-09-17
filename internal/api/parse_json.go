@@ -20,6 +20,7 @@ type Item struct {
 	MapY        string `json:"mapy"`
 	FirstImage  string `json:"firstimage"`
 	CreatedTime string `json:"createdtime"`
+	CategoryID  string `json:"contenttypeid"`
 }
 
 // Items 구조체: JSON "items" 필드
