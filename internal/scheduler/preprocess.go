@@ -26,7 +26,7 @@ func getSystemPrompt() string {
 	
 	Use this genre list (return integer only):
 	1: KPOP, 2: Rock/Metal, 3: Ballad, 4: Rap/Hip-hop, 5: Folk/Trot,
-	6: Fan Meeting, 7: Indie, 8: Jazz/Soul, 9: International Artist (Visit Korea),
+	6: Fan Meeting, 7: Indie, 8: Jazz/Soul,
 	10: R&B, 11: EDM, 12: Dinner Show, 13: Others
 	
 	- The "keyword" field must contain exactly 20 core keywords joined with the literal string "|"
