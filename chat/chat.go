@@ -36,8 +36,8 @@ func (c *ChatRoomMember) BroadcastToRoom(room *ChatRoom, message ChatMessage, db
 		}
 
 		go func(m *ChatRoomMember) {
-			m.Mu.Lock()
-			defer m.Mu.Unlock()
+			m.Lock()
+			defer m.Unlock()
 			if m.Conn != nil {
 				if err := m.Conn.WriteJSON(message); err != nil {
 					log.Printf("Failed to send message to user %d: %v\n", m.UserID, err)

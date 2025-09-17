@@ -1,8 +1,10 @@
 package course
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/gorm"
@@ -53,12 +55,12 @@ func GetCourseDetails(db *gorm.DB, courseId uint) ([]CourseDetail, error) {
 func GetLastCoordinate(db *gorm.DB, course Course) place.Coordinate {
 	details, err := GetCourseDetails(db, course.ID)
 	if err != nil {
-		defer log.Fatalf("failed to get course detail")
+		defer log.Printf("failed to get course detail")
 	}
 	last := details[len(details)]
 	lastPlace, err := place.GetPlaceById(db, last.ID)
 	if err != nil {
-		defer log.Fatalf("failed to get place")
+		defer log.Printf("failed to get place")
 	}
 	return place.Coordinate{
 		Latitude:  lastPlace.Latitude,
@@ -78,7 +80,7 @@ func GetSpecificCouseDetail(db *gorm.DB, course Course, day, sequence int) Cours
 func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequence int) error {
 	place, err := place.GetPlaceById(db, placeId)
 	if err != nil {
-		defer log.Fatalf("place is not found")
+		defer log.Printf("place is not found")
 	}
 	courseDetail := CourseDetail{
 		CourseID:   courseId,
@@ -96,12 +98,29 @@ func AddPlaceToCourse(db *gorm.DB, courseId uint, placeId uint, day int, sequenc
 	return nil
 }
 
-func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
+func ModifyCourse(db *gorm.DB, title string, description *string, courseID uint) error {
+	err := db.Model(&Course{}).Where("id = ?", courseID).Updates(Course{
+		Title:       title,
+		Description: description,
+	}).Error
+	return err
+}
+
+func ModifyCourseDetails(db *gorm.DB, courseId uint, details []CourseDetail) error {
 	if err := db.Where("Course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
 		return err
 	}
 	for _, detail := range details {
 		detail.CourseID = courseId
+		p, err := place.GetPlaceById(db, detail.PlaceID)
+		if err != nil {
+			return fmt.Errorf("place does not exist: %w", err)
+		}
+		detail.PlaceTitle = p.Title
+		detail.Address = p.Address
+		detail.Latitud = p.Latitude
+		detail.Longitude = p.Longitude
+
 		if err := db.Create(&detail).Error; err != nil {
 			return err
 		}
@@ -109,13 +128,17 @@ func ModifyCourse(db *gorm.DB, courseId uint, details []CourseDetail) error {
 	return nil
 }
 
-func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) {
+func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) error {
 	course, err := GetCourseByCourseId(db, courseId)
 	if err != nil {
-		defer log.Fatalf("course does not exist : %v", err)
+		return fmt.Errorf("course does not exist: %w", err)
 	}
+
 	course.ImageKey = key
-	db.Save(&course)
+	if err := db.Save(&course).Error; err != nil {
+		return fmt.Errorf("failed to save course image key: %w", err)
+	}
+	return nil
 }
 
 func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
@@ -125,12 +148,27 @@ func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
 	return nil
 }
 
-func DeleteCourse(db *gorm.DB, courseId uint) error {
+func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) error {
+
+	deleteCourse, err := GetCourseByCourseId(db, courseId)
+	if err != nil {
+		return err
+	}
+
 	if err := db.Where("course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
 		return err
 	}
 	if err := db.Where("id = ?", courseId).Delete(&Course{}).Error; err != nil {
 		return err
 	}
+
+	if deleteCourse.ImageKey == nil {
+		return nil
+	}
+
+	if err = aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *deleteCourse.ImageKey); err != nil {
+		return err
+	}
+
 	return nil
 }

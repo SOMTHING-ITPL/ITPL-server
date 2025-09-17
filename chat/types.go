@@ -16,22 +16,25 @@ type Region struct {
 
 type ChatRoom struct {
 	gorm.Model
-	Title          string            `json:"title" gorm:"column:title"`
-	Members        []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
-	PerformanceDay int64             `json:"performance_day"`
-	MaxMembers     int               `json:"max_members"`
-	Departure      Region            `json:"departure"`
-	Arrival        Region            `json:"arrival"`
+	Members   []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
+	Departure Region            `json:"departure"`
+	Arrival   Region            `json:"arrival"`
+
+	Title          string  `json:"title" gorm:"column:title"`
+	ImageKey       *string `json:"image_key,omitempty" gorm:"column:image_key"`
+	PerformanceDay int64   `json:"performance_day"`
+	MaxMembers     int     `json:"max_members"`
 }
 
 type ChatRoomMember struct {
-	ChatRoomID uint `gorm:"primaryKey"`
-	UserID     uint `gorm:"primaryKey"`
-	IsAdmin    bool `gorm:"column:is_admin;default:false"`
-	JoinedAt   time.Time
-	User       user.User `gorm:"foreignKey:UserID"`
-	Conn       *websocket.Conn
-	Mu         sync.Mutex
+	User user.User `gorm:"foreignKey:UserID"`
+	sync.Mutex
+	*websocket.Conn
+
+	ChatRoomID uint      `json:"chat_room_id" gorm:"primaryKey"`
+	UserID     uint      `json:"user_id" gorm:"primaryKey"`
+	IsAdmin    bool      `json:"is_admin" gorm:"column:is_admin;default:false"`
+	JoinedAt   time.Time `json:"joined_at" gorm:"column:joined_at"`
 }
 
 type ChatMessage struct {

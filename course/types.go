@@ -6,6 +6,7 @@ import (
 
 type Course struct {
 	gorm.Model
+
 	UserID      uint    `json:"user_id"`
 	Title       string  `json:"title"`
 	Description *string `json:"description"`
@@ -16,6 +17,7 @@ type Course struct {
 
 type CourseDetail struct {
 	gorm.Model
+
 	CourseID   uint    `json:"course_id"`
 	Day        int     `json:"day"`
 	Sequence   int     `json:"sequence"`

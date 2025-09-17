@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -20,7 +21,7 @@ func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance
 		database:        db,
 		userRepository:  userRepo,
 		performanceRepo: pRepo,
-		BucketBasics:    bucketBasics,
+		bucketBasics:    bucketBasics,
 	}
 }
 
@@ -40,7 +41,11 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
 			return
 		}
-		userID, _ := uid.(uint)
+		userID, ok := uid.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
 		user, err := h.userRepository.GetById(userID)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
@@ -52,9 +57,9 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 		if err == nil {
 			// 업로드 처리
 			key, err := aws.UploadToS3(
-				h.BucketBasics.S3Client,
-				h.BucketBasics.BucketName,
-				fmt.Sprintf("course_image/%d/%d", userID, facilityId),
+				h.bucketBasics.S3Client,
+				h.bucketBasics.BucketName,
+				fmt.Sprintf("course_image/%d/%d", userID, facilityId), /*prefix*/
 				file,
 			)
 			if err != nil {
@@ -74,6 +79,203 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 		}
 
 		c.Status(http.StatusCreated)
+	}
+}
+
+func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
+	type request struct {
+		FacilityID uint `json:"facility_id"`
+		Days       uint `json:"days"`
+	}
+	type response struct {
+		Course        CourseInfoResponse
+		CourseDetails []CourseDetailResponse
+	}
+	return func(c *gin.Context) {
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, ok := uid.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		me, err := h.userRepository.GetById(userID)
+		facility, err := h.performanceRepo.GetFacilityById(req.FacilityID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
+
+		var createdCourse course.Course
+		switch req.Days {
+		case 1:
+			createdCourse = course.OneDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			break
+		case 2:
+
+			createdCourse = course.TwoDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			break
+		case 3:
+			createdCourse = course.ThreeDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			break
+
+		default:
+			c.JSON(http.StatusOK, gin.H{"message": "cannot generate course"})
+			return
+		}
+
+		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
+
+		courseDetailsResponse, err := ToCourseDetails(h.database, courseDetails)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		res := response{
+			Course:        ToCourseInfo(createdCourse),
+			CourseDetails: courseDetailsResponse,
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
+			Message: "Course Created",
+			Data:    res,
+		})
+	}
+}
+
+func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
+	type response struct {
+		Course  CourseInfoResponse
+		Details []CourseDetailResponse `json:"details,omitempty"`
+	}
+
+	return func(c *gin.Context) {
+		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
+			return
+		}
+
+		co, err := course.GetCourseByCourseId(h.database, uint(courseId))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "course does not exist"})
+			return
+		}
+		var imageURL *string
+		if co.ImageKey != nil {
+			URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *co.ImageKey)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
+				return
+			}
+			imageURL = &URL
+		}
+
+		courseInfo := CourseInfoResponse{
+			ID:          co.ID,
+			CreatedAt:   co.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:   co.UpdatedAt.Format(time.RFC3339),
+			UserID:      co.UserID,
+			Title:       co.Title,
+			Description: co.Description,
+			IsAICreated: co.IsAICreated,
+			FacilityID:  co.FacilityID,
+			ImageURL:    imageURL,
+		}
+		details, err := course.GetCourseDetails(h.database, uint(courseId))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: "})
+			return
+		}
+		courseDetailInfos, err := ToCourseDetails(h.database, details)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		res := response{
+			Course:  courseInfo,
+			Details: courseDetailInfos,
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
+			Message: "Course Details",
+			Data:    res,
+		})
+	}
+}
+
+func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, ok := uid.(uint)
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+
+		courses, err := course.GetCoursesByUserId(h.database, userID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: "})
+			return
+		}
+
+		var courseInfos []CourseInfoResponse
+		for _, course := range courses {
+			var imageURL *string
+			if course.ImageKey != nil {
+				URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *course.ImageKey)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
+					return
+				}
+				imageURL = &URL
+			}
+			courseInfos = append(courseInfos, CourseInfoResponse{
+				ID:          course.ID,
+				CreatedAt:   course.CreatedAt.Format(time.RFC3339),
+				UpdatedAt:   course.UpdatedAt.Format(time.RFC3339),
+				UserID:      userID,
+				Title:       course.Title,
+				Description: course.Description,
+				IsAICreated: course.IsAICreated,
+				FacilityID:  course.FacilityID,
+				ImageURL:    imageURL,
+			})
+		}
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
+			Message: "My Courses",
+			Data:    courseInfos,
+		})
 	}
 }
 
@@ -104,109 +306,11 @@ func (h *CourseHandler) AddPlaceToCourseHandler() gin.HandlerFunc {
 	}
 }
 
-func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
-	type response struct {
-		Course  CourseInfoResponse
-		Details []CourseDetailResponse
-	}
-
-	return func(c *gin.Context) {
-		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
-			return
-		}
-
-		co, err := course.GetCourseByCourseId(h.database, uint(courseId))
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "course does not exist"})
-			return
-		}
-
-		courseInfo := CourseInfoResponse{
-			ID:          co.ID,
-			CreatedAt:   co.CreatedAt.Format(time.RFC3339),
-			UpdatedAt:   co.UpdatedAt.Format(time.RFC3339),
-			UserID:      co.UserID,
-			Title:       co.Title,
-			Description: co.Description,
-			IsAICreated: co.IsAICreated,
-			FacilityID:  co.FacilityID,
-			ImageKey:    co.ImageKey,
-		}
-		details, err := course.GetCourseDetails(h.database, uint(courseId))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get course details: "})
-			return
-		}
-		var courseDetailInfos []CourseDetailResponse
-		for _, detail := range details {
-			courseDetailInfos = append(courseDetailInfos, CourseDetailResponse{
-				ID:         detail.ID,
-				CreatedAt:  detail.CreatedAt.Format(time.RFC3339),
-				UpdatedAt:  detail.UpdatedAt.Format(time.RFC3339),
-				CourseID:   detail.CourseID,
-				Day:        detail.Day,
-				Sequence:   detail.Sequence,
-				PlaceID:    detail.PlaceID,
-				PlaceTitle: detail.PlaceTitle,
-				Address:    detail.Address,
-				Latitud:    detail.Latitud,
-				Longitude:  detail.Longitude,
-			})
-		}
-
-		res := response{
-			Course:  courseInfo,
-			Details: courseDetailInfos,
-		}
-
-		c.JSON(http.StatusOK, CommonRes{
-			Message: "Course Details",
-			Data:    res,
-		})
-	}
-}
-
-func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		uid, ok := c.Get("userID")
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		userID, _ := uid.(uint)
-
-		courses, err := course.GetCoursesByUserId(h.database, userID)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: "})
-			return
-		}
-		var courseInfos []CourseInfoResponse
-		for _, course := range courses {
-			courseInfos = append(courseInfos, CourseInfoResponse{
-				ID:          course.ID,
-				CreatedAt:   course.CreatedAt.Format(time.RFC3339),
-				UpdatedAt:   course.UpdatedAt.Format(time.RFC3339),
-				UserID:      userID,
-				Title:       course.Title,
-				Description: course.Description,
-				IsAICreated: course.IsAICreated,
-				FacilityID:  course.FacilityID,
-				ImageKey:    course.ImageKey,
-			})
-		}
-
-		c.JSON(http.StatusOK, CommonRes{
-			Message: "My Courses",
-			Data:    courseInfos,
-		})
-	}
-}
-
 func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 	type request struct {
-		Details []course.CourseDetail `json:"details" binding:"required"`
+		Title       string                `json:"title" binding:"required"`
+		Description *string               `json:"description"`
+		Details     []course.CourseDetail `json:"details" binding:"required"`
 	}
 	return func(c *gin.Context) {
 		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
@@ -221,7 +325,12 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 			return
 		}
 
-		if err := course.ModifyCourse(h.database, uint(courseId), req.Details); err != nil {
+		if err := course.ModifyCourseDetails(h.database, uint(courseId), req.Details); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := course.ModifyCourse(h.database, req.Title, req.Description, uint(courseId)); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -230,78 +339,20 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 	}
 }
 
-func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
-	type request struct {
-		FacilityID uint `json:"facility_id"`
-		Days       uint `json:"days"`
-	}
-	type response struct {
-		Course        course.Course
-		CourseDetails []course.CourseDetail
-	}
-	return func(c *gin.Context) {
-		var req request
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		uid, ok := c.Get("userID")
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		userID, _ := uid.(uint)
-		me, err := h.userRepository.GetById(userID)
-		facility, err := h.performanceRepo.GetFacilityById(req.FacilityID)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		}
-		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
-
-		var createdCourse course.Course
-		switch req.Days {
-		case 1:
-			createdCourse = course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			break
-		case 2:
-
-			createdCourse = course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			break
-		case 3:
-			createdCourse = course.ThreeDayCourse(h.database, me, "추천 코스", &desc, *facility)
-			break
-
-		default:
-			c.JSON(http.StatusOK, gin.H{"message": "cannot generate course"})
-			return
-		}
-
-		courseDetails, _ := course.GetCourseDetails(h.database, createdCourse.ID)
-		res := response{
-			Course:        createdCourse,
-			CourseDetails: courseDetails,
-		}
-		c.JSON(http.StatusOK, CommonRes{
-			Message: "Course Created",
-			Data:    res,
-		})
-	}
-}
-
 func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// get course ID
-		courseID := c.PostForm("course_id")
+		courseID := c.Param("course_id")
 		icourseID, err := strconv.ParseUint(courseID, 10, 32)
 		ucourseID := uint(icourseID)
 
 		// Upload image to S3
-		file, err := c.FormFile("image") // images -> image (단수)
+		file, err := c.FormFile("image")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
 			return
 		}
-		key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID), file)
+		key, err := aws.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID) /*prefix*/, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 			return
@@ -321,7 +372,7 @@ func (h *CourseHandler) DeleteCourseHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid course ID"})
 			return
 		}
-		err = course.DeleteCourse(h.database, uint(courseId))
+		err = course.DeleteCourse(h.database, h.bucketBasics, uint(courseId))
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 			return

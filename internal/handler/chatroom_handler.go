@@ -1,18 +1,22 @@
 package handler
 
 import (
+	"errors"
+	"fmt"
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository) *ChatRoomHandler {
+func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws.BucketBasics) *ChatRoomHandler {
 	return &ChatRoomHandler{
 		database:       db,
 		userRepository: userRepo,
+		bucketBasics:   bucketBasics,
 	}
 }
 
@@ -40,6 +44,27 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 		}
 		userId, _ := uid.(uint)
 
+		var imageKey *string
+		file, err := c.FormFile("image")
+		if err == nil {
+			// 업로드 처리
+			key, err := aws.UploadToS3(
+				h.bucketBasics.S3Client,
+				h.bucketBasics.BucketName,
+				fmt.Sprintf("chat_image/%d", userId),
+				file,
+			)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imageKey = &key
+		} else if !errors.Is(err, http.ErrMissingFile) {
+			// 파일이 없는 경우는 무시, 그 외 에러만 처리
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read image"})
+			return
+		}
+
 		departure := chat.Region{
 			MapX: request.DepartureLongitude,
 			MapY: request.DepartureLatitude,
@@ -50,7 +75,7 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 			MapY: request.ArrivalLatitude,
 		}
 
-		chatRoom, err := chat.CreateChatRoom(h.userRepository, request.Title, userId, request.PerformanceDay, request.MaxMembers, departure, arrival)
+		chatRoom, err := chat.CreateChatRoom(h.userRepository, request.Title, imageKey, userId, request.PerformanceDay, request.MaxMembers, departure, arrival)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

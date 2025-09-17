@@ -74,7 +74,7 @@ type FacilityDetail struct {
 	SeatCount  string  `json:"seat_count,omitempty"`
 	Phone      *string `json:"phone,omitempty"`     // 전화번호
 	Homepage   *string `json:"homepage,omitempty" ` // 홈페이지
-	Address    string  `json:"addree"`              // 주소
+	Address    string  `json:"address"`              // 주소
 	Latitude   float64 `json:"latitude"`            // 위도
 	Longitude  float64 `json:"longitude"`           // 경도
 
@@ -114,7 +114,7 @@ type CourseInfoResponse struct {
 	Description *string `json:"description,omitempty"`
 	IsAICreated bool    `json:"is_ai_created"`
 	FacilityID  uint    `json:"facility_id"`
-	ImageKey    *string `json:"image_key,omitempty"`
+	ImageURL    *string `json:"image_url,omitempty"`
 }
 
 type CourseDetailResponse struct {
@@ -126,10 +126,12 @@ type CourseDetailResponse struct {
 	Sequence   int     `json:"sequence"`
 	PlaceID    uint    `json:"place_id"`
 	PlaceTitle string  `json:"place_title"`
+	PlaceImage string  `json:"place_image,omitempty"`
 	Address    string  `json:"address"`
 	Latitud    float64 `json:"latitude"`
 	Longitude  float64 `json:"longitude"`
 }
+
 type PreferSearchResponse struct {
 	ID       uint   `json:"id"`
 	Name     string `json:"name"`

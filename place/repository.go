@@ -60,7 +60,7 @@ func LoadNearPlaces(c Coordinate, category *string, db *gorm.DB, radius int64) (
 		params["contentTypeId"] = *category
 	}
 
-	finalurl, err := api.BuildURL(api_url, params)
+	finalurl, err := api.BuildURL(apiURL, params)
 	if err != nil {
 		return nil, err
 	}
@@ -125,14 +125,14 @@ func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 	return result, err
 }
 
-func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceWithReview, error) {
+func GetPlaceInfo(db *gorm.DB, placeID uint) (PlaceWithReview, error) {
 	var reviews []PlaceReview
-	err := db.Preload("Images").Where("place_id = ?", placeId).Find(&reviews).Error
+	err := db.Preload("Images").Where("place_id = ?", placeID).Find(&reviews).Error
 	if err != nil {
 		log.Printf("Failed to Load Review Images %v: ", err)
 	}
-	place, err := GetPlaceById(db, placeId)
-	reviewInfo, err := GetReviewInfo(db, placeId)
+	place, err := GetPlaceById(db, placeID)
+	reviewInfo, err := GetReviewInfo(db, placeID)
 	placeWithReview := PlaceWithReview{
 		Place:       *place,
 		ReviewCount: reviewInfo.Count,
@@ -150,4 +150,28 @@ func GetPlaceName(db *gorm.DB, placeID uint) (string, error) {
 	}
 
 	return place.Title, nil
+}
+
+func GetImageByPlaceID(db *gorm.DB, placeID uint) string {
+	place, err := GetPlaceById(db, placeID)
+	if err != nil {
+		defer log.Printf("Place does not exist")
+	}
+	return *place.PlaceImage
+}
+
+func SearchPlacesByTitle(db *gorm.DB, category int64, title string) ([]Place, error) {
+	var places []Place
+	if category == 0 {
+		err := db.Where("title LIKE ?", "%"+title+"%").Find(&places).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err := db.Where("category = ? AND title LIKE ?", category, "%"+title+"%").Find(&places).Error
+	if err != nil {
+		return nil, err
+	}
+	return places, nil
 }

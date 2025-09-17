@@ -1,6 +1,13 @@
 package handler
 
-import "github.com/SOMTHING-ITPL/ITPL-server/performance"
+import (
+	"time"
+
+	"github.com/SOMTHING-ITPL/ITPL-server/course"
+	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"gorm.io/gorm"
+)
 
 // derefString safely dereferences a string pointer, returning empty string if nil
 func derefString(s *string) string {
@@ -89,4 +96,39 @@ func ToFacilityShortList(facilities []performance.Facility) []FacilityShort {
 		details[i] = ToFacilityShort(&f)
 	}
 	return details
+}
+
+func ToCourseInfo(course course.Course) CourseInfoResponse {
+	return CourseInfoResponse{
+		ID:          course.ID,
+		CreatedAt:   course.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:   course.UpdatedAt.Format(time.RFC3339),
+		UserID:      course.UserID,
+		Title:       course.Title,
+		Description: course.Description,
+		IsAICreated: course.IsAICreated,
+		FacilityID:  course.FacilityID,
+	}
+}
+
+func ToCourseDetails(db *gorm.DB, details []course.CourseDetail) ([]CourseDetailResponse, error) {
+	var courseDetailResponse []CourseDetailResponse
+	for _, detail := range details {
+		res := CourseDetailResponse{
+			ID:         detail.ID,
+			CreatedAt:  detail.CreatedAt.Format(time.RFC3339),
+			UpdatedAt:  detail.UpdatedAt.Format(time.RFC3339),
+			CourseID:   detail.CourseID,
+			Day:        detail.Day,
+			Sequence:   detail.Sequence,
+			PlaceID:    detail.PlaceID,
+			PlaceTitle: detail.PlaceTitle,
+			PlaceImage: place.GetImageByPlaceID(db, detail.PlaceID),
+			Address:    detail.Address,
+			Latitud:    detail.Latitud,
+			Longitude:  detail.Longitude,
+		}
+		courseDetailResponse = append(courseDetailResponse, res)
+	}
+	return courseDetailResponse, nil
 }

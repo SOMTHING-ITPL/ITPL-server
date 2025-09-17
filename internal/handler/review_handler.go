@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -13,6 +14,7 @@ import (
 
 func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		splaceId := c.PostForm("place_id")
 		placeID, err := strconv.ParseUint(splaceId, 10, 32)
 		if err != nil {
@@ -27,19 +29,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid rating"})
 			return
 		}
-		var imgUrl []place.ReviewImage
 
-		// 이미지 파일 받기
-		form, _ := c.MultipartForm()
-		files := form.File["images"]
-		for _, fileHeader := range files {
-			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d", placeId), fileHeader)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
-				return
-			}
-			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
-		}
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -47,47 +37,27 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 		}
 		userID, _ := uid.(uint)
 		user, err := h.userRepository.GetById(userID)
-
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
+
+		var imgUrl []place.ReviewImage
+
+		// 이미지 파일 받기
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		for _, fileHeader := range files {
+			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", placeId, userID) /*prefix*/, fileHeader)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
+		}
+
 		if err := place.WriteReview(h.database, placeId, user, text, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
-			return
-		}
-		c.Status(http.StatusNoContent)
-	}
-}
-
-func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
-			return
-		}
-		uid, ok := c.Get("userID")
-		if !ok {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-			return
-		}
-		userID, _ := uid.(uint)
-
-		rev, err := place.GetReviewByID(h.database, uint(revId))
-		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Review not found"})
-			return
-		}
-
-		if rev.UserId != userID {
-			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own reviews"})
-			return
-		}
-
-		err = place.DeleteReview(h.database, uint(revId), *h.BucketBasics)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
 			return
 		}
 		c.Status(http.StatusNoContent)
@@ -124,14 +94,21 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 			})
 		}
 
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "Place Reviews",
-			Data:    response})
+			Data:    response,
+		})
 	}
 }
 
 func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
+
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -166,9 +143,16 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				Images:       imgs,
 			})
 		}
-		c.JSON(http.StatusOK, CommonRes{
+
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+
+		_ = enc.Encode(CommonRes{
 			Message: "My Reviews",
-			Data:    response})
+			Data:    response,
+		})
 	}
 }
 
@@ -191,18 +175,6 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 		rev, err := place.GetReviewByID(h.database, uint(revId))
 		place.DeleteReviewImage(h.database, h.BucketBasics, *rev)
 
-		var imgUrl []place.ReviewImage
-		// 이미지 파일 받기
-		form, _ := c.MultipartForm()
-		files := form.File["images"]
-		for _, fileHeader := range files {
-			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d", rev.PlaceId), fileHeader)
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
-				return
-			}
-			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
-		}
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -214,8 +186,55 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 			return
 		}
+
+		var imgUrl []place.ReviewImage
+		// 이미지 파일 받기
+		form, _ := c.MultipartForm()
+		files := form.File["images"]
+		for _, fileHeader := range files {
+			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", rev.PlaceId, userID) /*prefix*/, fileHeader)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
+				return
+			}
+			imgUrl = append(imgUrl, place.ReviewImage{Key: key})
+		}
 		if err := place.ModifyReview(h.database, rev, rev.PlaceId, user, comment, rating, imgUrl); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to re-upload review"})
+			return
+		}
+		c.Status(http.StatusNoContent)
+	}
+}
+
+func (h *PlaceHandler) DeleteReviewHandler() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		revId, err := strconv.ParseUint(c.Param("review_id"), 10, 32)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid review ID"})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+
+		rev, err := place.GetReviewByID(h.database, uint(revId))
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Review not found"})
+			return
+		}
+
+		if rev.UserId != userID {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You can only delete your own reviews"})
+			return
+		}
+
+		err = place.DeleteReview(h.database, uint(revId), *h.BucketBasics)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete review: " + err.Error()})
 			return
 		}
 		c.Status(http.StatusNoContent)
