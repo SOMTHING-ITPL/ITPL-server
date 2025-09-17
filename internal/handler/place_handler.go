@@ -54,8 +54,12 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 
 		if keyword != "" {
 			filtered := []place.Place{}
+			trimmedKeyword := strings.TrimSpace(keyword)
+
 			for _, p := range places {
-				if strings.Contains(p.Title, keyword) {
+				trimmedTitle := strings.TrimSpace(p.Title)
+
+				if strings.Contains(trimmedTitle, trimmedKeyword) {
 					filtered = append(filtered, p)
 				}
 			}
