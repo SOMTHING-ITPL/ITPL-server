@@ -60,7 +60,7 @@ func LoadNearPlaces(c Coordinate, category *string, db *gorm.DB, radius int64) (
 		params["contentTypeId"] = *category
 	}
 
-	finalurl, err := api.BuildURL(apiURL, params)
+	finalurl, err := api.BuildURL(api_url, params)
 	if err != nil {
 		return nil, err
 	}
