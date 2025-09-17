@@ -127,6 +127,12 @@ func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
 }
 
 func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) error {
+
+	deleteCourse, err := GetCourseByCourseId(db, courseId)
+	if err != nil {
+		return err
+	}
+
 	if err := db.Where("course_id = ?", courseId).Delete(&CourseDetail{}).Error; err != nil {
 		return err
 	}
@@ -134,10 +140,6 @@ func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) er
 		return err
 	}
 
-	deleteCourse, err := GetCourseByCourseId(db, courseId)
-	if err != nil {
-		return err
-	}
 	if err = aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *deleteCourse.ImageKey); err != nil {
 		return err
 	}

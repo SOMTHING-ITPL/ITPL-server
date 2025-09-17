@@ -118,14 +118,14 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 		var createdCourse course.Course
 		switch req.Days {
 		case 1:
-			createdCourse = course.OneDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			createdCourse = course.OneDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
 			break
 		case 2:
 
-			createdCourse = course.TwoDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			createdCourse = course.TwoDayCourse(h.database, me/*user*/, "추천 코스", &desc, *facility)
 			break
 		case 3:
-			createdCourse = course.ThreeDayCourse(h.database, me, "추천 코스", &desc, *facility)
+			createdCourse = course.ThreeDayCourse(h.database, me/*user*/, "추천 코스", &desc, *facility)
 			break
 
 		default:
@@ -326,7 +326,7 @@ func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
 			return
 		}
-		key, err := aws.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID), file)
+		key, err := aws.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID) /*prefix*/, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 			return

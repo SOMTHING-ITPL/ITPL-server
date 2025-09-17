@@ -42,7 +42,7 @@ func upsertByCreatedTime(db *gorm.DB, places []Place) error {
 }
 
 func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB, radius int64) ([]Place, error) {
-	api_url := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
+	apiURL := os.Getenv("TOUR_API_URL") + "/locationBasedList2?"
 	params := map[string]string{
 		"serviceKey":    os.Getenv("SERVICE_KEY"),
 		"numOfRows":     "30",
@@ -57,7 +57,7 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB, radius int64) ([]
 		"contentTypeId": strconv.FormatInt(category, 10),
 	}
 
-	finalurl, err := api.BuildURL(api_url, params)
+	finalurl, err := api.BuildURL(apiURL, params)
 	if err != nil {
 		return nil, err
 	}
@@ -73,12 +73,12 @@ func LoadNearPlaces(c Coordinate, category int64, db *gorm.DB, radius int64) ([]
 
 	for _, item := range items {
 		// Convert item to Place
-		placeId, _ := strconv.ParseInt(item.ContentId, 10, 64)
-		uPlaceId := uint(placeId)
+		placeID, _ := strconv.ParseInt(item.ContentId, 10, 64)
+		uPlaceID := uint(placeID)
 		longitude, _ := strconv.ParseFloat(item.MapX, 64)
 		latitude, _ := strconv.ParseFloat(item.MapY, 64)
 		place := Place{
-			TourapiPlaceId: uPlaceId,
+			TourapiPlaceId: uPlaceID,
 			Category:       category,
 			Title:          item.Title,
 			Address:        item.Addr1 + " " + item.Addr2,
@@ -121,14 +121,14 @@ func GetReviewInfo(db *gorm.DB, placeID uint) (ReviewInfo, error) {
 	return result, err
 }
 
-func GetPlaceInfo(db *gorm.DB, placeId uint) (PlaceWithReview, error) {
+func GetPlaceInfo(db *gorm.DB, placeID uint) (PlaceWithReview, error) {
 	var reviews []PlaceReview
-	err := db.Preload("Images").Where("place_id = ?", placeId).Find(&reviews).Error
+	err := db.Preload("Images").Where("place_id = ?", placeID).Find(&reviews).Error
 	if err != nil {
 		log.Printf("Failed to Load Review Images %v: ", err)
 	}
-	place, err := GetPlaceById(db, placeId)
-	reviewInfo, err := GetReviewInfo(db, placeId)
+	place, err := GetPlaceById(db, placeID)
+	reviewInfo, err := GetReviewInfo(db, placeID)
 	placeWithReview := PlaceWithReview{
 		Place:       *place,
 		ReviewCount: reviewInfo.Count,
@@ -154,4 +154,20 @@ func GetImageByPlaceID(db *gorm.DB, placeID uint) string {
 		defer log.Printf("Place does not exist")
 	}
 	return *place.PlaceImage
+}
+
+func SearchPlacesByTitle(db *gorm.DB, category int64, title string) ([]Place, error) {
+	var places []Place
+	if category == 0 {
+		err := db.Where("title LIKE ?", "%"+title+"%").Find(&places).Error
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err := db.Where("category = ? AND title LIKE ?", category, "%"+title+"%").Find(&places).Error
+	if err != nil {
+		return nil, err
+	}
+	return places, nil
 }
