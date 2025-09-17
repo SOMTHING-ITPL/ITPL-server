@@ -46,7 +46,7 @@ func (h *PlaceHandler) GetPlaceList() gin.HandlerFunc {
 			Longitude: lon,
 		}
 
-		places, err := place.LoadNearPlaces(coord, &category, h.database, 3000)
+		places, err := place.LoadNearPlaces(coord, category, h.database, 3000)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
