@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -32,11 +33,16 @@ func (h *ArtistHandler) GetArtists() gin.HandlerFunc {
 				return
 			}
 			res = append(res, PreferSearchResponse{
+				ID:       a.ID,
 				Name:     a.Name,
 				ImageUrl: url,
 			})
 		}
-		c.JSON(http.StatusOK, CommonRes{
+		c.Writer.Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer.WriteHeader(http.StatusOK)
+		enc := json.NewEncoder(c.Writer)
+		enc.SetEscapeHTML(false)
+		_ = enc.Encode(CommonRes{
 			Message: "success",
 			Data:    res,
 		})

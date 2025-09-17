@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
@@ -16,8 +17,16 @@ import (
 )
 
 func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBasics) *gin.Engine {
-	r := gin.Default()
+	logger, err := NewLogger()
+	if err != nil {
+		fmt.Printf("fail to get logger %s", err)
+	}
 
+	r := gin.New()
+	r.Use(gin.Recovery())
+	r.Use(LoggerMiddleware(logger))
+
+	//이거 좀 너무 더러운데 어케 정리하고 싶음.
 	userRepo := user.NewRepository(db)
 	smtpRepo := email.NewRepository(redisDB)
 	performanceRepo := performance.NewRepository(db, redisDB)
@@ -41,15 +50,16 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 		authGroup := public.Group("/auth")
 		registerAuthRoutes(authGroup, userHandler)
 
-		putData := public.Group("/testdata/sample")
-		putData.POST("/artist", artistHandler.PutArtist())
-		putData.POST("genre", userHandler.PutGenre())
 	}
 
 	protected := r.Group("/api")
 	protected.Use(AuthMiddleware())
 	// protected.Use(~)//should add middleWare
 	{
+		putData := protected.Group("/testdata/sample")
+		putData.POST("/artist", artistHandler.PutArtist())
+		putData.POST("genre", userHandler.PutGenre())
+
 		userGroup := protected.Group("/user")
 		registerUserRoutes(userGroup, userHandler)
 		registerArtistRoutes(userGroup, artistHandler)

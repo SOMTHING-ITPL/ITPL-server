@@ -133,6 +133,7 @@ type CourseDetailResponse struct {
 }
 
 type PreferSearchResponse struct {
+	ID       uint   `json:"id"`
 	Name     string `json:"name"`
 	ImageUrl string `json:"image_url"`
 }
