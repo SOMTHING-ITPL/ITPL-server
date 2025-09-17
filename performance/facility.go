@@ -54,12 +54,18 @@ func (r *Repository) GetFacilityByKopisID(id string) (*Facility, error) {
 	return &facility, nil
 }
 
-func (r *Repository) FindFacilities(page, limit int, region string) ([]Facility, error) {
+func (r *Repository) FindFacilities(page, limit int, region string) ([]Facility, int64, error) {
 	var facilities []Facility
+	var total int64
+
 	db := r.db.Model(&Facility{})
 
 	if region != "" {
 		db = db.Where("region = ?", region)
+	}
+
+	if err := db.Count(&total).Error; err != nil {
+		return nil, 0, err
 	}
 
 	offset := (page - 1) * limit
@@ -68,8 +74,8 @@ func (r *Repository) FindFacilities(page, limit int, region string) ([]Facility,
 		Limit(limit).
 		Offset(offset).
 		Find(&facilities).Error; err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return facilities, nil
+	return facilities, total, nil
 }

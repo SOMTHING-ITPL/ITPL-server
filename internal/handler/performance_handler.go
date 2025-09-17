@@ -113,7 +113,7 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 			return
 		}
 
-		facilities, err := p.performanceRepo.FindFacilities(req.Page, req.Limit, req.Region)
+		facilities, total, err := p.performanceRepo.FindFacilities(req.Page, req.Limit, req.Region)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"fail to get facility": err})
 		}
@@ -122,7 +122,7 @@ func (p *PerformanceHandler) GetFacilityList() gin.HandlerFunc {
 			Message: "success",
 			Data: FacilityListRes{
 				Facilities: ToFacilityShortList(facilities),
-				Count:      len(facilities),
+				Count:      int(total), // 이러면 안되는게 맞긴 한데 .. ㅋㅋ 64비트 꽉 차겠음?
 			},
 		})
 	}
