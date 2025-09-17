@@ -205,13 +205,9 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 }
 
 func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
-
 	type request struct {
-		Details     []course.CourseDetail `json:"details" binding:"required"`
-		Title       *string               `json:"title"`
-		Description *string               `json:"description"`
+		Details []course.CourseDetail `json:"details" binding:"required"`
 	}
-
 	return func(c *gin.Context) {
 		courseId, err := strconv.ParseUint(c.Param("course_id"), 10, 32)
 		if err != nil {
@@ -226,12 +222,8 @@ func (h *CourseHandler) ModifyCourseHandler() gin.HandlerFunc {
 		}
 
 		if err := course.ModifyCourse(h.database, uint(courseId), req.Details); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to update db - course detail"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
-		}
-
-		if err := course.ModifyCourseDesc(h.database, uint(courseId), req.Title, req.Description); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "fail to update db - course"})
 		}
 
 		c.Status(http.StatusNoContent)
