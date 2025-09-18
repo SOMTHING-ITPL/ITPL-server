@@ -141,6 +141,14 @@ func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) error {
 	return nil
 }
 
+func SetPerformanceID(db *gorm.DB, course *Course, performanceId uint) error {
+	course.PerformanceID = &performanceId
+	if err := db.Save(&course).Error; err != nil {
+		return fmt.Errorf("failed to save performance id: %w", err)
+	}
+	return nil
+}
+
 func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
 	if err := db.Where("course_id = ? AND place_id = ?", courseId, placeID).Delete(&CourseDetail{}).Error; err != nil {
 		return err
