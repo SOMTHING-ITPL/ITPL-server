@@ -150,9 +150,12 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		createdCourse.PerformanceID = &req.PerformanceID
+
+		course.SetPerformanceID(h.database, &createdCourse, req.PerformanceID)
+		courseInfo := ToCourseInfo(createdCourse)
+		courseInfo.ImageURL = performance.PosterURL
 		res := response{
-			Course:        ToCourseInfo(createdCourse),
+			Course:        courseInfo,
 			CourseDetails: courseDetailsResponse,
 		}
 
