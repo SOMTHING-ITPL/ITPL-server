@@ -150,3 +150,15 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 		})
 	}
 }
+
+func (h *PlaceHandler) SearchPlacesByTitleHandler() gin.HandlerFunc {
+	type request struct {
+		Title     string  `json:"title" binding:"required"`
+		Category  int     `json:"category"`
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	}
+	return func(c *gin.Context) {
+
+	}
+}
