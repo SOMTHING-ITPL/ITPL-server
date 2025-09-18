@@ -140,7 +140,13 @@ func (r *Repository) GetPerformanceImages(prefId uint) ([]PerformanceImage, erro
 func (r *Repository) GetPerformanceWithTicketsAndImages(perfID uint) (*PerformanceWithTicketsAndImage, error) {
 	var perf Performance
 
-	err := r.db.Preload("TicketSites").Preload("Images").First(&perf, perfID).Error
+	err := r.db.
+		Preload("TicketSites").
+		Preload("Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("url DESC")
+		}).
+		First(&perf, perfID).Error
+
 	if err != nil {
 		return nil, err
 	}
