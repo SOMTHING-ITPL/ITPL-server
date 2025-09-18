@@ -50,4 +50,8 @@ func main() {
 	if err := scheduler.PutPerformanceList(startDayStr, afterSixMonthsStr, false, &todayStr); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
+
+	if err := scheduler.UpdateStatusList(); err != nil {
+		fmt.Errorf("error is occur: update status! %s", err)
+	}
 }

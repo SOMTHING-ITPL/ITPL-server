@@ -119,6 +119,14 @@ func (s *PerformanceScheduler) BuilderPerformance(res *api.PerformanceDetailRes,
 	}, nil
 }
 
+func (s *PerformanceScheduler) UpdateStatusList() error {
+	if err := s.PerformanceRepo.UpdateUglyStatusPerformance(time.Now()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // 공연 목록 조회 -> 공연 상세 조회 / LLM 추가 정보 수집 -> 공연 시설 조회
 func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, isRunnung bool, afterDay *string) error {
 	pge, row := 1, 100
