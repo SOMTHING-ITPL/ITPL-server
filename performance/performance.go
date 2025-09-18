@@ -83,9 +83,9 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 			"title LIKE ? OR `cast` LIKE ? OR `keyword` LIKE ?",
 			likePattern, likePattern, likePattern,
 		)
+	} else {
+		db = db.Where("status IN (?)", []string{"공연중", "공연예정"})
 	}
-
-	db = db.Where("status IN (?)", []string{"공연중", "공연예정"})
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -93,7 +93,7 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 
 	offset := (page - 1) * limit
 	if err := db.
-		Order("created_at DESC").
+		Order("start_date ASC").
 		Limit(limit).
 		Offset(offset).
 		Find(&performances).Error; err != nil {
