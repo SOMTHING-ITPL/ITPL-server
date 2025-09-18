@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
@@ -349,7 +350,11 @@ func (p *PerformanceHandler) AiRecommendation() gin.HandlerFunc {
 		// userIDStr, exists := c.Get("userID") //getUserId
 		// userID, ok := userIDStr.(uint)
 
-		perfIds := []uint{200, 201, 203}
+		perfIds := make([]uint, 3)
+		for i := 0; i < 3; i++ {
+			num := rand.Intn(101) + 480 // 0~100 + 450 = 450~550
+			perfIds[i] = uint(num)
+		}
 
 		perf, err := p.performanceRepo.GetPerformancesByIDs(perfIds)
 		if err != nil {

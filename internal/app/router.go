@@ -26,7 +26,6 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	r.Use(gin.Recovery())
 	r.Use(LoggerMiddleware(logger))
 
-	//이거 좀 너무 더러운데 어케 정리하고 싶음.
 	userRepo := user.NewRepository(db)
 	smtpRepo := email.NewRepository(redisDB)
 	performanceRepo := performance.NewRepository(db, redisDB)

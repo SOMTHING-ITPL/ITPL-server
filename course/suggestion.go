@@ -27,7 +27,7 @@ func OneDayCourse(db *gorm.DB, user user.User, title string, description *string
 		Longitude: facility.Longitude,
 	}
 
-	restaurants, err := place.LoadNearPlaces(coord, "39", db, 3000)
+	restaurants, err := place.LoadNearPlaces(coord, "39", db, 5000)
 	if err != nil {
 		log.Printf("failed to load places")
 	}
