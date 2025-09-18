@@ -78,7 +78,9 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			return
 		}
 
-		c.Status(http.StatusCreated)
+		c.JSON(http.StatusCreated, CommonRes{
+			Message: "Course Created",
+		})
 	}
 }
 

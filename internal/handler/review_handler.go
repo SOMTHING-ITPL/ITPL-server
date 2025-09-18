@@ -60,7 +60,9 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}
-		c.Status(http.StatusNoContent)
+		c.JSON(http.StatusNoContent, CommonRes{
+			Message: "Review Created",
+		})
 	}
 }
 
@@ -133,9 +135,16 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
 				imgs = append(imgs, ReviewImageResponse{URL: url})
 			}
+			p, err := place.GetPlaceById(h.database, r.PlaceId)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get place: "})
+				return
+			}
 			response = append(response, PlaceReviewResponse{
 				ID:           r.ID,
 				UserID:       r.UserId,
+				PlaceID:      r.PlaceId,
+				PlaceName:    p.Title,
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
