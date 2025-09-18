@@ -7,12 +7,13 @@ import (
 type Course struct {
 	gorm.Model
 
-	UserID      uint    `json:"user_id"`
-	Title       string  `json:"title"`
-	Description *string `json:"description"`
-	IsAICreated bool    `json:"is_ai_created"`
-	FacilityID  uint    `json:"facility_id"`
-	ImageKey    *string `json:"image_key,omitempty"`
+	UserID        uint    `json:"user_id"`
+	Title         string  `json:"title"`
+	Description   *string `json:"description"`
+	IsAICreated   bool    `json:"is_ai_created"`
+	FacilityID    uint    `json:"facility_id"`
+	PerformanceID *uint   `json:"performance_id,omitempty"`
+	ImageKey      *string `json:"image_key,omitempty"`
 }
 
 type CourseDetail struct {

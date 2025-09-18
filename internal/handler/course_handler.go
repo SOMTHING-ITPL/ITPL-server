@@ -78,14 +78,17 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			return
 		}
 
-		c.Status(http.StatusCreated)
+		c.JSON(http.StatusCreated, CommonRes{
+			Message: "Course Created",
+		})
 	}
 }
 
 func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 	type request struct {
-		FacilityID uint `json:"facility_id"`
-		Days       uint `json:"days"`
+		FacilityID    uint `json:"facility_id"`
+		PerformanceID uint `json:"performance_id"`
+		Days          uint `json:"days"`
 	}
 	type response struct {
 		Course        CourseInfoResponse
@@ -113,19 +116,26 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		performance, err := h.performanceRepo.GetPerformanceById(req.PerformanceID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid performance id"})
+			return
+		}
+
+		title := fmt.Sprintf("%s에서의 %s 관람 코스", facility.Name, performance.Title)
 		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
 
 		var createdCourse course.Course
 		switch req.Days {
 		case 1:
-			createdCourse = course.OneDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.OneDayCourse(h.database, me /*user*/, title, &desc, *facility)
 			break
 		case 2:
 
-			createdCourse = course.TwoDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.TwoDayCourse(h.database, me /*user*/, title, &desc, *facility)
 			break
 		case 3:
-			createdCourse = course.ThreeDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.ThreeDayCourse(h.database, me /*user*/, title, &desc, *facility)
 			break
 
 		default:
@@ -140,6 +150,7 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
+		createdCourse.PerformanceID = &req.PerformanceID
 		res := response{
 			Course:        ToCourseInfo(createdCourse),
 			CourseDetails: courseDetailsResponse,
@@ -183,6 +194,16 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 				return
 			}
 			imageURL = &URL
+		} else {
+			if co.IsAICreated {
+				performance, err := h.performanceRepo.GetPerformanceById(*co.PerformanceID)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+					return
+				}
+				defaultURL := performance.PosterURL
+				imageURL = defaultURL
+			}
 		}
 
 		courseInfo := CourseInfoResponse{
@@ -253,6 +274,16 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 					return
 				}
 				imageURL = &URL
+			} else {
+				if course.IsAICreated {
+					performance, err := h.performanceRepo.GetPerformanceById(*course.PerformanceID)
+					if err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+						return
+					}
+					defaultURL := performance.PosterURL
+					imageURL = defaultURL
+				}
 			}
 			courseInfos = append(courseInfos, CourseInfoResponse{
 				ID:          course.ID,
