@@ -18,6 +18,8 @@ FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
+ENV TZ=Asia/Seoul
+
 WORKDIR /app   
 
 COPY --from=builder /app/main /usr/local/bin/main
