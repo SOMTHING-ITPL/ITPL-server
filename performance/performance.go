@@ -164,7 +164,7 @@ func (r *Repository) GetRecentPerformance(targetDate time.Time, num int) ([]Perf
 	var perfs []Performance
 
 	//start Date 바로 직전인 것만 가져옴
-	err := r.db.Where("start_date >= ?", targetDate).Order("start_date DESC").Limit(num).Find(&perfs).Error
+	err := r.db.Where("start_date >= ?", targetDate).Order("start_date ASC").Limit(num).Find(&perfs).Error
 
 	if err != nil {
 		log.Printf("Fail to Get start_date : %s", err)
