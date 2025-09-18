@@ -349,22 +349,28 @@ func (p *PerformanceHandler) AiRecommendation() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// userIDStr, exists := c.Get("userID") //getUserId
 		// userID, ok := userIDStr.(uint)
-
-		perfIds := make([]uint, 3)
-		for i := 0; i < 3; i++ {
-			num := rand.Intn(101) + 480 // 0~100 + 450 = 450~550
-			perfIds[i] = uint(num)
-		}
-
-		perf, err := p.performanceRepo.GetPerformancesByIDs(perfIds)
+		perf, _, err := p.performanceRepo.FindPerformances(1, 200, 0, "", "")
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "gail to get perfs"})
 			return
 		}
 
+		n := 3
+		if len(perf) < n {
+			n = len(perf)
+		}
+
+		shuffled := make([]performance.Performance, len(perf))
+		copy(shuffled, perf)
+		rand.Shuffle(len(shuffled), func(i, j int) {
+			shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+		})
+
+		randomPerf := shuffled[:n]
+
 		result := make([]res, 0, 3)
 		performanceMap := make(map[uint]performance.Performance)
-		for _, p := range perf {
+		for _, p := range randomPerf {
 			performanceMap[p.ID] = p
 		}
 
