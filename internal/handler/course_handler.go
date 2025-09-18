@@ -150,6 +150,7 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
+		createdCourse.PerformanceID = &req.PerformanceID
 		res := response{
 			Course:        ToCourseInfo(createdCourse),
 			CourseDetails: courseDetailsResponse,
@@ -193,6 +194,16 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 				return
 			}
 			imageURL = &URL
+		} else {
+			if co.IsAICreated {
+				performance, err := h.performanceRepo.GetPerformanceById(*co.PerformanceID)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+					return
+				}
+				defaultURL := performance.PosterURL
+				imageURL = defaultURL
+			}
 		}
 
 		courseInfo := CourseInfoResponse{
@@ -263,6 +274,16 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 					return
 				}
 				imageURL = &URL
+			} else {
+				if course.IsAICreated {
+					performance, err := h.performanceRepo.GetPerformanceById(*course.PerformanceID)
+					if err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+						return
+					}
+					defaultURL := performance.PosterURL
+					imageURL = defaultURL
+				}
 			}
 			courseInfos = append(courseInfos, CourseInfoResponse{
 				ID:          course.ID,
