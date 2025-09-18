@@ -25,7 +25,7 @@ type Facility struct {
 	SeatCount       *string `gorm:"type:varchar(255)" json:"seat_count"`
 	Phone           *string `gorm:"type:varchar(255)" json:"phone"`      // 전화번호
 	Homepage        *string `gorm:"type:varchar(255)" json:"homepage" `  // 홈페이지
-	Address         string  `gorm:"type:varchar(255)" json:"address"`     // 주소
+	Address         string  `gorm:"type:varchar(255)" json:"address"`    // 주소
 	Latitude        float64 `gorm:"type:decimal(10,7)" json:"latitude"`  // 위도
 	Longitude       float64 `gorm:"type:decimal(10,7)" json:"longitude"` // 경도
 	Region          string  `gorm:"type:varchar(255)" json:"region"`

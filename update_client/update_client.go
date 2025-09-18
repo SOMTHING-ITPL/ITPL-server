@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -23,59 +24,40 @@ func NewClient(socket string) (*UpdateClient, error) {
 	return &UpdateClient{Conn: conn, Client: client}, nil
 }
 
-func (c *UpdateClient) UpdateConcert(concert *[]performance.Performance) error {
+func (c *UpdateClient) UpdateConcert(concerts []performance.Performance) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) //5초 timeout?
 	defer cancel()
 
-	resp, err := c.Client.UpdateConcerts(ctx, req)
+	req := []*Concert{}
+	for _, ccn := range concerts {
+		parsedCast, err := performance.ParsingCast(*ccn.Cast)
+		if err != nil {
+			return fmt.Errorf("fail to parse cast: %w", err)
+		}
+		parsedKeyword, err := performance.ParsingKeyword(ccn.Keyword)
+		if err != nil {
+			return fmt.Errorf("fail to parse keyword: %w", err)
+		}
+
+		req = append(req, &Concert{
+			Id:        strconv.FormatUint(uint64(ccn.ID), 10),
+			Title:     ccn.Title,
+			Genre:     int32(ccn.Genre),
+			Cast:      parsedCast,
+			Keyword:   parsedKeyword,
+			UpdatedAt: ccn.UpdatedAt.Format(time.RFC3339),
+		})
+	}
+
+	resp, err := c.Client.UpdateConcerts(ctx, &UpdateRequest{
+		Concerts: req,
+	})
+
 	if err != nil {
 		log.Fatalf("UpdateConcerts RPC failed: %v", err)
+		return err
 	}
 
-	fmt.Printf("✅ 서버 응답: success=%v, message=%s\n", resp.GetSuccess(), resp.GetMessage())
-
-}
-
-func main() {
-	// 서버 연결
-	conn, err := grpc.NewClient("localhost:50052", grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		log.Fatalf("failed to connect: %v", err)
-	}
-	defer conn.Close()
-
-	client := NewConcertUpdaterClient(conn)
-
-	// 요청 데이터 준비
-	req := &UpdateRequest{
-		Concerts: []*Concert{
-			{
-				Id:        "123",
-				Title:     "뮤지컬 라이온킹",
-				Genre:     1,
-				Cast:      []string{"홍길동", "김철수"},
-				Keyword:   []string{"뮤지컬", "가족"},
-				UpdatedAt: time.Now().Format(time.RFC3339),
-			},
-			{
-				Id:        "456",
-				Title:     "재즈 콘서트",
-				Genre:     2,
-				Cast:      []string{"존 콜트레인"},
-				Keyword:   []string{"재즈", "연주"},
-				UpdatedAt: time.Now().Format(time.RFC3339),
-			},
-		},
-	}
-
-	// RPC 호출
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	resp, err := client.UpdateConcerts(ctx, req)
-	if err != nil {
-		log.Fatalf("UpdateConcerts RPC failed: %v", err)
-	}
-
-	fmt.Printf("✅ 서버 응답: success=%v, message=%s\n", resp.GetSuccess(), resp.GetMessage())
+	fmt.Printf("서버 응답: success=%v, message=%s\n", resp.GetSuccess(), resp.GetMessage())
+	return nil
 }
