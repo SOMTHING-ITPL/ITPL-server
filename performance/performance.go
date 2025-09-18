@@ -179,3 +179,33 @@ func (r *Repository) GetRecentPerformance(targetDate time.Time, num int) ([]Perf
 
 	return perfs, nil
 }
+
+func (r *Repository) UpdateUglyStatusPerformance(targetDate time.Time) error {
+
+	// 공연 완료
+	if err := r.db.Model(&Performance{}).
+		Where("end_date < ?", targetDate).
+		Update("state", "공연완료").Error; err != nil {
+		log.Printf("failed to update 공연완료: %v", err)
+		return err
+	}
+
+	// 공연 중
+	if err := r.db.Model(&Performance{}).
+		Where("start_date <= ?", targetDate).
+		Where("end_date >= ?", targetDate).
+		Update("state", "공연중").Error; err != nil {
+		log.Printf("failed to update 공연중: %v", err)
+		return err
+	}
+
+	// 공연 예정
+	if err := r.db.Model(&Performance{}).
+		Where("start_date > ?", targetDate).
+		Update("state", "공연예정").Error; err != nil {
+		log.Printf("failed to update 공연예정: %v", err)
+		return err
+	}
+
+	return nil
+}
