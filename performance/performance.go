@@ -185,7 +185,7 @@ func (r *Repository) UpdateUglyStatusPerformance(targetDate time.Time) error {
 	// 공연 완료
 	if err := r.db.Model(&Performance{}).
 		Where("end_date < ?", targetDate).
-		Update("state", "공연완료").Error; err != nil {
+		Update("status", "공연완료").Error; err != nil {
 		log.Printf("failed to update 공연완료: %v", err)
 		return err
 	}
@@ -194,7 +194,7 @@ func (r *Repository) UpdateUglyStatusPerformance(targetDate time.Time) error {
 	if err := r.db.Model(&Performance{}).
 		Where("start_date <= ?", targetDate).
 		Where("end_date >= ?", targetDate).
-		Update("state", "공연중").Error; err != nil {
+		Update("status", "공연중").Error; err != nil {
 		log.Printf("failed to update 공연중: %v", err)
 		return err
 	}
@@ -202,7 +202,7 @@ func (r *Repository) UpdateUglyStatusPerformance(targetDate time.Time) error {
 	// 공연 예정
 	if err := r.db.Model(&Performance{}).
 		Where("start_date > ?", targetDate).
-		Update("state", "공연예정").Error; err != nil {
+		Update("status", "공연예정").Error; err != nil {
 		log.Printf("failed to update 공연예정: %v", err)
 		return err
 	}
