@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -13,7 +13,7 @@ import (
 type UserHandler struct {
 	userRepository *user.Repository
 	smtpRepository *email.Repository
-	BucketBasics   *aws.BucketBasics
+	BucketBasics   *aws_client.BucketBasics
 }
 
 type PerformanceHandler struct {
@@ -23,20 +23,20 @@ type PerformanceHandler struct {
 type PlaceHandler struct {
 	database       *gorm.DB
 	userRepository *user.Repository
-	BucketBasics   *aws.BucketBasics
+	BucketBasics   *aws_client.BucketBasics
 }
 
 type CourseHandler struct {
 	database        *gorm.DB
 	userRepository  *user.Repository
 	performanceRepo *performance.Repository
-	bucketBasics    *aws.BucketBasics
+	bucketBasics    *aws_client.BucketBasics
 }
 
 type ChatRoomHandler struct {
 	database       *gorm.DB
 	userRepository *user.Repository
-	bucketBasics   *aws.BucketBasics
+	bucketBasics   *aws_client.BucketBasics
 }
 
 type CalendarHandler struct {
@@ -46,5 +46,5 @@ type CalendarHandler struct {
 
 type ArtistHandler struct {
 	artistRepo   *artist.Repository
-	BucketBasics *aws.BucketBasics
+	BucketBasics *aws_client.BucketBasics
 }

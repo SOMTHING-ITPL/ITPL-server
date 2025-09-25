@@ -1,4 +1,4 @@
-package aws
+package aws_client
 
 import (
 	"context"

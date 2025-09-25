@@ -1,7 +1,7 @@
 package place
 
 import (
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/gorm"
 )
@@ -84,7 +84,7 @@ func ModifyReview(db *gorm.DB, rev *PlaceReview, placeId uint, user user.User, c
 	return nil
 }
 
-func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error {
+func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws_client.BucketBasics) error {
 	// Load images
 	var images []ReviewImage
 	if err := db.Where("review_id = ?", revId).Find(&images).Error; err != nil {
@@ -93,7 +93,7 @@ func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error 
 
 	// Delete images from S3
 	for _, img := range images {
-		err := aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, img.Key)
+		err := aws_client.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, img.Key)
 		if err != nil {
 			return err
 		}
@@ -112,7 +112,7 @@ func DeleteReview(db *gorm.DB, revId uint, bucketBasics aws.BucketBasics) error 
 	return nil
 }
 
-func DeleteReviewImage(db *gorm.DB, bucketBasics *aws.BucketBasics, rev PlaceReview) error {
+func DeleteReviewImage(db *gorm.DB, bucketBasics *aws_client.BucketBasics, rev PlaceReview) error {
 	var images []ReviewImage
 	if err := db.Where("review_id = ?", rev.ID).Find(&images).Error; err != nil {
 		return err
@@ -120,7 +120,7 @@ func DeleteReviewImage(db *gorm.DB, bucketBasics *aws.BucketBasics, rev PlaceRev
 
 	// Delete images from S3
 	for _, img := range images {
-		err := aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, img.Key)
+		err := aws_client.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, img.Key)
 		if err != nil {
 			return err
 		}

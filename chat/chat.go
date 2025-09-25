@@ -3,13 +3,38 @@ package chat
 import (
 	"context"
 	"log"
+	"mime/multipart"
+	"time"
 
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func (c *ChatRoomMember) BroadcastToRoom(room *ChatRoom, message ChatMessage, db *dynamodb.Client, tableName string) {
+func BuildMessage(senderID, roomID uint, text string) TextMessage {
+	return TextMessage{
+		SenderID:  senderID,
+		Text:      text,
+		RoomID:    roomID,
+		Timestamp: time.Now(),
+	}
+}
+
+func BuildImage(cfg aws_client.BucketBasics, senderID, roomID uint, head *multipart.FileHeader) (ImageMessage, error) {
+	key, err := aws_client.UploadToS3(cfg.S3Client, cfg.BucketName, "chat_images", head)
+	if err != nil {
+		return ImageMessage{}, err
+	}
+	return ImageMessage{
+		SenderID:  senderID,
+		RoomID:    roomID,
+		Timestamp: time.Now(),
+		ImageKey:  key,
+	}, nil
+}
+
+func (c *ChatRoomMember) BroadcastText(room *ChatRoom, message TextMessage, db *dynamodb.Client, tableName string) {
 	go func() {
 		av, err := attributevalue.MarshalMap(message)
 		if err != nil {
@@ -45,4 +70,7 @@ func (c *ChatRoomMember) BroadcastToRoom(room *ChatRoom, message ChatMessage, db
 			}
 		}(member)
 	}
+}
+
+func (c *ChatRoomMember) BroadCastImage() {
 }

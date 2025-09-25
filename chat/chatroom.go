@@ -117,7 +117,6 @@ func GetMembers(db *gorm.DB, room ChatRoom) ([]ChatRoomMember, error) {
 	return members, nil
 }
 
-func LeaveChatRoom(db *gorm.DB, userId uint, roomId uint) error{
+func LeaveChatRoom(db *gorm.DB, userId uint, roomId uint) error {
 	return db.Where("chat_room_id = ? AND user_id = ?", roomId, userId).Delete(&ChatRoomMember{}).Error
 }
-

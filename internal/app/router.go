@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBasics) *gin.Engine {
+func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws_client.BucketBasics) *gin.Engine {
 	logger, err := NewLogger()
 	if err != nil {
 		fmt.Printf("fail to get logger %s", err)

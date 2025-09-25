@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"gorm.io/gorm"
@@ -156,7 +156,7 @@ func DeletePlaceFromCourse(db *gorm.DB, courseId uint, placeID uint) error {
 	return nil
 }
 
-func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) error {
+func DeleteCourse(db *gorm.DB, bucketBasics *aws_client.BucketBasics, courseId uint) error {
 
 	deleteCourse, err := GetCourseByCourseId(db, courseId)
 	if err != nil {
@@ -174,7 +174,7 @@ func DeleteCourse(db *gorm.DB, bucketBasics *aws.BucketBasics, courseId uint) er
 		return nil
 	}
 
-	if err = aws.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *deleteCourse.ImageKey); err != nil {
+	if err = aws_client.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *deleteCourse.ImageKey); err != nil {
 		return err
 	}
 

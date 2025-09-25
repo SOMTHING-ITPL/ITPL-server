@@ -5,7 +5,7 @@ import (
 
 	"context"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	server "github.com/SOMTHING-ITPL/ITPL-server/internal/app"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/storage"
@@ -45,7 +45,7 @@ func main() {
 		log.Fatalf("Unable to load AWS config: %v", err)
 	}
 
-	bucketService := aws.NewBucketBasics(awsCfg, &s3Cfg)
+	bucketService := aws_client.NewBucketBasics(awsCfg, &s3Cfg)
 
 	log.Printf("S3 Bucket: %s", bucketService.BucketName)
 

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
 	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws.BucketBasics) *ChatRoomHandler {
+func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws_client.BucketBasics) *ChatRoomHandler {
 	return &ChatRoomHandler{
 		database:       db,
 		userRepository: userRepo,
@@ -48,7 +48,7 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 		file, err := c.FormFile("image")
 		if err == nil {
 			// 업로드 처리
-			key, err := aws.UploadToS3(
+			key, err := aws_client.UploadToS3(
 				h.bucketBasics.S3Client,
 				h.bucketBasics.BucketName,
 				fmt.Sprintf("chat_image/%d", userId),

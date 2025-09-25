@@ -37,10 +37,16 @@ type ChatRoomMember struct {
 	JoinedAt   time.Time `json:"joined_at" gorm:"column:joined_at"`
 }
 
-type ChatMessage struct {
-	Type      string    `json:"type"` // "text" or "image"
-	SenderId  uint      `json:"sender"`
-	Content   string    `json:"content"` // for text or image URL
-	RoomId    uint      `json:"room_id"`
+type TextMessage struct {
+	SenderID  uint      `json:"sender"`
+	Text      string    `json:"text"`
+	RoomID    uint      `json:"room_id"`
 	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
+}
+
+type ImageMessage struct {
+	SenderID  uint      `json:"sender_id"`
+	RoomID    uint      `json:"room_id"`
+	Timestamp time.Time `json:"timestamp"`
+	ImageKey  string    `json:"image_key"`
 }
