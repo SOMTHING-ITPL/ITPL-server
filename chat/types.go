@@ -9,8 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-// ChatRoom, ChatRoomMember : gorm model
+// for CreateChatRoom()
+type ChatRoomInfo struct {
+	Title          string  `json:"title"`
+	ImgKey         *string `json:"img_key,omitempty"`
+	PerformanceDay int64   `json:"performance_day"`
+	MaxMembers     int     `json:"max_members"`
+	Departure      Region  `json:"departure"`
+	Arrival        Region  `json:"arrival"`
+}
 
+// ChatRoom, ChatRoomMember : gorm mode
 type Region struct {
 	MapX float64 `json:"map_x"`
 	MapY float64 `json:"map_y"`
@@ -39,8 +48,7 @@ type ChatRoomMember struct {
 	JoinedAt   time.Time `json:"joined_at" gorm:"column:joined_at"`
 }
 
-// Text & Image Message : dynamodb model
-
+// Message : dynamodb model
 type TextMessage struct {
 	SenderID  uint      `json:"sender"`
 	Text      string    `json:"text"`

@@ -5,7 +5,7 @@ import (
 
 	"context"
 
-	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	server "github.com/SOMTHING-ITPL/ITPL-server/internal/app"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/storage"

@@ -5,14 +5,14 @@ import (
 	"fmt"
 	"net/http"
 
-	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws_client.BucketBasics) *ChatRoomHandler {
+func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics) *ChatRoomHandler {
 	return &ChatRoomHandler{
 		database:       db,
 		userRepository: userRepo,
@@ -48,7 +48,7 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 		file, err := c.FormFile("image")
 		if err == nil {
 			// 업로드 처리
-			key, err := aws_client.UploadToS3(
+			key, err := s3.UploadToS3(
 				h.bucketBasics.S3Client,
 				h.bucketBasics.BucketName,
 				fmt.Sprintf("chat_image/%d", userId),
@@ -75,7 +75,16 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 			MapY: request.ArrivalLatitude,
 		}
 
-		chatRoom, err := chat.CreateChatRoom(h.userRepository, request.Title, imageKey, userId, request.PerformanceDay, request.MaxMembers, departure, arrival)
+		info := chat.ChatRoomInfo{
+			Title:          request.Title,
+			ImgKey:         imageKey,
+			PerformanceDay: request.PerformanceDay,
+			MaxMembers:     request.MaxMembers,
+			Departure:      departure,
+			Arrival:        arrival,
+		}
+
+		chatRoom, err := chat.CreateChatRoom(h.userRepository, info, userId)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return

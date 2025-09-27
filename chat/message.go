@@ -1,16 +1,11 @@
 package chat
 
 import (
-	"context"
 	"fmt"
-	"log"
 	"mime/multipart"
 	"time"
 
-	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
-	"github.com/aws/aws-sdk-go-v2/aws"
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/google/uuid"
 )
 
@@ -23,8 +18,8 @@ func BuildTextMessage(senderID, roomID uint, text string) TextMessage {
 	}
 }
 
-func BuildImageMessage(cfg aws_client.BucketBasics, senderID, roomID uint, head *multipart.FileHeader) (ImageMessage, error) {
-	key, err := aws_client.UploadToS3(cfg.S3Client, cfg.BucketName, "chat_images", head)
+func BuildImageMessage(cfg s3.BucketBasics, senderID, roomID uint, head *multipart.FileHeader) (ImageMessage, error) {
+	key, err := s3.UploadToS3(cfg.S3Client, cfg.BucketName, "chat_images", head)
 	if err != nil {
 		return ImageMessage{}, err
 	}
@@ -36,7 +31,7 @@ func BuildImageMessage(cfg aws_client.BucketBasics, senderID, roomID uint, head 
 	}, nil
 }
 
-func BuildMessage(bucketBasics aws_client.BucketBasics, contentType string, message any) (Message, error) {
+func BuildMessage(bucketBasics s3.BucketBasics, contentType string, message any) (Message, error) {
 	now := time.Now().UTC()
 	sk := now.Format(time.RFC3339Nano) + "#" + uuid.NewString()
 
@@ -54,7 +49,7 @@ func BuildMessage(bucketBasics aws_client.BucketBasics, contentType string, mess
 		}
 	} else if contentType == "image" {
 		if msg, ok := message.(ImageMessage); ok {
-			imageURL, err := aws_client.GetPresignURL(bucketBasics.AwsConfig, bucketBasics.BucketName, msg.ImageKey)
+			imageURL, err := s3.GetPresignURL(bucketBasics.AwsConfig, bucketBasics.BucketName, msg.ImageKey)
 			if err != nil {
 				return Message{}, err
 			}
@@ -71,42 +66,4 @@ func BuildMessage(bucketBasics aws_client.BucketBasics, contentType string, mess
 
 	err := fmt.Errorf("invalid content type. expected 'text' or 'image', got '%s'", contentType)
 	return Message{}, err
-}
-
-func (c *ChatRoomMember) BroadcastMessage(room *ChatRoom, message Message, db *dynamodb.Client, tableName string) {
-	go func() {
-		av, err := attributevalue.MarshalMap(message)
-		if err != nil {
-			log.Println("Failed to marshal message:", err)
-			return
-		}
-
-		_, err = db.PutItem(context.TODO(), &dynamodb.PutItemInput{
-			TableName: aws.String(tableName),
-			Item:      av,
-		})
-		if err != nil {
-			log.Println("Failed to save message to DynamoDB:", err)
-		}
-	}()
-
-	// 2. WebSocket 브로드캐스트
-	for i := range room.Members {
-		member := room.Members[i]
-
-		// Skip sender
-		if member.UserID == c.UserID {
-			continue
-		}
-
-		go func(m *ChatRoomMember) {
-			m.Lock()
-			defer m.Unlock()
-			if m.Conn != nil {
-				if err := m.Conn.WriteJSON(message); err != nil {
-					log.Printf("Failed to send message to user %d: %v\n", m.UserID, err)
-				}
-			}
-		}(member)
-	}
 }

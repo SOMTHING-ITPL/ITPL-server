@@ -1,4 +1,4 @@
-package aws_client
+package dynamo
 
 import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"

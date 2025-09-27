@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
-	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"

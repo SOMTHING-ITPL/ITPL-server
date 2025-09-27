@@ -1,4 +1,4 @@
-package aws_client
+package s3
 
 import (
 	"context"

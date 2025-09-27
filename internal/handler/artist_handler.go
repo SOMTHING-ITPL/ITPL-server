@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
-	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/gin-gonic/gin"
 )
 
