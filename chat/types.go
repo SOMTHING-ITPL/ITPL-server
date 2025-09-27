@@ -9,6 +9,8 @@ import (
 	"gorm.io/gorm"
 )
 
+// ChatRoom, ChatRoomMember : gorm model
+
 type Region struct {
 	MapX float64 `json:"map_x"`
 	MapY float64 `json:"map_y"`
@@ -37,6 +39,8 @@ type ChatRoomMember struct {
 	JoinedAt   time.Time `json:"joined_at" gorm:"column:joined_at"`
 }
 
+// Text & Image Message : dynamodb model
+
 type TextMessage struct {
 	SenderID  uint      `json:"sender"`
 	Text      string    `json:"text"`
@@ -49,4 +53,14 @@ type ImageMessage struct {
 	RoomID    uint      `json:"room_id"`
 	Timestamp time.Time `json:"timestamp"`
 	ImageKey  string    `json:"image_key"`
+}
+
+type Message struct {
+	MessageSK   string    `json:"message_sk" dynamodbav:"message_sk"`     // Sort Key (timestamp#uuid)
+	ContentType string    `json:"content_type" dynamodbav:"content_type"` // "text" or "image"
+	SenderID    uint      `json:"sender_id" dynamodbav:"sender_id"`
+	RoomID      uint      `json:"room_id" dynamodbav:"room_id"`                         // Partition Key
+	Timestamp   time.Time `json:"timestamp" dynamodbav:"timestamp"`                     // stored as string RFC3339 fromat as default
+	Content     *string   `json:"content,omitempty" dynamodbav:"content,omitempty"`     // for text messages
+	ImageURL    *string   `json:"image_url,omitempty" dynamodbav:"image_url,omitempty"` // for image messages
 }

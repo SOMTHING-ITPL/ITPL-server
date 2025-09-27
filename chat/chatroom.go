@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"gorm.io/gorm"
 )
 
@@ -119,4 +120,11 @@ func GetMembers(db *gorm.DB, room ChatRoom) ([]ChatRoomMember, error) {
 
 func LeaveChatRoom(db *gorm.DB, userId uint, roomId uint) error {
 	return db.Where("chat_room_id = ? AND user_id = ?", roomId, userId).Delete(&ChatRoomMember{}).Error
+}
+
+func DeleteChatRoom(gormDB *gorm.DB, dynamoClient *dynamodb.Client, roomId uint) error {
+	/* Delete messages from DynamoDB */
+
+	// Delete chatroom from MySQL
+	return gormDB.Delete(&ChatRoom{}, roomId).Error
 }

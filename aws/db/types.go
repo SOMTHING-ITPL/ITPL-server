@@ -8,3 +8,8 @@ type PartiQLRunner struct {
 	DynamoDbClient *dynamodb.Client
 	TableName      string
 }
+
+type TableBasics struct {
+	DynamoDbClient *dynamodb.Client
+	TableName      string
+}
