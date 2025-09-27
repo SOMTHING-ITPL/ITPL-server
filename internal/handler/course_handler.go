@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository, bucketBasics *aws.BucketBasics) *CourseHandler {
+func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository, bucketBasics *s3.BucketBasics) *CourseHandler {
 	return &CourseHandler{
 		database:        db,
 		userRepository:  userRepo,
@@ -56,7 +56,7 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 		file, err := c.FormFile("image")
 		if err == nil {
 			// 업로드 처리
-			key, err := aws.UploadToS3(
+			key, err := s3.UploadToS3(
 				h.bucketBasics.S3Client,
 				h.bucketBasics.BucketName,
 				fmt.Sprintf("course_image/%d/%d", userID, facilityId), /*prefix*/
@@ -191,7 +191,7 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 		}
 		var imageURL *string
 		if co.ImageKey != nil {
-			URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *co.ImageKey)
+			URL, err := s3.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *co.ImageKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
 				return
@@ -263,7 +263,7 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 
 		courses, err := course.GetCoursesByUserId(h.database, userID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: "})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses "})
 			return
 		}
 
@@ -271,7 +271,7 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 		for _, course := range courses {
 			var imageURL *string
 			if course.ImageKey != nil {
-				URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *course.ImageKey)
+				URL, err := s3.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *course.ImageKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
 					return
@@ -386,7 +386,7 @@ func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
 			return
 		}
-		key, err := aws.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID) /*prefix*/, file)
+		key, err := s3.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID) /*prefix*/, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 			return

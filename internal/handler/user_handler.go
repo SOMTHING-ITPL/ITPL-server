@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/auth"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository, awsBucket *aws.BucketBasics) *UserHandler {
+func NewUserHandler(userRepository *user.Repository, smtpRepository *email.Repository, awsBucket *s3.BucketBasics) *UserHandler {
 	return &UserHandler{userRepository: userRepository, smtpRepository: smtpRepository, BucketBasics: awsBucket}
 }
 
@@ -124,7 +124,7 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 
 		var photoURL *string
 		if user.Photo != nil {
-			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
+			url, err := s3.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *user.Photo)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
 				return
@@ -191,14 +191,14 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 		file, err := c.FormFile("profile")
 		if err == nil {
 			if user.Photo != nil {
-				err = aws.DeleteImage(h.BucketBasics.S3Client, h.BucketBasics.BucketName, *user.Photo)
+				err = s3.DeleteImage(h.BucketBasics.S3Client, h.BucketBasics.BucketName, *user.Photo)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to delete old image"})
 					return
 				}
 			}
 
-			url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
+			url, err := s3.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("profile/%d", userID), file)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"error": fmt.Sprintf("failed to upload profile image: %v", err),
@@ -223,7 +223,7 @@ func (h *UserHandler) UpdateProfile() gin.HandlerFunc {
 
 		var photoURL *string
 		if updatedUser.Photo != nil {
-			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *updatedUser.Photo)
+			url, err := s3.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, *updatedUser.Photo)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get photo in aws: " + err.Error()})
 				return
@@ -448,7 +448,7 @@ func (h *UserHandler) GetGenres() gin.HandlerFunc {
 
 		res := make([]PreferSearchResponse, 0, len(genres))
 		for _, g := range genres {
-			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, g.ImageKey)
+			url, err := s3.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, g.ImageKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Image URL From AWS"})
 				return
@@ -534,7 +534,7 @@ func (h *UserHandler) PutGenre() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get file "})
 			return
 		}
-		url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("genre/%s", name), file)
+		url, err := s3.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("genre/%s", name), file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("failed to upload image: %v", err),

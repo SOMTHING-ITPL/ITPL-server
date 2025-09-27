@@ -4,12 +4,13 @@ import (
 	"context"
 	"log"
 
-	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func (c *ChatRoomMember) BroadcastToRoom(room *ChatRoom, message ChatMessage, db *dynamodb.Client, tableName string) {
+func (c *ChatRoomMember) BroadcastMessage(room *ChatRoom, message Message, db *dynamodb.Client, tableBasics dynamo.TableBasics) {
+	// 1. Save to DynamoDB
 	go func() {
 		av, err := attributevalue.MarshalMap(message)
 		if err != nil {
@@ -17,10 +18,7 @@ func (c *ChatRoomMember) BroadcastToRoom(room *ChatRoom, message ChatMessage, db
 			return
 		}
 
-		_, err = db.PutItem(context.TODO(), &dynamodb.PutItemInput{
-			TableName: aws.String(tableName),
-			Item:      av,
-		})
+		err = tableBasics.AddItemToDB(context.Background(), av)
 		if err != nil {
 			log.Println("Failed to save message to DynamoDB:", err)
 		}
