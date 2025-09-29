@@ -5,3 +5,10 @@
 2025-09-17T20:29:09.598+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/course/4/details", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
 2025-09-17T20:31:18.110+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/place/list", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
 2025-09-17T20:48:02.440+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "PATCH", "path": "/api/course/14/details", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
+2025-09-29T17:33:39.178+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 400, "method": "POST", "path": "/api/auth/check-email", "client_ip": "::1", "response": "{\"error\":\"This email is already exist\"}"}
+2025-09-29T17:34:31.785+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "POST", "path": "/api/auth/check-email", "client_ip": "::1", "response": "{\"error\":\"failed to send code\"}"}
+2025-09-29T17:35:11.716+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "POST", "path": "/api/auth/check-email", "client_ip": "::1", "response": "{\"error\":\"failed to send code\"}"}
+2025-09-29T17:36:09.333+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "POST", "path": "/api/auth/login", "client_ip": "::1", "response": "{\"error\":\"Failed to Get user\"}"}
+2025-09-29T17:36:20.068+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 400, "method": "POST", "path": "/api/auth/login", "client_ip": "::1", "response": "{\"error\":\"check your body\"}"}
+2025-09-29T17:36:25.061+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "POST", "path": "/api/auth/login", "client_ip": "::1", "response": "{\"error\":\"Failed to Get user\"}"}
+2025-09-29T17:36:32.743+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "POST", "path": "/api/auth/login", "client_ip": "::1", "response": "{\"error\":\"Failed to Get user\"}"}
