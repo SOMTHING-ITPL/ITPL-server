@@ -19,7 +19,7 @@ func BuildTextMessage(senderID, roomID uint, text string) TextMessage {
 }
 
 func BuildImageMessage(cfg s3.BucketBasics, senderID, roomID uint, head *multipart.FileHeader) (ImageMessage, error) {
-	key, err := s3.UploadToS3(cfg.S3Client, cfg.BucketName, "chat_images", head)
+	key, err := s3.UploadToS3(cfg.S3Client, cfg.BucketName, fmt.Sprintf("chatRooms/%d", roomID), head)
 	if err != nil {
 		return ImageMessage{}, err
 	}
@@ -27,7 +27,7 @@ func BuildImageMessage(cfg s3.BucketBasics, senderID, roomID uint, head *multipa
 		SenderID:  senderID,
 		RoomID:    roomID,
 		Timestamp: time.Now(),
-		ImageKey:  key,
+		ImageKey:  &key,
 	}, nil
 }
 
@@ -49,17 +49,13 @@ func BuildMessage(bucketBasics s3.BucketBasics, contentType string, message any)
 		}
 	} else if contentType == "image" {
 		if msg, ok := message.(ImageMessage); ok {
-			imageURL, err := s3.GetPresignURL(bucketBasics.AwsConfig, bucketBasics.BucketName, msg.ImageKey)
-			if err != nil {
-				return Message{}, err
-			}
 			return Message{
 				ContentType: "image",
 				MessageSK:   sk,
 				SenderID:    msg.SenderID,
 				RoomID:      msg.RoomID,
 				Timestamp:   msg.Timestamp,
-				ImageURL:    &imageURL,
+				ImageKey:    msg.ImageKey,
 			}, nil
 		}
 	}

@@ -8,3 +8,10 @@ import (
 func NewDynamoDBClient(awsCfg aws.Config) *dynamodb.Client {
 	return dynamodb.NewFromConfig(awsCfg)
 }
+
+func NewTableBasics(dynamoDbClient *dynamodb.Client, tableName string) TableBasics {
+	return TableBasics{
+		DynamoDbClient: dynamoDbClient,
+		TableName:      tableName,
+	}
+}

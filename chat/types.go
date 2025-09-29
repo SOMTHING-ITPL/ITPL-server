@@ -60,7 +60,7 @@ type ImageMessage struct {
 	SenderID  uint      `json:"sender_id"`
 	RoomID    uint      `json:"room_id"`
 	Timestamp time.Time `json:"timestamp"`
-	ImageKey  string    `json:"image_key"`
+	ImageKey  *string   `json:"image_key"`
 }
 
 type Message struct {
@@ -70,5 +70,5 @@ type Message struct {
 	RoomID      uint      `json:"room_id" dynamodbav:"room_id"`                         // Partition Key
 	Timestamp   time.Time `json:"timestamp" dynamodbav:"timestamp"`                     // stored as string RFC3339 fromat as default
 	Content     *string   `json:"content,omitempty" dynamodbav:"content,omitempty"`     // for text messages
-	ImageURL    *string   `json:"image_url,omitempty" dynamodbav:"image_url,omitempty"` // for image messages
+	ImageKey    *string   `json:"image_url,omitempty" dynamodbav:"image_url,omitempty"` // for image messages
 }

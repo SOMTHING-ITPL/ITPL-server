@@ -3,20 +3,24 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics) *ChatRoomHandler {
+func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
 	return &ChatRoomHandler{
 		database:       db,
 		userRepository: userRepo,
 		bucketBasics:   bucketBasics,
+		tableBasics:    basics,
 	}
 }
 
@@ -102,5 +106,20 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
+	}
+}
+
+func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roomID := c.Param("room_id")
+		if roomID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
+			return
+		}
+		messages, err := h.tableBasics.GetItemsByPartitionKey(c, "room_id", &types.AttributeValueMemberN{Value: roomID})
+		if err != nil {
+			log.Printf("Failed to get items from DynamoDB: %v", err)
+		}
+		c.JSON(http.StatusOK, gin.H{"messages": messages})
 	}
 }
