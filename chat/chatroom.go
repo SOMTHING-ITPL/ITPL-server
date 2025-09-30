@@ -119,3 +119,14 @@ func DeleteChatRoom(gormDB *gorm.DB, dynamoClient *dynamodb.Client, roomId uint)
 	// Delete chatroom from MySQL
 	return gormDB.Delete(&ChatRoom{}, roomId).Error
 }
+
+/*
+func GetChatHistory(c context.Context, tableBasics dynamo.TableBasics, roomID string) ([]Message, error) {
+	var messages []Message
+	messages, err := tableBasics.GetItemsByPartitionKey(c, "room_id", &types.AttributeValueMemberN{Value: roomID})
+	if err != nil {
+		return nil, err
+	}
+	return messages, err
+}
+*/

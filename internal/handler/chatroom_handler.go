@@ -24,6 +24,7 @@ func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3
 	}
 }
 
+// POST
 func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 	type req struct {
 		Title              string  `json:"title" binding:"required"`
@@ -104,11 +105,26 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 }
 
 func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
+	type request struct {
+		UserID uint `json:"user_id"`
+		RoomID uint `json:"room_id"`
+	}
 	return func(c *gin.Context) {
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
+		if err := chat.JoinChatRoom(h.userRepository, h.database, req.UserID, req.RoomID); err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		c.Status(http.StatusNoContent)
 	}
 }
 
+// GET
 func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		roomID := c.Param("room_id")
@@ -116,10 +132,20 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
 			return
 		}
-		messages, err := h.tableBasics.GetItemsByPartitionKey(c, "room_id", &types.AttributeValueMemberN{Value: roomID})
+		m, err := h.tableBasics.GetItemsByPartitionKey(c, "room_id", &types.AttributeValueMemberN{Value: roomID})
 		if err != nil {
-			log.Printf("Failed to get items from DynamoDB: %v", err)
+			log.Printf("Failed to get items from DynamoDB : %v", err)
+			c.Status(http.StatusInternalServerError)
+			return
 		}
+		messages, err := chat.MapToMessage(m)
+		if err != nil {
+			log.Printf("map to Message struct Convert Error %v", err)
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+
+		// 응답 구조 수정 필요
 		c.JSON(http.StatusOK, gin.H{"messages": messages})
 	}
 }
