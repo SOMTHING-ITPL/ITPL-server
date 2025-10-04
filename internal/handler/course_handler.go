@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -16,7 +16,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository, bucketBasics *aws.BucketBasics) *CourseHandler {
+func NewCourseHandler(db *gorm.DB, userRepo *user.Repository, pRepo *performance.Repository, bucketBasics *s3.BucketBasics) *CourseHandler {
 	return &CourseHandler{
 		database:        db,
 		userRepository:  userRepo,
@@ -56,7 +56,7 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 		file, err := c.FormFile("image")
 		if err == nil {
 			// 업로드 처리
-			key, err := aws.UploadToS3(
+			key, err := s3.UploadToS3(
 				h.bucketBasics.S3Client,
 				h.bucketBasics.BucketName,
 				fmt.Sprintf("course_image/%d/%d", userID, facilityId), /*prefix*/
@@ -78,14 +78,17 @@ func (h *CourseHandler) CreateCourseHandler() func(c *gin.Context) {
 			return
 		}
 
-		c.Status(http.StatusCreated)
+		c.JSON(http.StatusCreated, CommonRes{
+			Message: "Course Created",
+		})
 	}
 }
 
 func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 	type request struct {
-		FacilityID uint `json:"facility_id"`
-		Days       uint `json:"days"`
+		FacilityID    uint `json:"facility_id"`
+		PerformanceID uint `json:"performance_id"`
+		Days          uint `json:"days"`
 	}
 	type response struct {
 		Course        CourseInfoResponse
@@ -113,19 +116,26 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		performance, err := h.performanceRepo.GetPerformanceById(req.PerformanceID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid performance id"})
+			return
+		}
+
+		title := fmt.Sprintf("%s에서의 %s 관람 코스", facility.Name, performance.Title)
 		desc := fmt.Sprintf("%s 님을 위한 코스입니다.", me.NickName)
 
 		var createdCourse course.Course
 		switch req.Days {
 		case 1:
-			createdCourse = course.OneDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.OneDayCourse(h.database, me /*user*/, title, &desc, *facility)
 			break
 		case 2:
 
-			createdCourse = course.TwoDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.TwoDayCourse(h.database, me /*user*/, title, &desc, *facility)
 			break
 		case 3:
-			createdCourse = course.ThreeDayCourse(h.database, me /*user*/, "추천 코스", &desc, *facility)
+			createdCourse = course.ThreeDayCourse(h.database, me /*user*/, title, &desc, *facility)
 			break
 
 		default:
@@ -140,8 +150,12 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
+
+		course.SetPerformanceID(h.database, &createdCourse, req.PerformanceID)
+		courseInfo := ToCourseInfo(createdCourse)
+		courseInfo.ImageURL = performance.PosterURL
 		res := response{
-			Course:        ToCourseInfo(createdCourse),
+			Course:        courseInfo,
 			CourseDetails: courseDetailsResponse,
 		}
 
@@ -177,12 +191,22 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 		}
 		var imageURL *string
 		if co.ImageKey != nil {
-			URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *co.ImageKey)
+			URL, err := s3.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *co.ImageKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
 				return
 			}
 			imageURL = &URL
+		} else {
+			if co.IsAICreated {
+				performance, err := h.performanceRepo.GetPerformanceById(*co.PerformanceID)
+				if err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+					return
+				}
+				defaultURL := performance.PosterURL
+				imageURL = defaultURL
+			}
 		}
 
 		courseInfo := CourseInfoResponse{
@@ -239,7 +263,7 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 
 		courses, err := course.GetCoursesByUserId(h.database, userID)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses: "})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get courses "})
 			return
 		}
 
@@ -247,12 +271,22 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 		for _, course := range courses {
 			var imageURL *string
 			if course.ImageKey != nil {
-				URL, err := aws.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *course.ImageKey)
+				URL, err := s3.GetPresignURL(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, *course.ImageKey)
 				if err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get image URL"})
 					return
 				}
 				imageURL = &URL
+			} else {
+				if course.IsAICreated {
+					performance, err := h.performanceRepo.GetPerformanceById(*course.PerformanceID)
+					if err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+						return
+					}
+					defaultURL := performance.PosterURL
+					imageURL = defaultURL
+				}
 			}
 			courseInfos = append(courseInfos, CourseInfoResponse{
 				ID:          course.ID,
@@ -352,7 +386,7 @@ func (h *CourseHandler) ModifyCourseImage() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
 			return
 		}
-		key, err := aws.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID) /*prefix*/, file)
+		key, err := s3.UploadToS3(h.bucketBasics.S3Client, h.bucketBasics.BucketName, fmt.Sprintf("course_images/%d", ucourseID) /*prefix*/, file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 			return

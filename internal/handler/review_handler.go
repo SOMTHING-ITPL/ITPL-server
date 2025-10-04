@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/gin-gonic/gin"
 )
@@ -48,7 +48,7 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 		form, _ := c.MultipartForm()
 		files := form.File["images"]
 		for _, fileHeader := range files {
-			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", placeId, userID) /*prefix*/, fileHeader)
+			key, err := s3.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", placeId, userID) /*prefix*/, fileHeader)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 				return
@@ -60,7 +60,9 @@ func (h *PlaceHandler) WriteReviewHandler() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to write review: " + err.Error()})
 			return
 		}
-		c.Status(http.StatusNoContent)
+		c.JSON(http.StatusNoContent, CommonRes{
+			Message: "Review Created",
+		})
 	}
 }
 
@@ -80,7 +82,7 @@ func (h *PlaceHandler) GetPlaceReviewsHandler() gin.HandlerFunc {
 		for _, r := range reviews {
 			var imgs []ReviewImageResponse
 			for _, img := range r.Images {
-				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
+				url, _ := s3.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
 				imgs = append(imgs, ReviewImageResponse{URL: url})
 			}
 			response = append(response, PlaceReviewResponse{
@@ -130,12 +132,19 @@ func (h *PlaceHandler) GetMyReviewsHandler() gin.HandlerFunc {
 		for _, r := range reviews {
 			var imgs []ReviewImageResponse
 			for _, img := range r.Images {
-				url, _ := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
+				url, _ := s3.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, img.Key)
 				imgs = append(imgs, ReviewImageResponse{URL: url})
+			}
+			p, err := place.GetPlaceById(h.database, r.PlaceId)
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get place: "})
+				return
 			}
 			response = append(response, PlaceReviewResponse{
 				ID:           r.ID,
 				UserID:       r.UserId,
+				PlaceID:      r.PlaceId,
+				PlaceName:    p.Title,
 				UserNickname: r.UserNickName,
 				Rating:       r.Rating,
 				Comment:      r.Comment,
@@ -192,7 +201,7 @@ func (h *PlaceHandler) ModifyReviewHandler() gin.HandlerFunc {
 		form, _ := c.MultipartForm()
 		files := form.File["images"]
 		for _, fileHeader := range files {
-			key, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", rev.PlaceId, userID) /*prefix*/, fileHeader)
+			key, err := s3.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("reviews/%d/%d", rev.PlaceId, userID) /*prefix*/, fileHeader)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to upload image"})
 				return

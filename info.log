@@ -26,3 +26,5 @@
 2025-09-17T20:43:15.116+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "POST", "path": "/api/course/suggestion", "client_ip": "::1"}
 2025-09-17T20:48:21.694+0900	info	app/log_middleware.go:82	HTTP request	{"status": 204, "method": "PATCH", "path": "/api/course/14/details", "client_ip": "::1"}
 2025-09-17T20:48:28.555+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/course/14/details", "client_ip": "::1"}
+2025-09-29T17:37:46.356+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/auth/history/1", "client_ip": "::1"}
+2025-09-29T17:37:51.969+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/auth/history/1", "client_ip": "::1"}

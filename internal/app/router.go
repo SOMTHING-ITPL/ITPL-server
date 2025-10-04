@@ -5,7 +5,8 @@ import (
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
@@ -16,7 +17,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBasics) *gin.Engine {
+func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasics, tableBasics *dynamo.TableBasics) *gin.Engine {
 	logger, err := NewLogger()
 	if err != nil {
 		fmt.Printf("fail to get logger %s", err)
@@ -38,7 +39,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *aws.BucketBas
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo, bucketBasics)
-	chatRoomHandler := handler.NewChatRoomHandler(db, userRepo, bucketBasics)
+	chatRoomHandler := handler.NewChatRoomHandler(db, userRepo, bucketBasics, tableBasics)
 
 	//this router does not needs auth
 	public := r.Group("/api")
@@ -169,4 +170,5 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
 	rg.POST("/room", chatRoomHandler.CreateChatRoom())
 	rg.POST("/join-room", chatRoomHandler.JoinChatRoom())
+	rg.GET("/history/:room_id", chatRoomHandler.GetHistory())
 }

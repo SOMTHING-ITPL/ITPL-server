@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws.BucketBasics) *PlaceHandler {
+func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics) *PlaceHandler {
 	return &PlaceHandler{
 		database:       db,
 		userRepository: userRepo,
@@ -111,7 +111,7 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 		for _, rev := range revs {
 			var imgResponses []ReviewImageResponse
 			for _, img := range rev.Images {
-				url, err := aws.GetPresignURL(
+				url, err := s3.GetPresignURL(
 					h.BucketBasics.AwsConfig,
 					h.BucketBasics.BucketName,
 					img.Key,
@@ -148,5 +148,17 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 			Message: "Place Info",
 			Data:    placeInfoResponse,
 		})
+	}
+}
+
+func (h *PlaceHandler) SearchPlacesByTitleHandler() gin.HandlerFunc {
+	type request struct {
+		Title     string  `json:"title" binding:"required"`
+		Category  int     `json:"category"`
+		Latitude  float64 `json:"latitude"`
+		Longitude float64 `json:"longitude"`
+	}
+	return func(c *gin.Context) {
+
 	}
 }

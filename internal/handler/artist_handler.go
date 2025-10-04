@@ -6,11 +6,11 @@ import (
 	"net/http"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
-	"github.com/SOMTHING-ITPL/ITPL-server/aws"
+	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/gin-gonic/gin"
 )
 
-func NewArtistHandler(artistRepo *artist.Repository, bucket *aws.BucketBasics) *ArtistHandler {
+func NewArtistHandler(artistRepo *artist.Repository, bucket *aws_client.BucketBasics) *ArtistHandler {
 	return &ArtistHandler{
 		artistRepo:   artistRepo,
 		BucketBasics: bucket,
@@ -27,7 +27,7 @@ func (h *ArtistHandler) GetArtists() gin.HandlerFunc {
 		//Get PresignedImage URL
 		res := make([]PreferSearchResponse, 0, len(artist))
 		for _, a := range artist {
-			url, err := aws.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, a.ImageKey)
+			url, err := aws_client.GetPresignURL(h.BucketBasics.AwsConfig, h.BucketBasics.BucketName, a.ImageKey)
 			if err != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get Image URL From AWS"})
 				return
@@ -105,7 +105,7 @@ func (h *ArtistHandler) PutArtist() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "failed to get file "})
 			return
 		}
-		url, err := aws.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("artist/%s", name), file)
+		url, err := aws_client.UploadToS3(h.BucketBasics.S3Client, h.BucketBasics.BucketName, fmt.Sprintf("artist/%s", name), file)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": fmt.Sprintf("failed to upload profile image: %v", err),
