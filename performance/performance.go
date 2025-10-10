@@ -83,9 +83,9 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 			"title LIKE ? OR `cast` LIKE ? OR `keyword` LIKE ?",
 			likePattern, likePattern, likePattern,
 		)
+	} else {
+		db = db.Where("status IN (?)", []string{"공연중", "공연예정"})
 	}
-
-	db = db.Where("status IN (?)", []string{"공연중", "공연예정"})
 
 	if err := db.Count(&total).Error; err != nil {
 		return nil, 0, err
@@ -93,7 +93,7 @@ func (r *Repository) FindPerformances(page, limit, genre int, region, keyword st
 
 	offset := (page - 1) * limit
 	if err := db.
-		Order("created_at DESC").
+		Order("start_date ASC").
 		Limit(limit).
 		Offset(offset).
 		Find(&performances).Error; err != nil {
@@ -140,7 +140,13 @@ func (r *Repository) GetPerformanceImages(prefId uint) ([]PerformanceImage, erro
 func (r *Repository) GetPerformanceWithTicketsAndImages(perfID uint) (*PerformanceWithTicketsAndImage, error) {
 	var perf Performance
 
-	err := r.db.Preload("TicketSites").Preload("Images").First(&perf, perfID).Error
+	err := r.db.
+		Preload("TicketSites").
+		Preload("Images", func(db *gorm.DB) *gorm.DB {
+			return db.Order("url DESC")
+		}).
+		First(&perf, perfID).Error
+
 	if err != nil {
 		return nil, err
 	}
@@ -164,7 +170,7 @@ func (r *Repository) GetRecentPerformance(targetDate time.Time, num int) ([]Perf
 	var perfs []Performance
 
 	//start Date 바로 직전인 것만 가져옴
-	err := r.db.Where("start_date >= ?", targetDate).Order("start_date DESC").Limit(num).Find(&perfs).Error
+	err := r.db.Where("start_date >= ?", targetDate).Order("start_date ASC").Limit(num).Find(&perfs).Error
 
 	if err != nil {
 		log.Printf("Fail to Get start_date : %s", err)
@@ -172,4 +178,34 @@ func (r *Repository) GetRecentPerformance(targetDate time.Time, num int) ([]Perf
 	}
 
 	return perfs, nil
+}
+
+func (r *Repository) UpdateUglyStatusPerformance(targetDate time.Time) error {
+
+	// 공연 완료
+	if err := r.db.Model(&Performance{}).
+		Where("end_date < ?", targetDate).
+		Update("status", "공연완료").Error; err != nil {
+		log.Printf("failed to update 공연완료: %v", err)
+		return err
+	}
+
+	// 공연 중
+	if err := r.db.Model(&Performance{}).
+		Where("start_date <= ?", targetDate).
+		Where("end_date >= ?", targetDate).
+		Update("status", "공연중").Error; err != nil {
+		log.Printf("failed to update 공연중: %v", err)
+		return err
+	}
+
+	// 공연 예정
+	if err := r.db.Model(&Performance{}).
+		Where("start_date > ?", targetDate).
+		Update("status", "공연예정").Error; err != nil {
+		log.Printf("failed to update 공연예정: %v", err)
+		return err
+	}
+
+	return nil
 }
