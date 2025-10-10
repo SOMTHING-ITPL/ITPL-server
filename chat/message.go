@@ -49,6 +49,10 @@ func BuildMessage(bucketBasics s3.BucketBasics, contentType string, message any)
 		}
 	} else if contentType == "image" {
 		if msg, ok := message.(ImageMessage); ok {
+			url, err := s3.GetPresignURL(bucketBasics.AwsConfig, bucketBasics.BucketName, *msg.ImageKey)
+			if err != nil {
+				return Message{}, err
+			}
 			return Message{
 				ContentType: "image",
 				MessageSK:   sk,
@@ -56,6 +60,7 @@ func BuildMessage(bucketBasics s3.BucketBasics, contentType string, message any)
 				RoomID:      msg.RoomID,
 				Timestamp:   msg.Timestamp,
 				ImageKey:    msg.ImageKey,
+				Content:     &url,
 			}, nil
 		}
 	}

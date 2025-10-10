@@ -67,8 +67,8 @@ type Message struct {
 	MessageSK   string    `json:"message_sk" dynamodbav:"message_sk"`     // Sort Key (timestamp#uuid)
 	ContentType string    `json:"content_type" dynamodbav:"content_type"` // "text" or "image"
 	SenderID    uint      `json:"sender_id" dynamodbav:"sender_id"`
-	RoomID      uint      `json:"room_id" dynamodbav:"room_id"`                         // Partition Key
-	Timestamp   time.Time `json:"timestamp" dynamodbav:"timestamp"`                     // stored as string RFC3339 fromat as default
-	Content     *string   `json:"content,omitempty" dynamodbav:"content,omitempty"`     // for text messages
-	ImageKey    *string   `json:"image_url,omitempty" dynamodbav:"image_url,omitempty"` // for image messages
+	RoomID      uint      `json:"room_id" dynamodbav:"room_id"`                     // Partition Key
+	Timestamp   time.Time `json:"timestamp" dynamodbav:"timestamp"`                 // stored as string RFC3339 fromat as default
+	Content     *string   `json:"content,omitempty" dynamodbav:"content,omitempty"` // for both text and image
+	ImageKey    *string   `json:"-" dynamodbav:"image_url,omitempty"`               // for image messages
 }
