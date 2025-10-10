@@ -8,14 +8,14 @@ import (
 	"strings"
 	"time"
 
-	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
-func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *aws_client.BucketBasics) *PlaceHandler {
+func NewPlaceHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics) *PlaceHandler {
 	return &PlaceHandler{
 		database:       db,
 		userRepository: userRepo,
@@ -111,7 +111,7 @@ func (h *PlaceHandler) GetPlaceInfoHandler() gin.HandlerFunc {
 		for _, rev := range revs {
 			var imgResponses []ReviewImageResponse
 			for _, img := range rev.Images {
-				url, err := aws_client.GetPresignURL(
+				url, err := s3.GetPresignURL(
 					h.BucketBasics.AwsConfig,
 					h.BucketBasics.BucketName,
 					img.Key,

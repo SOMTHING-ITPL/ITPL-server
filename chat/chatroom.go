@@ -1,22 +1,18 @@
 package chat
 
 import (
+	"context"
+	"strconv"
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
+	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"gorm.io/gorm"
 )
 
-func CreateChatRoom(
-	r *user.Repository,
-	title string,
-	imgKey *string,
-	myId uint,
-	performanceDay int64,
-	maxMembers int,
-	departure Region,
-	arrival Region,
-) (*ChatRoom, error) {
+func CreateChatRoom(r *user.Repository, info ChatRoomInfo, myId uint) (*ChatRoom, error) {
 	me, err := r.GetById(myId)
 	if err != nil {
 		return nil, err
@@ -28,13 +24,13 @@ func CreateChatRoom(
 		User:     me,
 	}
 	return &ChatRoom{
-		Title:          title,
-		ImageKey:       imgKey,
+		Title:          info.Title,
+		ImageKey:       info.ImgKey,
 		Members:        []*ChatRoomMember{creater},
-		PerformanceDay: performanceDay,
-		MaxMembers:     maxMembers,
-		Departure:      departure,
-		Arrival:        arrival,
+		PerformanceDay: info.PerformanceDay,
+		MaxMembers:     info.MaxMembers,
+		Departure:      info.Departure,
+		Arrival:        info.Arrival,
 	}, nil
 }
 
@@ -119,4 +115,33 @@ func GetMembers(db *gorm.DB, room ChatRoom) ([]ChatRoomMember, error) {
 
 func LeaveChatRoom(db *gorm.DB, userId uint, roomId uint) error {
 	return db.Where("chat_room_id = ? AND user_id = ?", roomId, userId).Delete(&ChatRoomMember{}).Error
+}
+
+func DeleteChatRoom(ctx context.Context, gormDB *gorm.DB, bucketBasics *s3.BucketBasics, tableBasics *dynamo.TableBasics, roomID uint) error {
+	sroomID := strconv.FormatUint(uint64(roomID), 10)
+	// Delete Images from S3
+	mmsg, err := tableBasics.GetItemsByPartitionKey(ctx, "room_id", &types.AttributeValueMemberN{Value: sroomID})
+	if err != nil {
+		return err
+	}
+
+	msg, err := MapToMessage(mmsg)
+	if err != nil {
+		return err
+	}
+
+	for _, m := range msg {
+		if m.ContentType == "image" {
+			if err := s3.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *m.ImageKey); err != nil {
+				return err
+			}
+		}
+	}
+	/* Delete messages from DynamoDB */
+	if err := tableBasics.DeleteItemsByPartitionKey(ctx, "room_id", &types.AttributeValueMemberN{Value: sroomID}); err != nil {
+		return err
+	}
+
+	// Delete chatroom from MySQL
+	return gormDB.Delete(&ChatRoom{}, roomID).Error
 }
