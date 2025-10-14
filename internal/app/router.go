@@ -8,6 +8,7 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/handler"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -32,6 +33,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 	performanceRepo := performance.NewRepository(db, redisDB)
 	calendarRepo := calendar.NewRepository(db)
 	artistRepo := artist.NewRepository(db)
+	chatRoomRepo := chat.NewChatRoomRepository(db)
 
 	userHandler := handler.NewUserHandler(userRepo, smtpRepo, bucketBasics)
 	performanceHandler := handler.NewPerformanceHandler(performanceRepo)
@@ -39,7 +41,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo, bucketBasics)
-	chatRoomHandler := handler.NewChatRoomHandler(db, userRepo, bucketBasics, tableBasics)
+	chatRoomHandler := handler.NewChatRoomHandler(chatRoomRepo, userRepo, bucketBasics, tableBasics)
 
 	//this router does not needs auth
 	public := r.Group("/api")

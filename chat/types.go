@@ -9,6 +9,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// ChatRoom repository
+type ChatRoomRepository struct {
+	DB *gorm.DB
+}
+
+type RoomManager struct {
+	Rooms map[uint]*ChatRoom
+	sync.Mutex
+}
+
 // for CreateChatRoom()
 type ChatRoomInfo struct {
 	Title          string  `json:"title"`
@@ -27,9 +37,10 @@ type Region struct {
 
 type ChatRoom struct {
 	gorm.Model
-	Members   []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
-	Departure Region            `json:"departure"`
-	Arrival   Region            `json:"arrival"`
+	sync.Mutex                   // to avoid race condition
+	Members    []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
+	Departure  Region            `json:"departure"`
+	Arrival    Region            `json:"arrival"`
 
 	Title          string  `json:"title" gorm:"column:title"`
 	ImageKey       *string `json:"image_key,omitempty" gorm:"column:image_key"`

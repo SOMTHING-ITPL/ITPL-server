@@ -12,15 +12,14 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
+func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
 	return &ChatRoomHandler{
-		database:       db,
-		userRepository: userRepo,
-		bucketBasics:   bucketBasics,
-		tableBasics:    basics,
+		chatRoomRepository: chatRoomRepo,
+		userRepository:     userRepo,
+		bucketBasics:       bucketBasics,
+		tableBasics:        basics,
 	}
 }
 
@@ -89,13 +88,8 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 			Arrival:        arrival,
 		}
 
-		chatRoom, err := chat.CreateChatRoom(h.userRepository, info, userId)
+		err = h.chatRoomRepository.CreateChatRoom(h.userRepository, info, userId)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := h.database.Create(chatRoom).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
@@ -116,7 +110,7 @@ func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
 			return
 		}
 
-		if err := chat.JoinChatRoom(h.userRepository, h.database, req.UserID, req.RoomID); err != nil {
+		if err := h.chatRoomRepository.JoinChatRoom(h.userRepository, req.UserID, req.RoomID); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}

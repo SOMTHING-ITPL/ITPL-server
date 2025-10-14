@@ -25,6 +25,8 @@ func (c *ChatRoomMember) BroadcastMessage(room *ChatRoom, message Message, db *d
 	}()
 
 	// 2. WebSocket 브로드캐스트
+	room.Lock()
+	defer room.Unlock()
 	for i := range room.Members {
 		member := room.Members[i]
 
