@@ -5,6 +5,7 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/email"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
@@ -35,10 +36,10 @@ type CourseHandler struct {
 }
 
 type ChatRoomHandler struct {
-	database       *gorm.DB
-	userRepository *user.Repository
-	bucketBasics   *s3.BucketBasics
-	tableBasics    *dynamo.TableBasics
+	chatRoomRepository *chat.ChatRoomRepository
+	userRepository     *user.Repository
+	bucketBasics       *s3.BucketBasics
+	tableBasics        *dynamo.TableBasics
 }
 
 type CalendarHandler struct {
@@ -49,4 +50,11 @@ type CalendarHandler struct {
 type ArtistHandler struct {
 	artistRepo   *artist.Repository
 	BucketBasics *s3.BucketBasics
+}
+
+type ChatHandler struct {
+	database       *gorm.DB
+	userRepository *user.Repository
+	bucketBasics   *s3.BucketBasics
+	tableBasics    *dynamo.TableBasics
 }

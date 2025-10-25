@@ -61,6 +61,8 @@ func main() {
 	dynamoClient := dynamo.NewDynamoDBClient(awsCfg)
 	tableBasics := dynamo.NewTableBasics(dynamoClient, "itpl-message-db")
 
+	//var RoomManager = chat.NewRoomManager()
+
 	//db 쪽으로 빼야 하나?
 	storage.AutoMigrate(db)
 	r := server.SetupRouter(db, rdb, bucketService, &tableBasics)

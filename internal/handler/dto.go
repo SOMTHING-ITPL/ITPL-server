@@ -3,9 +3,12 @@ package handler
 import (
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"gorm.io/gorm"
 )
 
@@ -131,4 +134,17 @@ func ToCourseDetails(db *gorm.DB, details []course.CourseDetail) ([]CourseDetail
 		courseDetailResponse = append(courseDetailResponse, res)
 	}
 	return courseDetailResponse, nil
+}
+
+func ToChatRoomInfoResponse(cfg aws.Config, bucketName string, room chat.ChatRoom) (ChatRoomInfoResponse, error) {
+	imageUrl, err := s3.GetPresignURL(cfg, bucketName, *room.ImageKey)
+	return ChatRoomInfoResponse{
+		ID:             room.ID,
+		Title:          room.Title,
+		ImageUrl:       &imageUrl,
+		PerformanceDay: room.PerformanceDay,
+		MaxMembers:     room.MaxMembers,
+		DepartureName:  room.DepartureName,
+		ArrivalName:    room.ArrivalName,
+	}, err
 }
