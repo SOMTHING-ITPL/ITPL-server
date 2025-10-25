@@ -55,7 +55,7 @@ func (r *ChatRoomRepository) GetChatRoomById(roomId uint) (*ChatRoom, error) {
 	return &room, nil
 }
 
-func (r *ChatRoomRepository) JoinChatRoom(userRepo *user.Repository, userId uint, roomId uint) error {
+func (r *ChatRoomRepository) AddUserToChatRoom(userRepo *user.Repository, userId uint, roomId uint) error {
 	chatRoom, err := r.GetChatRoomById(roomId)
 	if err != nil {
 		return err
@@ -117,4 +117,9 @@ func (r *ChatRoomRepository) DeleteChatRoom(ctx context.Context, bucketBasics *s
 
 	// Delete chatroom from MySQL
 	return r.DB.Delete(&ChatRoom{}, roomID).Error
+}
+
+// Message 구조체 dynamodb에 upload
+func (r *ChatRoomRepository) UploadMessageToDynamoDB(ctx context.Context, message Message) error {
+	return r.TableBasics.AddItemToDB(ctx, message)
 }

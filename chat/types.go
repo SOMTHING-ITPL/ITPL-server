@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
@@ -11,26 +12,8 @@ import (
 
 // ChatRoom repository
 type ChatRoomRepository struct {
-	DB *gorm.DB
-}
-
-// WebSocket related structs
-type WSRoom struct {
-	sync.Mutex             // to avoid race condition
-	RoomID     uint        // room ID
-	Members    []*WSMember // userID -> ChatRoomMember
-}
-
-type WSMember struct {
-	*websocket.Conn
-	sync.Mutex
-
-	UserID uint
-}
-
-type RoomManager struct {
-	Rooms map[uint]*WSRoom // roomID -> WSRoom
-	sync.Mutex
+	DB          *gorm.DB
+	TableBasics *dynamo.TableBasics
 }
 
 // for CreateChatRoom()
@@ -81,4 +64,28 @@ type Message struct {
 	RoomID    uint      `json:"room_id" dynamodbav:"room_id"`     // Partition Key
 	Timestamp time.Time `json:"timestamp" dynamodbav:"timestamp"` // stored as string RFC3339 fromat as default
 	Text      string    `json:"text" dynamodbav:"text"`
+}
+
+type Hub struct {
+	roomID     uint
+	clients    map[uint]*Client
+	register   chan *Client
+	unregister chan *Client
+	broadcast  chan Message
+	closeCh    chan struct{}
+	DynamoDB   *dynamo.TableBasics
+}
+
+type Client struct {
+	id     uint
+	roomID uint
+	hub    *Hub
+	conn   *websocket.Conn
+	send   chan Message
+}
+
+type RoomManager struct {
+	mu       sync.RWMutex
+	rooms    map[uint]*Hub
+	DynamoDB *dynamo.TableBasics
 }

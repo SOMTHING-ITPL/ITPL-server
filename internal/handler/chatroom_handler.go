@@ -97,7 +97,8 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"message": "Created chatroom successfully"})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Chat room created successfully"})
 	}
 }
 
@@ -193,11 +194,12 @@ func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
 			return
 		}
 		userID, _ := uid.(uint)
-		if err := h.chatRoomRepository.JoinChatRoom(h.userRepository, userID, req.RoomID); err != nil {
+		if err := h.chatRoomRepository.AddUserToChatRoom(h.userRepository, userID, req.RoomID); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		c.Status(http.StatusNoContent)
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Joined chat room successfully"})
 	}
 }
 
@@ -224,7 +226,38 @@ func (h *ChatRoomHandler) GetChatRoomMembers() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"members": members})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: fmt.Sprintf("members of room %d", rid),
+			Data:    members,
+		})
+	}
+}
+
+// POST
+func (h *ChatRoomHandler) LeaveChatRoom() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roomID := c.Param("room_id")
+		if roomID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
+			return
+		}
+		rid, err := strconv.ParseUint(roomID, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid room_id"})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+		if err := h.chatRoomRepository.DeleteChatRoomMember(userID, uint(rid)); err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Left chat room successfully"})
 	}
 }
 
@@ -250,6 +283,9 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 		}
 
 		// 응답 구조 수정 필요
-		c.JSON(http.StatusOK, gin.H{"messages": messages})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "Chat history retrieved successfully",
+			Data:    messages,
+		})
 	}
 }
