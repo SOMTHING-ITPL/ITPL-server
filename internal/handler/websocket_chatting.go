@@ -3,16 +3,31 @@ package handler
 import (
 	_ "log"
 	"net/http"
+	"os"
 
 	_ "github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	CheckOrigin: func(r *http.Request) bool { return true },
+var allowedOrigins = []string{
+	os.Getenv("FRONTEND_URL"),
 }
 
-/* 수정 필요
+var upgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+
+	CheckOrigin: func(r *http.Request) bool {
+		origin := r.Header.Get("Origin")
+		for _, allowed := range allowedOrigins {
+			if origin == allowed {
+				return true // 일치하면 연결 허용
+			}
+		}
+		return false
+	},
+}
+
 func UpgradeToWebSocket(w http.ResponseWriter, r *http.Request) (*websocket.Conn, error) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -28,6 +43,7 @@ func CloseWebSocket(conn *websocket.Conn) error {
 	return nil
 }
 
+/* 수정 필요
 func (h *ChatHandler) ChatWebSocketHandler(w http.ResponseWriter, r *http.Request) {
 
 	conn, err := UpgradeToWebSocket(w, r)

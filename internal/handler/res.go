@@ -137,3 +137,13 @@ type PreferSearchResponse struct {
 	Name     string `json:"name"`
 	ImageUrl string `json:"image_url"`
 }
+
+type ChatRoomInfoResponse struct {
+	ID             uint    `json:"id"`
+	Title          string  `json:"title"`
+	ImageUrl       *string `json:"image_url,omitempty"`
+	PerformanceDay int64   `json:"performance_day"`
+	MaxMembers     int     `json:"max_members"`
+	DepartureName  string  `json:"departure_name"`
+	ArrivalName    string  `json:"arrival_name"`
+}

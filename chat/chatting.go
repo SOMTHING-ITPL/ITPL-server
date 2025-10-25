@@ -9,7 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 )
 
-func (c *ChatRoomMember) BroadcastMessage(room *ChatRoom, message Message, db *dynamodb.Client, tableBasics dynamo.TableBasics) {
+func (c *ChatRoomMember) BroadcastMessage(room *WSRoom, message Message, db *dynamodb.Client, tableBasics dynamo.TableBasics) {
 	// 1. Save to DynamoDB
 	go func() {
 		av, err := attributevalue.MarshalMap(message)
@@ -35,7 +35,7 @@ func (c *ChatRoomMember) BroadcastMessage(room *ChatRoom, message Message, db *d
 			continue
 		}
 
-		go func(m *ChatRoomMember) {
+		go func(m *WSMember) {
 			m.Lock()
 			defer m.Unlock()
 			if m.Conn != nil {

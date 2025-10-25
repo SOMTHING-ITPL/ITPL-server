@@ -14,8 +14,22 @@ type ChatRoomRepository struct {
 	DB *gorm.DB
 }
 
+// WebSocket related structs
+type WSRoom struct {
+	sync.Mutex             // to avoid race condition
+	RoomID     uint        // room ID
+	Members    []*WSMember // userID -> ChatRoomMember
+}
+
+type WSMember struct {
+	*websocket.Conn
+	sync.Mutex
+
+	UserID uint
+}
+
 type RoomManager struct {
-	Rooms map[uint]*ChatRoom
+	Rooms map[uint]*WSRoom // roomID -> WSRoom
 	sync.Mutex
 }
 
@@ -25,8 +39,10 @@ type ChatRoomInfo struct {
 	ImgKey         *string `json:"img_key,omitempty"`
 	PerformanceDay int64   `json:"performance_day"`
 	MaxMembers     int     `json:"max_members"`
-	Departure      Region  `json:"departure"`
-	Arrival        Region  `json:"arrival"`
+	DepartureCoord Region  `json:"departure_coord"`
+	ArrivalCoord   Region  `json:"arrival_coord"`
+	DepartureName  string  `json:"departure_name"`
+	ArrivalName    string  `json:"arrival_name"`
 }
 
 // ChatRoom, ChatRoomMember : gorm mode
@@ -37,10 +53,12 @@ type Region struct {
 
 type ChatRoom struct {
 	gorm.Model
-	sync.Mutex                   // to avoid race condition
-	Members    []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
-	Departure  Region            `json:"departure"`
-	Arrival    Region            `json:"arrival"`
+	Members        []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
+	DepartureCoord Region            `json:"departure_coord"`
+	ArrivalCoord   Region            `json:"arrival_coord"`
+
+	DepartureName string `json:"departure_name"`
+	ArrivalName   string `json:"arrival_name"`
 
 	Title          string  `json:"title" gorm:"column:title"`
 	ImageKey       *string `json:"image_key,omitempty" gorm:"column:image_key"`
@@ -50,8 +68,6 @@ type ChatRoom struct {
 
 type ChatRoomMember struct {
 	User user.User `gorm:"foreignKey:UserID"`
-	sync.Mutex
-	*websocket.Conn
 
 	ChatRoomID uint      `json:"chat_room_id" gorm:"primaryKey"`
 	UserID     uint      `json:"user_id" gorm:"primaryKey"`
@@ -59,27 +75,10 @@ type ChatRoomMember struct {
 	JoinedAt   time.Time `json:"joined_at" gorm:"column:joined_at"`
 }
 
-// Message : dynamodb model
-type TextMessage struct {
-	SenderID  uint      `json:"sender"`
-	Text      string    `json:"text"`
-	RoomID    uint      `json:"room_id"`
-	Timestamp time.Time `json:"timestamp" bson:"timestamp"`
-}
-
-type ImageMessage struct {
-	SenderID  uint      `json:"sender_id"`
-	RoomID    uint      `json:"room_id"`
-	Timestamp time.Time `json:"timestamp"`
-	ImageKey  *string   `json:"image_key"`
-}
-
 type Message struct {
-	MessageSK   string    `json:"message_sk" dynamodbav:"message_sk"`     // Sort Key (timestamp#uuid)
-	ContentType string    `json:"content_type" dynamodbav:"content_type"` // "text" or "image"
-	SenderID    uint      `json:"sender_id" dynamodbav:"sender_id"`
-	RoomID      uint      `json:"room_id" dynamodbav:"room_id"`                     // Partition Key
-	Timestamp   time.Time `json:"timestamp" dynamodbav:"timestamp"`                 // stored as string RFC3339 fromat as default
-	Content     *string   `json:"content,omitempty" dynamodbav:"content,omitempty"` // for both text and image
-	ImageKey    *string   `json:"-" dynamodbav:"image_url,omitempty"`               // for image messages
+	MessageSK string    `json:"message_sk" dynamodbav:"message_sk"` // Sort Key (timestamp#uuid)
+	SenderID  uint      `json:"sender_id" dynamodbav:"sender_id"`
+	RoomID    uint      `json:"room_id" dynamodbav:"room_id"`     // Partition Key
+	Timestamp time.Time `json:"timestamp" dynamodbav:"timestamp"` // stored as string RFC3339 fromat as default
+	Text      string    `json:"text" dynamodbav:"text"`
 }

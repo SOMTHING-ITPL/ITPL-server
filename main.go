@@ -61,10 +61,7 @@ func main() {
 	dynamoClient := dynamo.NewDynamoDBClient(awsCfg)
 	tableBasics := dynamo.NewTableBasics(dynamoClient, "itpl-message-db")
 
-	// 채팅방 정보를 메모리 상에서 관리해야 함
-	// DB에서 불러오면 새로운 ChatRoom 객체가 생성 -> 기존에 접속한 사용자들과 다른 객체가 됨
-	// -> 기존 사용자들에게 메시지 브로드캐스트 불가
-	// var ChatRooms = make(map[uint]*chat.ChatRoom)
+	//var RoomManager = chat.NewRoomManager()
 
 	//db 쪽으로 빼야 하나?
 	storage.AutoMigrate(db)

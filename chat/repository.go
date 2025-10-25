@@ -35,9 +35,12 @@ func (r *ChatRoomRepository) CreateChatRoom(userRepo *user.Repository, info Chat
 		Members:        []*ChatRoomMember{creater},
 		PerformanceDay: info.PerformanceDay,
 		MaxMembers:     info.MaxMembers,
-		Departure:      info.Departure,
-		Arrival:        info.Arrival,
+		DepartureCoord: info.DepartureCoord,
+		ArrivalCoord:   info.ArrivalCoord,
+		DepartureName:  info.DepartureName,
+		ArrivalName:    info.ArrivalName,
 	}
+
 	if err := r.DB.Create(newChatRoom).Error; err != nil {
 		return err
 	}
@@ -101,30 +104,12 @@ func (r *ChatRoomRepository) GetMembers(room *ChatRoom) ([]ChatRoomMember, error
 	return members, nil
 }
 
-func (r *ChatRoomRepository) LeaveChatRoom(userId uint, roomId uint) error {
+func (r *ChatRoomRepository) DeleteChatRoomMember(userId uint, roomId uint) error {
 	return r.DB.Where("chat_room_id = ? AND user_id = ?", roomId, userId).Delete(&ChatRoomMember{}).Error
 }
 
 func (r *ChatRoomRepository) DeleteChatRoom(ctx context.Context, bucketBasics *s3.BucketBasics, tableBasics *dynamo.TableBasics, roomID uint) error {
 	sroomID := strconv.FormatUint(uint64(roomID), 10)
-	// Delete Images from S3
-	mmsg, err := tableBasics.GetItemsByPartitionKey(ctx, "room_id", &types.AttributeValueMemberN{Value: sroomID})
-	if err != nil {
-		return err
-	}
-
-	msg, err := MapToMessage(mmsg)
-	if err != nil {
-		return err
-	}
-
-	for _, m := range msg {
-		if m.ContentType == "image" {
-			if err := s3.DeleteImage(bucketBasics.S3Client, bucketBasics.BucketName, *m.ImageKey); err != nil {
-				return err
-			}
-		}
-	}
 	/* Delete messages from DynamoDB */
 	if err := tableBasics.DeleteItemsByPartitionKey(ctx, "room_id", &types.AttributeValueMemberN{Value: sroomID}); err != nil {
 		return err
