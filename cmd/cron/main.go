@@ -38,7 +38,7 @@ func main() {
 	//start Date + 6month
 	//running 3일 전 업데이트 된 거
 	today := time.Now()
-	startDate := today.AddDate(0, 0, -3)
+	startDate := today.AddDate(0, 0, 5)
 
 	afterSixMonths := today.AddDate(0, 6, 0)
 
