@@ -68,6 +68,7 @@ func (c *RecommenderRPCClient) PerformanceRecommendation(userRepo *user.Reposito
 	for _, fav := range favs {
 		reqfavs = append(reqfavs, fav.Title)
 	}
+
 	userRequest := &UserRequest{
 		UserId:  int32(userID),
 		Genres:  reqgenres,
@@ -78,21 +79,28 @@ func (c *RecommenderRPCClient) PerformanceRecommendation(userRepo *user.Reposito
 
 	/*request to server stub*/
 	resp, err := c.Client.Recommend(ctx, userRequest)
+	if err != nil {
+		return nil, err
+	}
 
 	var result []performance.Performance
 	for _, item := range resp.Concerts {
+		if item == nil {
+			log.Printf("WARNING: Received a nil Concert item from gRPC server. Skipping.")
+			continue // nil 항목은 건너뛰고 다음 루프로 이동
+		}
 		ID, err := strconv.ParseInt(item.Id, 10, 64)
 		if err != nil {
 			log.Printf("failed to convert rpc response(concert.Id) to int")
 			return nil, err
 		}
-
 		ap, err := performanceRepo.GetPerformanceById(uint(ID))
 		if err != nil {
 			log.Printf("failed to find performance by ID, after GRPC CALL - recommendation")
 			return nil, err
 		}
 		result = append(result, *ap)
+
 	}
 
 	return result, nil

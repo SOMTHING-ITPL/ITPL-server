@@ -205,7 +205,7 @@ var File_recommender_proto protoreflect.FileDescriptor
 
 const file_recommender_proto_rawDesc = "" +
 	"\n" +
-	"\x11recommender.proto\x12\vrecommender\"\x85\x01\n" +
+	"\x11recommender.proto\"\x85\x01\n" +
 	"\vUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12\x16\n" +
 	"\x06genres\x18\x02 \x03(\x05R\x06genres\x12\x18\n" +
@@ -215,11 +215,11 @@ const file_recommender_proto_rawDesc = "" +
 	"\aConcert\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x14\n" +
-	"\x05score\x18\x03 \x01(\x02R\x05score\"E\n" +
-	"\x11RecommendResponse\x120\n" +
-	"\bconcerts\x18\x01 \x03(\v2\x14.recommender.ConcertR\bconcerts2T\n" +
-	"\vRecommender\x12E\n" +
-	"\tRecommend\x12\x18.recommender.UserRequest\x1a\x1e.recommender.RecommendResponseB*Z(ITPL-server/grpc_client/recommend_clientb\x06proto3"
+	"\x05score\x18\x03 \x01(\x02R\x05score\"9\n" +
+	"\x11RecommendResponse\x12$\n" +
+	"\bconcerts\x18\x01 \x03(\v2\b.ConcertR\bconcerts2<\n" +
+	"\vRecommender\x12-\n" +
+	"\tRecommend\x12\f.UserRequest\x1a\x12.RecommendResponseB*Z(ITPL-server/grpc_client/recommend_clientb\x06proto3"
 
 var (
 	file_recommender_proto_rawDescOnce sync.Once
@@ -235,14 +235,14 @@ func file_recommender_proto_rawDescGZIP() []byte {
 
 var file_recommender_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
 var file_recommender_proto_goTypes = []any{
-	(*UserRequest)(nil),       // 0: recommender.UserRequest
-	(*Concert)(nil),           // 1: recommender.Concert
-	(*RecommendResponse)(nil), // 2: recommender.RecommendResponse
+	(*UserRequest)(nil),       // 0: UserRequest
+	(*Concert)(nil),           // 1: Concert
+	(*RecommendResponse)(nil), // 2: RecommendResponse
 }
 var file_recommender_proto_depIdxs = []int32{
-	1, // 0: recommender.RecommendResponse.concerts:type_name -> recommender.Concert
-	0, // 1: recommender.Recommender.Recommend:input_type -> recommender.UserRequest
-	2, // 2: recommender.Recommender.Recommend:output_type -> recommender.RecommendResponse
+	1, // 0: RecommendResponse.concerts:type_name -> Concert
+	0, // 1: Recommender.Recommend:input_type -> UserRequest
+	2, // 2: Recommender.Recommend:output_type -> RecommendResponse
 	2, // [2:3] is the sub-list for method output_type
 	1, // [1:2] is the sub-list for method input_type
 	1, // [1:1] is the sub-list for extension type_name
