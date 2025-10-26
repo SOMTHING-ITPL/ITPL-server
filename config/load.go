@@ -15,6 +15,7 @@ var (
 	KopisCfg  *KopisApiConfig
 	OpenAICfg *OpenAiConfig
 	S3Cfg     *S3Config
+	GrpcCfg   *GrpcConfig
 )
 
 func LoadConfigs(configs ...Config) error {
@@ -45,8 +46,9 @@ func InitConfigs() error {
 	KopisCfg = &KopisApiConfig{}
 	OpenAICfg = &OpenAiConfig{}
 	S3Cfg = &S3Config{}
+	GrpcCfg = &GrpcConfig{}
 
-	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg, OpenAICfg, S3Cfg); err != nil {
+	if err := LoadConfigs(KakaoCfg, DbCfg, GoogleCfg, RedisCfg, SmtpCfg, KopisCfg, OpenAICfg, S3Cfg, GrpcCfg); err != nil {
 		return err
 	}
 
@@ -165,5 +167,14 @@ func (s *S3Config) Load() error {
 	if val := viper.GetString("BUCKET_NAME"); val != "" {
 		s.BucketName = val
 	}
+	return nil
+}
+
+func (g *GrpcConfig) Load() error {
+	//In Yaml
+	g.Host = viper.GetString("grpc.host")
+	g.RecommendPort = viper.GetString("grpc.recommend_port")
+	g.UpdatePort = viper.GetString("grpc.update_port")
+
 	return nil
 }

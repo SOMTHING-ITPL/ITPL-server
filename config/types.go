@@ -54,3 +54,9 @@ type S3Config struct {
 	SecretKey  string
 	BucketName string
 }
+
+type GrpcConfig struct {
+	Host          string
+	UpdatePort    string
+	RecommendPort string
+}

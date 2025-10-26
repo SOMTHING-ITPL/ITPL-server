@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-package recommender;
 option go_package = "ITPL-server/grpc_client/recommend_client";
 
 service Recommender {

@@ -8,6 +8,7 @@ import (
 
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/api"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/update_client"
 )
 
 type PerformanceScheduler struct {
@@ -128,8 +129,9 @@ func (s *PerformanceScheduler) UpdateStatusList() error {
 }
 
 // 공연 목록 조회 -> 공연 상세 조회 / LLM 추가 정보 수집 -> 공연 시설 조회
-func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, isRunnung bool, afterDay *string) error {
-	pge, row := 1, 100
+func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, isRunnung bool, afterDay *string, upcli *update_client.UpdateClient) error {
+	pge, row := 1, 10
+	result := make([]*performance.Performance, 0)
 
 	for {
 		req := api.PerformanceListRequest{
@@ -152,6 +154,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 		}
 
 		for _, performance := range performanceList {
+			fmt.Printf("Scheduler : tring to put data : %s ....", performance.Name)
 			performanceRes, err := api.GetDetailPerformance(performance.ID)
 			if err != nil {
 				return fmt.Errorf("Scheduler: Get Performance fail: %w", err)
@@ -159,16 +162,25 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 
 			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID, performanceRes.Area)
 			if err != nil {
-				return err
+				return fmt.Errorf("Scheduler: PUT Facility detail error: %w", err)
 			}
 
-			_, err = s.PutPerformanceDetail(performanceRes, performance.ID, facilityId)
+			perfDetail, err := s.PutPerformanceDetail(performanceRes, performance.ID, facilityId)
 			if err != nil {
-				return err
+				return fmt.Errorf("Scheduler: PUT Performance detail error: %w", err)
 			}
+			result = append(result, perfDetail)
+			fmt.Printf("Success to store data ! %s ....", performance.Name)
 		}
+		if err := upcli.UpdateConcert(result); err != nil {
+			fmt.Printf("error is occured when update data! %s", err.Error())
+		}
+
+		result = result[:0]
+
 		pge++
 	}
+
 }
 
 // 아 애매하네 .. 이것도 캐싱형태로 해야 하나? 으으음 계속 날리는 형태로 ? 애매한데 ...
@@ -198,7 +210,7 @@ func (s *PerformanceScheduler) PutFacilityDetail(id string, region string) (uint
 }
 
 // updatedAT 데이터 넣어줘야 함.
-func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDetailRes, originalPerf *performance.Performance, facilityID uint) (uint, error) {
+func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDetailRes, originalPerf *performance.Performance, facilityID uint) (*performance.Performance, error) {
 	layout := "2006.01.02"
 
 	// updatePerf.StartDate = strings.ReplaceAll(updatePerf.StartDate, "-", ".")
@@ -229,21 +241,21 @@ func (s *PerformanceScheduler) UpdatePerformance(updatePerf *api.PerformanceDeta
 	originalPerf.FacilityName = updatePerf.Facility
 
 	if err := s.PerformanceRepo.UpdatePerformance(originalPerf); err != nil {
-		return 0, fmt.Errorf("Scheduler: updating performance fail: %w", err)
+		return nil, fmt.Errorf("Scheduler: updating performance fail: %w", err)
 	}
 
-	return originalPerf.ID, nil
+	return originalPerf, nil
 }
 
-func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRes, id string, facilityID uint) (uint, error) {
+func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRes, id string, facilityID uint) (*performance.Performance, error) {
 	// performanceRes, err := api.GetDetailPerformance(id)
 	data, err := s.PerformanceRepo.GetPerformanceByKopisID(id)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 	if data != nil {
 		s.UpdatePerformance(res, data, facilityID)
-		return data.ID, nil
+		return data, nil
 	}
 
 	//preprocess
@@ -259,19 +271,19 @@ func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRe
 
 	performance, err := s.BuilderPerformance(res, gptRes, facilityID)
 	if err != nil {
-		return 0, fmt.Errorf("Scheduler: building performance fail: %w", err)
+		return nil, fmt.Errorf("Scheduler: building performance fail: %w", err)
 	}
 
 	performanceID, err := s.PerformanceRepo.CreatePerformance(performance)
 	if err != nil {
-		return 0, fmt.Errorf("Scheduler: Creating performance fail: %w", err)
+		return nil, fmt.Errorf("Scheduler: Creating performance fail: %w", err)
 	}
 
 	imageList := s.BuilderPerformanceImages(performanceID, res.StyUrls)
 
 	for _, image := range imageList {
 		if err := s.PerformanceRepo.CreatePerformanceImage(&image); err != nil {
-			return 0, fmt.Errorf("Scheduler: creating site fail: %w", err)
+			return nil, fmt.Errorf("Scheduler: creating site fail: %w", err)
 		}
 	}
 
@@ -279,9 +291,9 @@ func (s *PerformanceScheduler) PutPerformanceDetail(res *api.PerformanceDetailRe
 
 	for _, ticket := range ticketList {
 		if err := s.PerformanceRepo.CreatePerformanceTicketSite(&ticket); err != nil {
-			return 0, fmt.Errorf("Scheduler: creating site fail: %w", err)
+			return nil, fmt.Errorf("Scheduler: creating site fail: %w", err)
 		}
 	}
 
-	return performanceID, nil
+	return performance, nil
 }

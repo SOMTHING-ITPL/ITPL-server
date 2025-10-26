@@ -12,8 +12,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-func NewClient(socket string) (*UpdateClient, error) {
-	conn, err := grpc.NewClient(socket, grpc.WithTransportCredentials(insecure.NewCredentials()))
+func NewClient(sockAddr string) (*UpdateClient, error) {
+	conn, err := grpc.NewClient(sockAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("failed to connect: %v", err)
 		return &UpdateClient{}, err
@@ -24,8 +24,8 @@ func NewClient(socket string) (*UpdateClient, error) {
 	return &UpdateClient{Conn: conn, Client: client}, nil
 }
 
-func (c *UpdateClient) UpdateConcert(concerts []performance.Performance) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) //5초 timeout?
+func (c *UpdateClient) UpdateConcert(concerts []*performance.Performance) error {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //5초 timeout?
 	defer cancel()
 
 	req := []*Concert{}
