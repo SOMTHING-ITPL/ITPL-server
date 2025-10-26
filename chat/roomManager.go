@@ -4,7 +4,8 @@ import "github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 
 func NewChatRoomManager(db *dynamo.TableBasics) *RoomManager {
 	return &RoomManager{
-		rooms: make(map[uint]*Hub),
+		rooms:    make(map[uint]*Hub),
+		dynamoDB: db,
 	}
 }
 
@@ -30,9 +31,9 @@ func (m *RoomManager) GetOrCreate(roomID uint) *Hub {
 		clients:    make(map[uint]*Client),
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
-		broadcast:  make(chan Message, 256),
+		broadcast:  make(chan Message, 256), //broadCast에는 이 Message 뿌려야 함.
 		closeCh:    make(chan struct{}),
-		DynamoDB:   m.DynamoDB,
+		DynamoDB:   m.dynamoDB,
 	}
 	m.rooms[roomID] = hub
 	go hub.Run()

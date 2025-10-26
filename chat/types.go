@@ -84,5 +84,5 @@ type Client struct {
 type RoomManager struct {
 	mu       sync.RWMutex
 	rooms    map[uint]*Hub
-	DynamoDB *dynamo.TableBasics
+	dynamoDB *dynamo.TableBasics
 }
