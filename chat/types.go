@@ -36,7 +36,7 @@ type Region struct {
 
 type ChatRoom struct {
 	gorm.Model
-	Members        []*ChatRoomMember `json:"members" gorm:"foreignKey:ChatRoomID"`
+	Members        []*ChatRoomMember `json:"members"`
 	DepartureCoord Region            `json:"departure_coord"`
 	ArrivalCoord   Region            `json:"arrival_coord"`
 
