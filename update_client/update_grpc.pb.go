@@ -19,7 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ConcertUpdater_UpdateConcerts_FullMethodName = "/update.ConcertUpdater/UpdateConcerts"
+	ConcertUpdater_UpdateConcerts_FullMethodName = "/ConcertUpdater/UpdateConcerts"
 )
 
 // ConcertUpdaterClient is the client API for ConcertUpdater service.
@@ -108,7 +108,7 @@ func _ConcertUpdater_UpdateConcerts_Handler(srv interface{}, ctx context.Context
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ConcertUpdater_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "update.ConcertUpdater",
+	ServiceName: "ConcertUpdater",
 	HandlerType: (*ConcertUpdaterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

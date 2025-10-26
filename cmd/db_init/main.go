@@ -44,7 +44,10 @@ func main() {
 	layout := "20060102"
 	todayStr := today.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
-	cli, err := update_client.NewClient(config.GrpcCfg.Host + ":" + config.GrpcCfg.UpdatePort)
+	sock := config.GrpcCfg.Host + ":" + config.GrpcCfg.UpdatePort
+	fmt.Print(sock)
+	cli, err := update_client.NewClient(sock)
+
 	if err != nil {
 		log.Fatal("Failed to create update client:", err)
 	}

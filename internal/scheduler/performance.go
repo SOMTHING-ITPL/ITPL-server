@@ -130,7 +130,7 @@ func (s *PerformanceScheduler) UpdateStatusList() error {
 
 // 공연 목록 조회 -> 공연 상세 조회 / LLM 추가 정보 수집 -> 공연 시설 조회
 func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate string, isRunnung bool, afterDay *string, upcli *update_client.UpdateClient) error {
-	pge, row := 1, 100
+	pge, row := 1, 10
 	result := make([]*performance.Performance, 0)
 
 	for {
@@ -170,12 +170,17 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 				return fmt.Errorf("Scheduler: PUT Performance detail error: %w", err)
 			}
 			result = append(result, perfDetail)
+			fmt.Printf("Success to store data ! %s ....", performance.Name)
+		}
+		if err := upcli.UpdateConcert(result); err != nil {
+			fmt.Printf("error is occured when update data! %s", err.Error())
 		}
 
-		upcli.UpdateConcert(result)
+		result = result[:0]
 
 		pge++
 	}
+
 }
 
 // 아 애매하네 .. 이것도 캐싱형태로 해야 하나? 으으음 계속 날리는 형태로 ? 애매한데 ...

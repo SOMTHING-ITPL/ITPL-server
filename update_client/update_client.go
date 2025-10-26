@@ -25,7 +25,7 @@ func NewClient(sockAddr string) (*UpdateClient, error) {
 }
 
 func (c *UpdateClient) UpdateConcert(concerts []*performance.Performance) error {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second) //5초 timeout?
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //5초 timeout?
 	defer cancel()
 
 	req := []*Concert{}
