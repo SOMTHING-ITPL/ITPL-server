@@ -1,10 +1,12 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
@@ -12,36 +14,223 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
-func NewChatRoomHandler(db *gorm.DB, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
+func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
 	return &ChatRoomHandler{
-		database:       db,
-		userRepository: userRepo,
-		bucketBasics:   bucketBasics,
-		tableBasics:    basics,
+		chatRoomRepository: chatRoomRepo,
+		userRepository:     userRepo,
+		bucketBasics:       bucketBasics,
+		tableBasics:        basics,
+	}
+}
+
+// GET
+// only title search
+func (h *ChatRoomHandler) GetChatRoomsByTitle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		title := c.Query("title")
+		rooms, err := h.chatRoomRepository.SearchChatRoomsByTitle(title)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		var response []ChatRoomInfoResponse
+		for _, room := range rooms {
+			roomInfo, err := ToChatRoomInfoResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, room)
+			if err != nil {
+				log.Printf("Failed to get chat room info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
+				return
+			}
+			if roomInfo.CurrentMembers < roomInfo.MaxMembers {
+				response = append(response, roomInfo)
+			}
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    response,
+		})
+	}
+}
+
+// GET
+// search by coordinates, title and performance day
+func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		title := c.Query("title")
+		ArrivalLongitude := c.Query("arrival_longitude")
+		ArrivalLatitude := c.Query("arrival_latitude")
+
+		arrivalLongitude, err := strconv.ParseFloat(ArrivalLongitude, 64)
+		if err != nil {
+			log.Printf("Failed to parse arrival longitude: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid arrival_longitude"})
+			return
+		}
+		arrivalLatitude, err := strconv.ParseFloat(ArrivalLatitude, 64)
+		if err != nil {
+			log.Printf("Failed to parse arrival latitude: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid arrival_latitude"})
+			return
+		}
+
+		DepartureLongitude := c.Query("departure_longitude")
+		DepartureLatitude := c.Query("departure_latitude")
+
+		departureLongitude, err := strconv.ParseFloat(DepartureLongitude, 64)
+		if err != nil {
+			log.Printf("Failed to parse departure longitude: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid departure_longitude"})
+			return
+		}
+
+		departureLatitude, err := strconv.ParseFloat(DepartureLatitude, 64)
+		if err != nil {
+			log.Printf("Failed to parse departure latitude: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid departure_latitude"})
+			return
+		}
+
+		performanceDay := c.Query("performance_day")
+		if ArrivalLongitude == "" || ArrivalLatitude == "" || DepartureLongitude == "" || DepartureLatitude == "" || performanceDay == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required query parameters"})
+			return
+		}
+		perfDay, err := strconv.ParseInt(performanceDay, 10, 64)
+		if err != nil {
+			log.Printf("Failed to parse performance day: %v", err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid performance_day"})
+			return
+		}
+		rooms, err := h.chatRoomRepository.GetChatRoomsByCoordinate(title, perfDay, departureLatitude, departureLongitude, arrivalLatitude, arrivalLongitude)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		var response []ChatRoomInfoResponse
+		for _, room := range rooms {
+			roomInfo, err := ToChatRoomInfoResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, room)
+			if err != nil {
+				log.Printf("Failed to get chat room info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
+				return
+			}
+			if roomInfo.CurrentMembers < roomInfo.MaxMembers {
+				response = append(response, roomInfo)
+			}
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    response,
+		})
+	}
+}
+
+// GET
+func (h *ChatRoomHandler) GetChatRoomMembers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roomID := c.Param("room_id")
+		if roomID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
+			return
+		}
+		rid, err := strconv.ParseUint(roomID, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid room_id"})
+			return
+		}
+		chatRoom, err := h.chatRoomRepository.GetChatRoomById(uint(rid))
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		members, err := h.chatRoomRepository.GetMembers(chatRoom)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		var response []ChatRoomMemberResponse
+		for _, member := range members {
+			memberInfo, err := ToChatRoomMemberInfoResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, h.chatRoomRepository.DB, member.UserID)
+			if err != nil {
+				log.Printf("Failed to get chat room member info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room member info"})
+				return
+			}
+			response = append(response, memberInfo)
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: fmt.Sprintf("members of room %d", rid),
+			Data:    response,
+		})
+	}
+}
+
+// GET
+func (h *ChatRoomHandler) GetMyChatRooms() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+		chatRooms, err := h.chatRoomRepository.GetMyChatRooms(userID)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		var response []ChatRoomInfoResponse
+		for _, room := range chatRooms {
+			roomInfo, err := ToChatRoomInfoResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, room)
+			if err != nil {
+				log.Printf("Failed to get chat room info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
+				return
+			}
+			response = append(response, roomInfo)
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "My chat rooms",
+			Data:    response,
+		})
+	}
+}
+
+// POST
+func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
+	type request struct {
+		RoomID uint `json:"room_id"`
+	}
+	return func(c *gin.Context) {
+		var req request
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+		if err := h.chatRoomRepository.AddUserToChatRoom(h.userRepository, userID, req.RoomID); err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		c.Status(http.StatusNoContent)
 	}
 }
 
 // POST
 func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
-	type req struct {
-		Title              string  `json:"title" binding:"required"`
-		PerformanceDay     int64   `json:"performance_day" binding:"required"`
-		MaxMembers         int     `json:"max_members" binding:"required"`
-		DepartureLongitude float64 `json:"departure_longitude" binding:"required"`
-		DepartureLatitude  float64 `json:"departure_latitude" binding:"required"`
-		ArrivalLongitude   float64 `json:"arrival_longitude" binding:"required"`
-		ArrivalLatitude    float64 `json:"arrival_latitude" binding:"required"`
-	}
 	return func(c *gin.Context) {
-		var request req
-		if err := c.ShouldBindJSON(&request); err != nil {
+		params, err := chat.LoadParams(c) // chat/util.go
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-
 		uid, ok := c.Get("userID")
 		if !ok {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
@@ -70,53 +259,53 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 			return
 		}
 
-		departure := chat.Region{
-			MapX: request.DepartureLongitude,
-			MapY: request.DepartureLatitude,
-		}
-
-		arrival := chat.Region{
-			MapX: request.ArrivalLongitude,
-			MapY: request.ArrivalLatitude,
-		}
-
 		info := chat.ChatRoomInfo{
-			Title:          request.Title,
-			ImgKey:         imageKey,
-			PerformanceDay: request.PerformanceDay,
-			MaxMembers:     request.MaxMembers,
-			Departure:      departure,
-			Arrival:        arrival,
+			Title:              params.Title,
+			ImgKey:             imageKey,
+			PerformanceDay:     params.PerformanceDay,
+			MaxMembers:         params.MaxMembers,
+			DepartureLatitude:  params.DepartureLatitude,
+			DepartureLongitude: params.DepartureLongitude,
+			ArrivalLatitude:    params.ArrivalLatitude,
+			ArrivalLongitude:   params.ArrivalLongitude,
+			DepartureName:      params.DepartureName,
+			ArrivalName:        params.ArrivalName,
 		}
 
-		chatRoom, err := chat.CreateChatRoom(h.userRepository, info, userId)
+		err = h.chatRoomRepository.CreateChatRoom(h.userRepository, info, userId)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		if err := h.database.Create(chatRoom).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.JSON(http.StatusOK, gin.H{"message": "Created chatroom successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
 
-func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
-	type request struct {
-		UserID uint `json:"user_id"`
-		RoomID uint `json:"room_id"`
-	}
+// POST
+func (h *ChatRoomHandler) LeaveChatRoom() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req request
-		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		roomID := c.Param("room_id")
+		if roomID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
 			return
 		}
-
-		if err := chat.JoinChatRoom(h.userRepository, h.database, req.UserID, req.RoomID); err != nil {
+		if roomID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
+			return
+		}
+		rid, err := strconv.ParseUint(roomID, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid room_id"})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+		if err := h.chatRoomRepository.DeleteChatRoomMember(userID, uint(rid)); err != nil {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
@@ -132,20 +321,48 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
 			return
 		}
-		m, err := h.tableBasics.GetItemsByPartitionKey(c, "room_id", &types.AttributeValueMemberN{Value: roomID})
+		mmap, err := h.tableBasics.GetItemsByPartitionKey(c, "room_id", &types.AttributeValueMemberN{Value: roomID})
 		if err != nil {
 			log.Printf("Failed to get items from DynamoDB : %v", err)
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		messages, err := chat.MapToMessage(m)
+		messages, err := chat.MapToMessage(mmap)
 		if err != nil {
 			log.Printf("map to Message struct Convert Error %v", err)
 			c.Status(http.StatusInternalServerError)
 			return
 		}
+		var response []ChatMessageResponse
+		for _, message := range messages {
+			res, err := ToChatMessageResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, h.chatRoomRepository.DB, message)
+			if err != nil {
+				log.Printf("Failed to get chat room member info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room member info"})
+				return
+			}
+			response = append(response, res)
+		}
 
-		// 응답 구조 수정 필요
-		c.JSON(http.StatusOK, gin.H{"messages": messages})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    response,
+		})
+	}
+}
+
+func (h *ChatRoomHandler) DeleteChatRoom() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roomID := c.Param("room_id")
+		rid, err := strconv.ParseUint(roomID, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid room_id"})
+			return
+		}
+		if err := h.chatRoomRepository.DeleteChatRoom(context.Background(), h.bucketBasics, h.tableBasics, uint(rid)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete room from DB"})
+			return
+		}
+		c.Status(http.StatusNoContent)
 	}
 }

@@ -1,0 +1,20 @@
+package chat
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+func BuildMessage(senderID, roomID uint, text string) Message {
+	now := time.Now().UTC()
+	sk := now.Format(time.RFC3339Nano) + "#" + uuid.NewString()
+
+	return Message{
+		MessageSK: sk,
+		SenderID:  senderID,
+		RoomID:    roomID,
+		Timestamp: now,
+		Text:      text,
+	}
+}

@@ -60,10 +60,9 @@ func (basics TableBasics) GetItemsByPartitionKey(ctx context.Context, partitionK
 	return items, nil
 }
 
-func (basics TableBasics) DeleteItemsByPartitionKey(ctx context.Context, partitionKeyName string, value types.AttributeValue) error {
-	keyCond := fmt.Sprintf("%s = :pkVal", partitionKeyName)
+func (basics TableBasics) DeleteItemsByPartitionKey(ctx context.Context, partitionKey string, value types.AttributeValue) error {
+	keyCond := fmt.Sprintf("%s = :pkVal", partitionKey)
 
-	// Get all items with the partition key
 	queryInput := &dynamodb.QueryInput{
 		TableName:              aws.String(basics.TableName),
 		KeyConditionExpression: aws.String(keyCond),
@@ -76,12 +75,10 @@ func (basics TableBasics) DeleteItemsByPartitionKey(ctx context.Context, partiti
 	if err != nil {
 		return fmt.Errorf("failed to query items: %w", err)
 	}
-
 	if len(queryOutput.Items) == 0 {
-		return nil // nothing to delete
+		return nil
 	}
 
-	// Split items into batches of 25 (BatchWrite limit)
 	const batchSize = 25
 	for i := 0; i < len(queryOutput.Items); i += batchSize {
 		end := i + batchSize
@@ -93,15 +90,9 @@ func (basics TableBasics) DeleteItemsByPartitionKey(ctx context.Context, partiti
 		writeRequests := make([]types.WriteRequest, 0, len(batch))
 
 		for _, item := range batch {
-			// Extract both PK and SK
-			key := make(map[string]types.AttributeValue)
-			key[partitionKeyName] = item[partitionKeyName]
-
-			// find sort key automatically
-			for k := range item {
-				if k != partitionKeyName {
-					key[k] = item[k]
-				}
+			key := map[string]types.AttributeValue{
+				"room_id":    item["room_id"],
+				"message_sk": item["message_sk"],
 			}
 
 			writeRequests = append(writeRequests, types.WriteRequest{
@@ -111,7 +102,6 @@ func (basics TableBasics) DeleteItemsByPartitionKey(ctx context.Context, partiti
 			})
 		}
 
-		// Execute BatchWriteItem
 		_, err := basics.DynamoDbClient.BatchWriteItem(ctx, &dynamodb.BatchWriteItemInput{
 			RequestItems: map[string][]types.WriteRequest{
 				basics.TableName: writeRequests,

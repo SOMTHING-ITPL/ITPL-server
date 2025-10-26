@@ -1,11 +1,16 @@
 package handler
 
 import (
+	"fmt"
 	"time"
 
+	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"gorm.io/gorm"
 )
 
@@ -131,4 +136,70 @@ func ToCourseDetails(db *gorm.DB, details []course.CourseDetail) ([]CourseDetail
 		courseDetailResponse = append(courseDetailResponse, res)
 	}
 	return courseDetailResponse, nil
+}
+
+func ToChatRoomInfoResponse(cfg aws.Config, bucketName string, room chat.ChatRoom) (ChatRoomInfoResponse, error) {
+	imageUrl, err := s3.GetPresignURL(cfg, bucketName, *room.ImageKey)
+	currentMembers := len(room.Members)
+	return ChatRoomInfoResponse{
+		ID:             room.ID,
+		Title:          room.Title,
+		ImageUrl:       &imageUrl,
+		PerformanceDay: room.PerformanceDay,
+		MaxMembers:     room.MaxMembers,
+		DepartureName:  room.DepartureName,
+		CurrentMembers: currentMembers,
+		ArrivalName:    room.ArrivalName,
+	}, err
+}
+
+func ToChatRoomMemberInfoResponse(cfg aws.Config, bucketName string, DB *gorm.DB, userID uint) (ChatRoomMemberResponse, error) {
+	var user user.User
+
+	result := DB.First(&user, userID)
+	if result.Error != nil {
+		fmt.Printf("get user error : %s\n", result.Error)
+		return ChatRoomMemberResponse{}, result.Error
+	}
+	var url string
+	var err error
+	if user.Photo != nil {
+		url, err = s3.GetPresignURL(cfg, bucketName, aws.ToString(user.Photo))
+		if err != nil {
+			return ChatRoomMemberResponse{}, err
+		}
+	}
+
+	return ChatRoomMemberResponse{
+		UserID:   user.ID,
+		Nickname: user.NickName,
+		ImageUrl: url,
+	}, nil
+}
+
+func ToChatMessageResponse(cfg aws.Config, bucketName string, DB *gorm.DB, msg chat.Message) (ChatMessageResponse, error) {
+	var user user.User
+
+	result := DB.First(&user, msg.SenderID)
+	if result.Error != nil {
+		fmt.Printf("get user error : %s\n", result.Error)
+		return ChatMessageResponse{}, result.Error
+	}
+	var url string
+	var err error
+	if user.Photo != nil {
+		url, err = s3.GetPresignURL(cfg, bucketName, aws.ToString(user.Photo))
+		if err != nil {
+			return ChatMessageResponse{}, err
+		}
+	}
+	return ChatMessageResponse{
+		MessageSK: msg.MessageSK,
+		SenderID:  user.ID,
+		Nickname:  user.NickName,
+		ImageURL:  url,
+		RoomID:    msg.RoomID,
+		Timestamp: msg.Timestamp,
+		Text:      msg.Text,
+	}, nil
 }

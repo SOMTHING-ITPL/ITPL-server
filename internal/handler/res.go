@@ -137,3 +137,30 @@ type PreferSearchResponse struct {
 	Name     string `json:"name"`
 	ImageUrl string `json:"image_url"`
 }
+
+type ChatRoomInfoResponse struct {
+	ID             uint    `json:"id"`
+	Title          string  `json:"title"`
+	ImageUrl       *string `json:"image_url,omitempty"`
+	PerformanceDay int64   `json:"performance_day"`
+	CurrentMembers int     `json:"current_members"`
+	MaxMembers     int     `json:"max_members"`
+	DepartureName  string  `json:"departure_name"`
+	ArrivalName    string  `json:"arrival_name"`
+}
+
+type ChatRoomMemberResponse struct {
+	UserID   uint   `json:"user_id"`
+	Nickname string `json:"nickname"`
+	ImageUrl string `json:"image_url,omitempty"`
+}
+
+type ChatMessageResponse struct {
+	MessageSK string    `json:"message_sk"`
+	SenderID  uint      `json:"sender_id"`
+	Nickname  string    `json:"nickname"`
+	ImageURL  string    `json:"image_url,omitempty"`
+	RoomID    uint      `json:"room_id"`
+	Timestamp time.Time `json:"timestamp"`
+	Text      string    `json:"text"`
+}

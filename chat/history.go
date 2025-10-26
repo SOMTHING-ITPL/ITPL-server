@@ -21,15 +21,5 @@ func GetChatHistory(ctx context.Context, bucketBasics *s3.BucketBasics, tableBas
 		log.Printf("failed to convert map to []Message. check chat/utils.go/MapToMessage()")
 		return nil, err
 	}
-	for _, msg := range messages {
-		if msg.ContentType == "image" {
-			url, err := s3.GetPresignURL(bucketBasics.AwsConfig, bucketBasics.BucketName, *msg.ImageKey)
-			if err != nil {
-				log.Printf("failed to get presigned url(in Chat history provider)")
-				return nil, err
-			}
-			msg.Content = &url
-		}
-	}
 	return messages, nil
 }
