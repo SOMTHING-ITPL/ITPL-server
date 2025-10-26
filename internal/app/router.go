@@ -182,5 +182,5 @@ func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHa
 
 	rg.PATCH("/room/leave/:room_id", chatRoomHandler.LeaveChatRoom())
 
-	rg.GET("/ws/:room_Id", chatRoomHandler.ConnectToChatRoom())
+	rg.GET("/ws/:room_id", chatRoomHandler.ConnectToChatRoom())
 }
