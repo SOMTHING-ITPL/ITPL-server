@@ -143,6 +143,7 @@ type ChatRoomInfoResponse struct {
 	Title          string  `json:"title"`
 	ImageUrl       *string `json:"image_url,omitempty"`
 	PerformanceDay int64   `json:"performance_day"`
+	CurrentMembers int     `json:"current_members"`
 	MaxMembers     int     `json:"max_members"`
 	DepartureName  string  `json:"departure_name"`
 	ArrivalName    string  `json:"arrival_name"`

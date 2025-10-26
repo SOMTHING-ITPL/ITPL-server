@@ -173,11 +173,15 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 }
 
 func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler, rm *chat.RoomManager) {
-	rg.POST("/room", chatRoomHandler.CreateChatRoom())
-	rg.POST("/room/join", chatRoomHandler.JoinChatRoom())
 	rg.GET("/rooms", chatRoomHandler.GetChatRoomsByCoordinate())
 	rg.GET("/room/:room_id/members", chatRoomHandler.GetChatRoomMembers())
 	rg.GET("/history/:room_id", chatRoomHandler.GetHistory())
+	rg.GET("/my-rooms", chatRoomHandler.GetMyChatRooms())
+
+	rg.POST("/room", chatRoomHandler.CreateChatRoom())
+	rg.POST("/room/join", chatRoomHandler.JoinChatRoom())
+
+	rg.PATCH("/room/leave/:room_id", chatRoomHandler.LeaveChatRoom())
 
 	//auth middle ware
 	// rg.GET("/ws", func(c *gin.Context) {
