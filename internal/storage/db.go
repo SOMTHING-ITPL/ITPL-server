@@ -6,6 +6,7 @@ import (
 
 	"github.com/SOMTHING-ITPL/ITPL-server/artist"
 	"github.com/SOMTHING-ITPL/ITPL-server/calendar"
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
@@ -48,6 +49,8 @@ func AutoMigrate(db *gorm.DB) {
 		&performance.PerformanceImage{},
 		&performance.PerformanceUserLike{},
 		&calendar.Calendar{},
+		&chat.ChatRoom{},
+		&chat.ChatRoomMember{},
 	)
 
 	if err != nil {

@@ -32,13 +32,13 @@ func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 		ArrivalLongitude := c.Query("arrival_longitude")
 		ArrivalLatitude := c.Query("arrival_latitude")
 
-		arrivalMapX, err := strconv.ParseFloat(ArrivalLongitude, 64)
+		arrivalLongitude, err := strconv.ParseFloat(ArrivalLongitude, 64)
 		if err != nil {
 			log.Printf("Failed to parse arrival longitude: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid arrival_longitude"})
 			return
 		}
-		arrivalMapY, err := strconv.ParseFloat(ArrivalLatitude, 64)
+		arrivalLatitude, err := strconv.ParseFloat(ArrivalLatitude, 64)
 		if err != nil {
 			log.Printf("Failed to parse arrival latitude: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid arrival_latitude"})
@@ -48,14 +48,14 @@ func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 		DepartureLongitude := c.Query("departure_longitude")
 		DepartureLatitude := c.Query("departure_latitude")
 
-		departureMapX, err := strconv.ParseFloat(DepartureLongitude, 64)
+		departureLongitude, err := strconv.ParseFloat(DepartureLongitude, 64)
 		if err != nil {
 			log.Printf("Failed to parse departure longitude: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid departure_longitude"})
 			return
 		}
 
-		departureMapY, err := strconv.ParseFloat(DepartureLatitude, 64)
+		departureLatitude, err := strconv.ParseFloat(DepartureLatitude, 64)
 		if err != nil {
 			log.Printf("Failed to parse departure latitude: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid departure_latitude"})
@@ -67,21 +67,13 @@ func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Missing required query parameters"})
 			return
 		}
-		arrival := chat.Region{
-			MapX: arrivalMapX,
-			MapY: arrivalMapY,
-		}
-		departure := chat.Region{
-			MapX: departureMapX,
-			MapY: departureMapY,
-		}
 		perfDay, err := strconv.ParseInt(performanceDay, 10, 64)
 		if err != nil {
 			log.Printf("Failed to parse performance day: %v", err)
 			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid performance_day"})
 			return
 		}
-		rooms, err := h.chatRoomRepository.GetChatRoomsByCoordinate(title, perfDay, departure, arrival)
+		rooms, err := h.chatRoomRepository.GetChatRoomsByCoordinate(title, perfDay, departureLatitude, departureLongitude, arrivalLatitude, arrivalLongitude)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -224,14 +216,16 @@ func (h *ChatRoomHandler) CreateChatRoom() gin.HandlerFunc {
 		}
 
 		info := chat.ChatRoomInfo{
-			Title:          params.Title,
-			ImgKey:         imageKey,
-			PerformanceDay: params.PerformanceDay,
-			MaxMembers:     params.MaxMembers,
-			DepartureCoord: params.DepartureCoord,
-			ArrivalCoord:   params.ArrivalCoord,
-			DepartureName:  params.DepartureName,
-			ArrivalName:    params.ArrivalName,
+			Title:              params.Title,
+			ImgKey:             imageKey,
+			PerformanceDay:     params.PerformanceDay,
+			MaxMembers:         params.MaxMembers,
+			DepartureLatitude:  params.DepartureLatitude,
+			DepartureLongitude: params.DepartureLongitude,
+			ArrivalLatitude:    params.ArrivalLatitude,
+			ArrivalLongitude:   params.ArrivalLongitude,
+			DepartureName:      params.DepartureName,
+			ArrivalName:        params.ArrivalName,
 		}
 
 		err = h.chatRoomRepository.CreateChatRoom(h.userRepository, info, userId)

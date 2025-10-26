@@ -26,19 +26,20 @@ func (r *ChatRoomRepository) CreateChatRoom(userRepo *user.Repository, info Chat
 		UserID:   me.ID,
 		JoinedAt: time.Now(),
 		IsAdmin:  true, // The creator is the admin
-		User:     me,
 	}
 
 	newChatRoom := &ChatRoom{
-		Title:          info.Title,
-		ImageKey:       info.ImgKey,
-		Members:        []*ChatRoomMember{creater},
-		PerformanceDay: info.PerformanceDay,
-		MaxMembers:     info.MaxMembers,
-		DepartureCoord: info.DepartureCoord,
-		ArrivalCoord:   info.ArrivalCoord,
-		DepartureName:  info.DepartureName,
-		ArrivalName:    info.ArrivalName,
+		Title:              info.Title,
+		ImageKey:           info.ImgKey,
+		Members:            []*ChatRoomMember{creater},
+		PerformanceDay:     info.PerformanceDay,
+		MaxMembers:         info.MaxMembers,
+		DepartureLatitude:  info.DepartureLatitude,
+		DepartureLongitude: info.DepartureLongitude,
+		ArrivalLatitude:    info.ArrivalLatitude,
+		ArrivalLongitude:   info.ArrivalLongitude,
+		DepartureName:      info.DepartureName,
+		ArrivalName:        info.ArrivalName,
 	}
 
 	if err := r.DB.Create(newChatRoom).Error; err != nil {
@@ -68,7 +69,6 @@ func (r *ChatRoomRepository) AddUserToChatRoom(userRepo *user.Repository, userId
 		UserID:   newUser.ID,
 		JoinedAt: time.Now(),
 		IsAdmin:  false, // Regular member
-		User:     newUser,
 	}
 	chatRoom.Members = append(chatRoom.Members, newMember)
 	if err := r.DB.Save(chatRoom).Error; err != nil {
@@ -77,15 +77,15 @@ func (r *ChatRoomRepository) AddUserToChatRoom(userRepo *user.Repository, userId
 	return nil
 }
 
-func (r *ChatRoomRepository) GetChatRoomsByCoordinate(text string, performanceDay int64, departure Region, arrival Region) ([]ChatRoom, error) {
+func (r *ChatRoomRepository) GetChatRoomsByCoordinate(text string, performanceDay int64, departureLatitude, departureLongitude, arrivalLatitude, arrivalLongitude float64) ([]ChatRoom, error) {
 	var rooms []ChatRoom
 
 	query := r.DB.Model(&ChatRoom{}).
 		Where("title LIKE ?", "%"+text+"%").
-		Where("departure_map_x BETWEEN ? AND ?", departure.MapX-0.1, departure.MapX+0.1).
-		Where("departure_map_y BETWEEN ? AND ?", departure.MapY-0.1, departure.MapY+0.1).
-		Where("arrival_map_x BETWEEN ? AND ?", arrival.MapX-0.1, arrival.MapX+0.1).
-		Where("arrival_map_y BETWEEN ? AND ?", arrival.MapY-0.1, arrival.MapY+0.1).
+		Where("departure_longitude BETWEEN ? AND ?", departureLongitude-0.1, departureLongitude+0.1).
+		Where("departure_latitude BETWEEN ? AND ?", departureLatitude-0.1, departureLatitude+0.1).
+		Where("arrival_longitude BETWEEN ? AND ?", arrivalLongitude-0.1, arrivalLongitude+0.1).
+		Where("arrival_latitude BETWEEN ? AND ?", arrivalLatitude-0.1, arrivalLatitude+0.1).
 		Where("performance_day = ?", performanceDay).
 		Preload("Members")
 
@@ -98,7 +98,7 @@ func (r *ChatRoomRepository) GetChatRoomsByCoordinate(text string, performanceDa
 
 func (r *ChatRoomRepository) GetMembers(room *ChatRoom) ([]ChatRoomMember, error) {
 	var members []ChatRoomMember
-	err := r.DB.Where("chat_room_id = ?", room.ID).Preload("User").Find(&members).Error
+	err := r.DB.Where("chat_room_id = ?", room.ID).Find(&members).Error
 	if err != nil {
 		return nil, err
 	}
