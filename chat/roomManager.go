@@ -2,7 +2,7 @@ package chat
 
 import "github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 
-func newChatRoomManager(db *dynamo.TableBasics) *RoomManager {
+func NewChatRoomManager(db *dynamo.TableBasics) *RoomManager {
 	return &RoomManager{
 		rooms: make(map[uint]*Hub),
 	}

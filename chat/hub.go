@@ -23,6 +23,7 @@ func (h *Hub) Run() {
 				}
 				err = h.DynamoDB.AddItemToDB(context.Background(), av)
 			}()
+
 			for _, client := range h.clients {
 				select {
 				case client.send <- msg:

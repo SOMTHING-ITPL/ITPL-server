@@ -54,7 +54,7 @@ var upgrader = websocket.Upgrader{
 // 	return nil
 // }
 
-func serveWs(w http.ResponseWriter, r *http.Request, rm *RoomManager) {
+func ServeWs(w http.ResponseWriter, r *http.Request, rm *RoomManager) {
 	roomIDStr := r.URL.Query().Get("room")
 	userIDStr := r.URL.Query().Get("uid")
 	if roomIDStr == "" || userIDStr == "" {

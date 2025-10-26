@@ -7,6 +7,7 @@ import (
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
+	"github.com/SOMTHING-ITPL/ITPL-server/chat"
 	"github.com/SOMTHING-ITPL/ITPL-server/config"
 	server "github.com/SOMTHING-ITPL/ITPL-server/internal/app"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/storage"
@@ -55,7 +56,11 @@ func main() {
 	tableBasics := dynamo.NewTableBasics(dynamoClient, "itpl-message-db")
 
 	storage.AutoMigrate(db)
-	r := server.SetupRouter(db, rdb, bucketService, &tableBasics)
+
+	//room manager
+	chatRM := chat.NewChatRoomManager(&tableBasics)
+
+	r := server.SetupRouter(db, rdb, bucketService, &tableBasics, chatRM)
 
 	r.Run(":8080")
 }
