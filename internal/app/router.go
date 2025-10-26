@@ -173,6 +173,7 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 
 func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
 	rg.GET("/rooms", chatRoomHandler.GetChatRoomsByCoordinate())
+	rg.GET("/rooms/title/:title", chatRoomHandler.GetChatRoomsByTitle())
 	rg.GET("/room/:room_id/members", chatRoomHandler.GetChatRoomMembers())
 	rg.GET("/history/:room_id", chatRoomHandler.GetHistory())
 	rg.GET("/my-rooms", chatRoomHandler.GetMyChatRooms())

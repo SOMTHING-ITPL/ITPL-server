@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
@@ -8,6 +9,7 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/course"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
 	"github.com/SOMTHING-ITPL/ITPL-server/place"
+	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"gorm.io/gorm"
 )
@@ -149,4 +151,28 @@ func ToChatRoomInfoResponse(cfg aws.Config, bucketName string, room chat.ChatRoo
 		CurrentMembers: currentMembers,
 		ArrivalName:    room.ArrivalName,
 	}, err
+}
+
+func ToChatRoomMemberInfoResponse(cfg aws.Config, bucketName string, DB *gorm.DB, userID uint) (ChatRoomMemberResponse, error) {
+	var user user.User
+
+	result := DB.First(&user, userID)
+	if result.Error != nil {
+		fmt.Printf("get user error : %s\n", result.Error)
+		return ChatRoomMemberResponse{}, result.Error
+	}
+	var url string
+	var err error
+	if user.Photo != nil {
+		url, err = s3.GetPresignURL(cfg, bucketName, aws.ToString(user.Photo))
+	}
+
+	if err != nil {
+		return ChatRoomMemberResponse{}, err
+	}
+	return ChatRoomMemberResponse{
+		UserID:   user.ID,
+		Nickname: user.NickName,
+		ImageUrl: url,
+	}, nil
 }

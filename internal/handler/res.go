@@ -148,3 +148,9 @@ type ChatRoomInfoResponse struct {
 	DepartureName  string  `json:"departure_name"`
 	ArrivalName    string  `json:"arrival_name"`
 }
+
+type ChatRoomMemberResponse struct {
+	UserID   uint   `json:"user_id"`
+	Nickname string `json:"nickname"`
+	ImageUrl string `json:"image_url,omitempty"`
+}
