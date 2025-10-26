@@ -39,3 +39,6 @@
 2025-10-26T18:08:06.664+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/chat/history/1", "client_ip": "::1"}
 2025-10-26T18:11:14.590+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/chat/rooms", "client_ip": "::1"}
 2025-10-26T18:11:35.511+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/chat/room/1/members", "client_ip": "::1"}
+2025-10-26T20:59:03.551+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "POST", "path": "/api/auth/login", "client_ip": "::1"}
+2025-10-26T21:00:07.601+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/chat/my-rooms", "client_ip": "::1"}
+2025-10-26T21:04:23.445+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/chat/room/1/members", "client_ip": "::1"}

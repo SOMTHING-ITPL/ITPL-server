@@ -25,6 +25,34 @@ func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Re
 }
 
 // GET
+// only title search
+func (h *ChatRoomHandler) GetChatRoomsByTitle() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		title := c.Param("title")
+		rooms, err := h.chatRoomRepository.SearchChatRoomsByTitle(title)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			return
+		}
+		var response []ChatRoomInfoResponse
+		for _, room := range rooms {
+			roomInfo, err := ToChatRoomInfoResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, room)
+			if err != nil {
+				log.Printf("Failed to get chat room info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
+				return
+			}
+			response = append(response, roomInfo)
+		}
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    response,
+		})
+	}
+}
+
+// GET
+// search by coordinates, title and performance day
 func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		title := c.Query("title")
@@ -87,7 +115,10 @@ func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 			}
 			response = append(response, roomInfo)
 		}
-		c.JSON(http.StatusOK, gin.H{"chat_rooms": response})
+		c.JSON(http.StatusOK, CommonRes{
+			Message: "success",
+			Data:    response,
+		})
 	}
 }
 
@@ -114,9 +145,19 @@ func (h *ChatRoomHandler) GetChatRoomMembers() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
+		var response []ChatRoomMemberResponse
+		for _, member := range members {
+			memberInfo, err := ToChatRoomMemberInfoResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, h.chatRoomRepository.DB, member.UserID)
+			if err != nil {
+				log.Printf("Failed to get chat room member info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room member info"})
+				return
+			}
+			response = append(response, memberInfo)
+		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: fmt.Sprintf("members of room %d", rid),
-			Data:    members,
+			Data:    response,
 		})
 	}
 }
@@ -289,9 +330,8 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 			return
 		}
 
-		// 응답 구조 수정 필요
 		c.JSON(http.StatusOK, CommonRes{
-			Message: "Chat history retrieved successfully",
+			Message: "success",
 			Data:    messages,
 		})
 	}
