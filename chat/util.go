@@ -76,19 +76,15 @@ func LoadParams(c *gin.Context) (ChatRoomInfo, error) {
 	arrivalName := c.PostForm("arrival_name")
 
 	info = ChatRoomInfo{
-		Title:          title,
-		PerformanceDay: performanceDay,
-		MaxMembers:     maxMembersi,
-		DepartureCoord: Region{
-			MapX: departureLongitude,
-			MapY: departureLatitude,
-		},
-		ArrivalCoord: Region{
-			MapX: arrivalLongitude,
-			MapY: arrivalLatitude,
-		},
-		DepartureName: departureName,
-		ArrivalName:   arrivalName,
+		Title:              title,
+		PerformanceDay:     performanceDay,
+		MaxMembers:         maxMembersi,
+		DepartureLongitude: departureLongitude,
+		DepartureLatitude:  departureLatitude,
+		ArrivalLongitude:   arrivalLongitude,
+		ArrivalLatitude:    arrivalLatitude,
+		DepartureName:      departureName,
+		ArrivalName:        arrivalName,
 	}
 	return info, nil
 }
