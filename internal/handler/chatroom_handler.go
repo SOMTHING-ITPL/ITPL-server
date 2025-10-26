@@ -29,7 +29,7 @@ func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Re
 // only title search
 func (h *ChatRoomHandler) GetChatRoomsByTitle() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		title := c.Param("title")
+		title := c.Query("title")
 		rooms, err := h.chatRoomRepository.SearchChatRoomsByTitle(title)
 		if err != nil {
 			c.Status(http.StatusInternalServerError)
@@ -215,8 +215,7 @@ func (h *ChatRoomHandler) JoinChatRoom() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
-		c.JSON(http.StatusOK, CommonRes{
-			Message: "Joined chat room successfully"})
+		c.Status(http.StatusNoContent)
 	}
 }
 
@@ -330,10 +329,20 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 			c.Status(http.StatusInternalServerError)
 			return
 		}
+		var response []ChatMessageResponse
+		for _, message := range messages {
+			res, err := ToChatMessageResponse(h.bucketBasics.AwsConfig, h.bucketBasics.BucketName, h.chatRoomRepository.DB, message)
+			if err != nil {
+				log.Printf("Failed to get chat room member info: %v", err)
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room member info"})
+				return
+			}
+			response = append(response, res)
+		}
 
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
-			Data:    messages,
+			Data:    response,
 		})
 	}
 }

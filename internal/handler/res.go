@@ -154,3 +154,13 @@ type ChatRoomMemberResponse struct {
 	Nickname string `json:"nickname"`
 	ImageUrl string `json:"image_url,omitempty"`
 }
+
+type ChatMessageResponse struct {
+	MessageSK string    `json:"message_sk"`
+	SenderID  uint      `json:"sender_id"`
+	Nickname  string    `json:"nickname"`
+	ImageURL  string    `json:"image_url,omitempty"`
+	RoomID    uint      `json:"room_id"`
+	Timestamp time.Time `json:"timestamp"`
+	Text      string    `json:"text"`
+}

@@ -165,14 +165,41 @@ func ToChatRoomMemberInfoResponse(cfg aws.Config, bucketName string, DB *gorm.DB
 	var err error
 	if user.Photo != nil {
 		url, err = s3.GetPresignURL(cfg, bucketName, aws.ToString(user.Photo))
+		if err != nil {
+			return ChatRoomMemberResponse{}, err
+		}
 	}
 
-	if err != nil {
-		return ChatRoomMemberResponse{}, err
-	}
 	return ChatRoomMemberResponse{
 		UserID:   user.ID,
 		Nickname: user.NickName,
 		ImageUrl: url,
+	}, nil
+}
+
+func ToChatMessageResponse(cfg aws.Config, bucketName string, DB *gorm.DB, msg chat.Message) (ChatMessageResponse, error) {
+	var user user.User
+
+	result := DB.First(&user, msg.SenderID)
+	if result.Error != nil {
+		fmt.Printf("get user error : %s\n", result.Error)
+		return ChatMessageResponse{}, result.Error
+	}
+	var url string
+	var err error
+	if user.Photo != nil {
+		url, err = s3.GetPresignURL(cfg, bucketName, aws.ToString(user.Photo))
+		if err != nil {
+			return ChatMessageResponse{}, err
+		}
+	}
+	return ChatMessageResponse{
+		MessageSK: msg.MessageSK,
+		SenderID:  user.ID,
+		Nickname:  user.NickName,
+		ImageURL:  url,
+		RoomID:    msg.RoomID,
+		Timestamp: msg.Timestamp,
+		Text:      msg.Text,
 	}, nil
 }
