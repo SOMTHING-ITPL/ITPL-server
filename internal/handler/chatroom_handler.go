@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -16,20 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-<<<<<<< HEAD
-func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
-=======
 func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics, rm *chat.RoomManager) *ChatRoomHandler {
->>>>>>> upstream/main
 	return &ChatRoomHandler{
 		chatRoomRepository: chatRoomRepo,
 		userRepository:     userRepo,
 		bucketBasics:       bucketBasics,
 		tableBasics:        basics,
-<<<<<<< HEAD
-=======
 		chatRoomManager:    rm,
->>>>>>> upstream/main
 	}
 }
 
@@ -51,13 +43,7 @@ func (h *ChatRoomHandler) GetChatRoomsByTitle() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
 				return
 			}
-<<<<<<< HEAD
-			if roomInfo.CurrentMembers < roomInfo.MaxMembers {
-				response = append(response, roomInfo)
-			}
-=======
 			response = append(response, roomInfo)
->>>>>>> upstream/main
 		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
@@ -128,13 +114,7 @@ func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
 				return
 			}
-<<<<<<< HEAD
-			if roomInfo.CurrentMembers < roomInfo.MaxMembers {
-				response = append(response, roomInfo)
-			}
-=======
 			response = append(response, roomInfo)
->>>>>>> upstream/main
 		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
@@ -359,29 +339,6 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 			}
 			response = append(response, res)
 		}
-<<<<<<< HEAD
-
-		c.JSON(http.StatusOK, CommonRes{
-			Message: "success",
-			Data:    response,
-		})
-	}
-}
-
-func (h *ChatRoomHandler) DeleteChatRoom() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		roomID := c.Param("room_id")
-		rid, err := strconv.ParseUint(roomID, 10, 64)
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid room_id"})
-			return
-		}
-		if err := h.chatRoomRepository.DeleteChatRoom(context.Background(), h.bucketBasics, h.tableBasics, uint(rid)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete room from DB"})
-			return
-		}
-		c.Status(http.StatusNoContent)
-=======
 
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
@@ -424,6 +381,5 @@ func (h *ChatRoomHandler) ConnectToChatRoom() gin.HandlerFunc {
 
 		chat.ServeWs(rid, userID, conn, h.chatRoomManager)
 
->>>>>>> upstream/main
 	}
 }
