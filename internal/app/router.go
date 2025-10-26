@@ -41,7 +41,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 	placeHandler := handler.NewPlaceHandler(db, userRepo, bucketBasics)
 	calendarHandler := handler.NewCalendarHandler(calendarRepo, performanceRepo)
 	artistHandler := handler.NewArtistHandler(artistRepo, bucketBasics)
-	chatRoomHandler := handler.NewChatRoomHandler(chatRoomRepo, userRepo, bucketBasics, tableBasics)
+	chatRoomHandler := handler.NewChatRoomHandler(chatRoomRepo, userRepo, bucketBasics, tableBasics, rm)
 
 	//this router does not needs auth
 	public := r.Group("/api")
@@ -51,9 +51,9 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 
 		authGroup := public.Group("/auth")
 		registerAuthRoutes(authGroup, userHandler)
-		r.GET("/ws", func(c *gin.Context) {
-			chat.ServeWs(c.Writer, c.Request, rm)
-		})
+		// r.GET("/ws", func(c *gin.Context) {
+		// 	chat.ServeWs(c.Writer, c.Request, rm)
+		// })
 
 	}
 
@@ -81,7 +81,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 		registerPerformanceRoutes(performanceGroup, performanceHandler)
 
 		chatGroup := protected.Group("/chat")
-		registerChatRoutes(chatGroup, chatRoomHandler, rm)
+		registerChatRoutes(chatGroup, chatRoomHandler)
 	}
 
 	return r
@@ -129,7 +129,6 @@ func registerUserPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *hand
 	rg.DELETE("/performance/:id", performanceHandler.DeletePerformanceLike())
 
 	rg.GET("/performance/recent", performanceHandler.GetRecentViewPerformance())
-
 }
 
 // for about course
@@ -172,7 +171,7 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 	// rg.POST("/view", performanceHandler.IncrementPerformanceView())
 }
 
-func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler, rm *chat.RoomManager) {
+func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
 	rg.GET("/rooms", chatRoomHandler.GetChatRoomsByCoordinate())
 	rg.GET("/room/:room_id/members", chatRoomHandler.GetChatRoomMembers())
 	rg.GET("/history/:room_id", chatRoomHandler.GetHistory())
@@ -183,8 +182,5 @@ func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHa
 
 	rg.PATCH("/room/leave/:room_id", chatRoomHandler.LeaveChatRoom())
 
-	//auth middle ware
-	// rg.GET("/ws", func(c *gin.Context) {
-	// 	chat.ServeWs(c.Writer, c.Request, rm)
-	// })
+	rg.GET("/ws/:room_Id", chatRoomHandler.ConnectToChatRoom())
 }

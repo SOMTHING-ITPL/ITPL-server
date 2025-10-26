@@ -40,6 +40,7 @@ type ChatRoomHandler struct {
 	userRepository     *user.Repository
 	bucketBasics       *s3.BucketBasics
 	tableBasics        *dynamo.TableBasics
+	chatRoomManager    *chat.RoomManager
 }
 
 type CalendarHandler struct {

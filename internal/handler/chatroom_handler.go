@@ -15,12 +15,13 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics) *ChatRoomHandler {
+func NewChatRoomHandler(chatRoomRepo *chat.ChatRoomRepository, userRepo *user.Repository, bucketBasics *s3.BucketBasics, basics *dynamo.TableBasics, rm *chat.RoomManager) *ChatRoomHandler {
 	return &ChatRoomHandler{
 		chatRoomRepository: chatRoomRepo,
 		userRepository:     userRepo,
 		bucketBasics:       bucketBasics,
 		tableBasics:        basics,
+		chatRoomManager:    rm,
 	}
 }
 
@@ -300,5 +301,42 @@ func (h *ChatRoomHandler) GetHistory() gin.HandlerFunc {
 			Message: "Chat history retrieved successfully",
 			Data:    messages,
 		})
+	}
+}
+
+func (h *ChatRoomHandler) ConnectToChatRoom() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roomID := c.Param("room_id")
+		log.Printf("[WS DEBUG] ConnectToChatRoom called with room_id: %s", roomID)
+
+		if roomID == "" {
+			log.Printf("[WS DEBUG] Missing room_id parameter")
+			c.JSON(http.StatusBadRequest, gin.H{"error": "room_id is required"})
+			return
+		}
+		rid, err := strconv.ParseUint(roomID, 10, 64)
+		if err != nil {
+			log.Printf("[WS DEBUG] Failed to parse room_id %s: %v", roomID, err)
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid room_id"})
+			return
+		}
+		uid, ok := c.Get("userID")
+		if !ok {
+			log.Printf("[WS DEBUG] No userID found in context")
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+			return
+		}
+		userID, _ := uid.(uint)
+		log.Printf("[WS DEBUG] User %d attempting to connect to room %d", userID, rid)
+
+		conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
+		if err != nil {
+			log.Printf("[WS DEBUG] WebSocket upgrade failed for user %d, room %d: %v", userID, rid, err)
+			return
+		}
+		log.Printf("[WS DEBUG] WebSocket connection established for user %d, room %d", userID, rid)
+
+		chat.ServeWs(rid, userID, conn, h.chatRoomManager)
+
 	}
 }
