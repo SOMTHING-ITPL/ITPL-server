@@ -81,7 +81,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 		registerPerformanceRoutes(performanceGroup, performanceHandler)
 
 		chatGroup := protected.Group("/chat")
-		registerChatRoutes(chatGroup, chatRoomHandler, rm)
+		registerChatRoutes(chatGroup, chatRoomHandler)
 	}
 
 	return r
