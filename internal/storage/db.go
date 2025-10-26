@@ -49,8 +49,8 @@ func AutoMigrate(db *gorm.DB) {
 		&performance.PerformanceImage{},
 		&performance.PerformanceUserLike{},
 		&calendar.Calendar{},
-		// &chat.ChatRoomMember{},
-		// &chat.ChatRoom{},
+		&chat.ChatRoom{},
+		&chat.ChatRoomMember{},
 	)
 
 	if err != nil {
