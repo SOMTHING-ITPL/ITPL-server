@@ -18,7 +18,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasics, tableBasics *dynamo.TableBasics) *gin.Engine {
+func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasics, tableBasics *dynamo.TableBasics, rm *chat.RoomManager) *gin.Engine {
 	logger, err := NewLogger()
 	if err != nil {
 		fmt.Printf("fail to get logger %s", err)
@@ -51,6 +51,9 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 
 		authGroup := public.Group("/auth")
 		registerAuthRoutes(authGroup, userHandler)
+		r.GET("/ws", func(c *gin.Context) {
+			chat.ServeWs(c.Writer, c.Request, rm)
+		})
 
 	}
 
@@ -78,7 +81,7 @@ func SetupRouter(db *gorm.DB, redisDB *redis.Client, bucketBasics *s3.BucketBasi
 		registerPerformanceRoutes(performanceGroup, performanceHandler)
 
 		chatGroup := protected.Group("/chat")
-		registerChatRoutes(chatGroup, chatRoomHandler)
+		registerChatRoutes(chatGroup, chatRoomHandler, rm)
 	}
 
 	return r
@@ -169,10 +172,19 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 	// rg.POST("/view", performanceHandler.IncrementPerformanceView())
 }
 
-func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
-	rg.POST("/room", chatRoomHandler.CreateChatRoom())
-	rg.POST("/room/join", chatRoomHandler.JoinChatRoom())
+func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler, rm *chat.RoomManager) {
 	rg.GET("/rooms", chatRoomHandler.GetChatRoomsByCoordinate())
 	rg.GET("/room/:room_id/members", chatRoomHandler.GetChatRoomMembers())
 	rg.GET("/history/:room_id", chatRoomHandler.GetHistory())
+	rg.GET("/my-rooms", chatRoomHandler.GetMyChatRooms())
+
+	rg.POST("/room", chatRoomHandler.CreateChatRoom())
+	rg.POST("/room/join", chatRoomHandler.JoinChatRoom())
+
+	rg.PATCH("/room/leave/:room_id", chatRoomHandler.LeaveChatRoom())
+
+	//auth middle ware
+	// rg.GET("/ws", func(c *gin.Context) {
+	// 	chat.ServeWs(c.Writer, c.Request, rm)
+	// })
 }

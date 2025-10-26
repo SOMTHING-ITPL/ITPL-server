@@ -55,7 +55,7 @@ func (r *ChatRoomRepository) GetChatRoomById(roomId uint) (*ChatRoom, error) {
 	return &room, nil
 }
 
-func (r *ChatRoomRepository) JoinChatRoom(userRepo *user.Repository, userId uint, roomId uint) error {
+func (r *ChatRoomRepository) AddUserToChatRoom(userRepo *user.Repository, userId uint, roomId uint) error {
 	chatRoom, err := r.GetChatRoomById(roomId)
 	if err != nil {
 		return err
@@ -86,7 +86,8 @@ func (r *ChatRoomRepository) GetChatRoomsByCoordinate(text string, performanceDa
 		Where("departure_map_y BETWEEN ? AND ?", departure.MapY-0.1, departure.MapY+0.1).
 		Where("arrival_map_x BETWEEN ? AND ?", arrival.MapX-0.1, arrival.MapX+0.1).
 		Where("arrival_map_y BETWEEN ? AND ?", arrival.MapY-0.1, arrival.MapY+0.1).
-		Where("performance_day = ?", performanceDay)
+		Where("performance_day = ?", performanceDay).
+		Preload("Members")
 
 	if err := query.Find(&rooms).Error; err != nil {
 		return nil, err
@@ -117,4 +118,21 @@ func (r *ChatRoomRepository) DeleteChatRoom(ctx context.Context, bucketBasics *s
 
 	// Delete chatroom from MySQL
 	return r.DB.Delete(&ChatRoom{}, roomID).Error
+}
+
+func (r *ChatRoomRepository) GetMyChatRooms(userID uint) ([]ChatRoom, error) {
+	var chatRooms []ChatRoom
+	err := r.DB.Joins("JOIN chat_room_members ON chat_rooms.id = chat_room_members.chat_room_id").
+		Where("chat_room_members.user_id = ?", userID).
+		Preload("Members").
+		Find(&chatRooms).Error
+	if err != nil {
+		return nil, err
+	}
+	return chatRooms, nil
+}
+
+// Message 구조체 dynamodb에 upload
+func (r *ChatRoomRepository) UploadMessageToDynamoDB(ctx context.Context, message Message) error {
+	return r.TableBasics.AddItemToDB(ctx, message)
 }

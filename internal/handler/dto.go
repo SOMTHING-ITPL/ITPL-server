@@ -138,6 +138,7 @@ func ToCourseDetails(db *gorm.DB, details []course.CourseDetail) ([]CourseDetail
 
 func ToChatRoomInfoResponse(cfg aws.Config, bucketName string, room chat.ChatRoom) (ChatRoomInfoResponse, error) {
 	imageUrl, err := s3.GetPresignURL(cfg, bucketName, *room.ImageKey)
+	currentMembers := len(room.Members)
 	return ChatRoomInfoResponse{
 		ID:             room.ID,
 		Title:          room.Title,
@@ -145,6 +146,7 @@ func ToChatRoomInfoResponse(cfg aws.Config, bucketName string, room chat.ChatRoo
 		PerformanceDay: room.PerformanceDay,
 		MaxMembers:     room.MaxMembers,
 		DepartureName:  room.DepartureName,
+		CurrentMembers: currentMembers,
 		ArrivalName:    room.ArrivalName,
 	}, err
 }
