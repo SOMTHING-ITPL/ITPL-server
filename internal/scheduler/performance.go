@@ -152,6 +152,7 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 		}
 
 		for _, performance := range performanceList {
+			fmt.Printf("Scheduler : tring to put data : %s ....", performance.Name)
 			performanceRes, err := api.GetDetailPerformance(performance.ID)
 			if err != nil {
 				return fmt.Errorf("Scheduler: Get Performance fail: %w", err)
@@ -159,12 +160,12 @@ func (s *PerformanceScheduler) PutPerformanceList(startDate string, endDate stri
 
 			facilityId, err := s.PutFacilityDetail(performanceRes.FacilityID, performanceRes.Area)
 			if err != nil {
-				return err
+				return fmt.Errorf("Scheduler: PUT Facility detail error: %w", err)
 			}
 
 			_, err = s.PutPerformanceDetail(performanceRes, performance.ID, facilityId)
 			if err != nil {
-				return err
+				return fmt.Errorf("Scheduler: PUT Performance detail error: %w", err)
 			}
 		}
 		pge++
