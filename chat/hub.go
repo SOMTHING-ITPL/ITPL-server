@@ -3,8 +3,6 @@ package chat
 import (
 	"context"
 	"log"
-
-	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
 )
 
 // TODO : send channel 이 가득 찰 경우에 => 블로킹 정책
@@ -26,12 +24,7 @@ func (h *Hub) Run() {
 		case msg := <-h.broadcast: //MessageType
 			//save to database
 			go func() {
-				av, err := attributevalue.MarshalMap(msg)
-				if err != nil {
-					log.Printf("[WS DEBUG] Failed to marshal message: %v", err)
-					return
-				}
-				err = h.DynamoDB.AddItemToDB(context.Background(), av)
+				err := h.DynamoDB.AddItemToDB(context.Background(), msg)
 				if err != nil {
 					log.Printf("[WS DEBUG] Failed to save message to DB: %v", err)
 				} else {
