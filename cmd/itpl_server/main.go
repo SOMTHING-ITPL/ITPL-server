@@ -1,9 +1,9 @@
 package main
 
 import (
-	"log"
-
 	"context"
+	"log"
+	"os"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
 	aws_client "github.com/SOMTHING-ITPL/ITPL-server/aws/s3"
@@ -53,7 +53,7 @@ func main() {
 
 	// DB Configuration
 	dynamoClient := dynamo.NewDynamoDBClient(awsCfg)
-	tableBasics := dynamo.NewTableBasics(dynamoClient, "itpl-message-db")
+	tableBasics := dynamo.NewTableBasics(dynamoClient, os.Getenv("DYNAMO_TABLE_NAME"))
 
 	storage.AutoMigrate(db)
 
