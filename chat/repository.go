@@ -26,7 +26,6 @@ func (r *ChatRoomRepository) CreateChatRoom(userRepo *user.Repository, info Chat
 		UserID:   me.ID,
 		JoinedAt: time.Now(),
 		IsAdmin:  true, // The creator is the admin
-		User:     me,
 	}
 
 	newChatRoom := &ChatRoom{
@@ -68,7 +67,6 @@ func (r *ChatRoomRepository) AddUserToChatRoom(userRepo *user.Repository, userId
 		UserID:   newUser.ID,
 		JoinedAt: time.Now(),
 		IsAdmin:  false, // Regular member
-		User:     newUser,
 	}
 	chatRoom.Members = append(chatRoom.Members, newMember)
 	if err := r.DB.Save(chatRoom).Error; err != nil {

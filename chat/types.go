@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SOMTHING-ITPL/ITPL-server/aws/dynamo"
-	"github.com/SOMTHING-ITPL/ITPL-server/user"
 	"github.com/gorilla/websocket"
 	"gorm.io/gorm"
 )
@@ -50,8 +49,6 @@ type ChatRoom struct {
 }
 
 type ChatRoomMember struct {
-	User user.User `gorm:"foreignKey:UserID"`
-
 	ChatRoomID uint      `json:"chat_room_id" gorm:"primaryKey"`
 	UserID     uint      `json:"user_id" gorm:"primaryKey"`
 	IsAdmin    bool      `json:"is_admin" gorm:"column:is_admin;default:false"`
