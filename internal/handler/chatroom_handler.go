@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -43,7 +44,9 @@ func (h *ChatRoomHandler) GetChatRoomsByTitle() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
 				return
 			}
-			response = append(response, roomInfo)
+			if roomInfo.CurrentMembers < roomInfo.MaxMembers {
+				response = append(response, roomInfo)
+			}
 		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
@@ -114,7 +117,9 @@ func (h *ChatRoomHandler) GetChatRoomsByCoordinate() gin.HandlerFunc {
 				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get chat room info"})
 				return
 			}
-			response = append(response, roomInfo)
+			if roomInfo.CurrentMembers < roomInfo.MaxMembers {
+				response = append(response, roomInfo)
+			}
 		}
 		c.JSON(http.StatusOK, CommonRes{
 			Message: "success",
@@ -381,5 +386,21 @@ func (h *ChatRoomHandler) ConnectToChatRoom() gin.HandlerFunc {
 
 		chat.ServeWs(rid, userID, conn, h.chatRoomManager)
 
+	}
+}
+
+func (h *ChatRoomHandler) DeleteChatRoom() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		roomID := c.Param("room_id")
+		rid, err := strconv.ParseUint(roomID, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid room_id"})
+			return
+		}
+		if err := h.chatRoomRepository.DeleteChatRoom(context.Background(), h.bucketBasics, h.tableBasics, uint(rid)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to delete room from DB"})
+			return
+		}
+		c.Status(http.StatusNoContent)
 	}
 }
