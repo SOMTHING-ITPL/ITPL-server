@@ -39,7 +39,7 @@ func main() {
 	//running
 	today := time.Now()
 
-	afterSixMonths := today.AddDate(0, 3, 0) //6으로 변경해야함.
+	afterSixMonths := today.AddDate(0, 6, 0) //6으로 변경해야함.
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
