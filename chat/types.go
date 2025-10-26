@@ -17,27 +17,27 @@ type ChatRoomRepository struct {
 
 // for CreateChatRoom()
 type ChatRoomInfo struct {
-	Title          string  `json:"title"`
-	ImgKey         *string `json:"img_key,omitempty"`
-	PerformanceDay int64   `json:"performance_day"`
-	MaxMembers     int     `json:"max_members"`
-	DepartureCoord Region  `json:"departure_coord"`
-	ArrivalCoord   Region  `json:"arrival_coord"`
-	DepartureName  string  `json:"departure_name"`
-	ArrivalName    string  `json:"arrival_name"`
+	Title              string  `json:"title"`
+	ImgKey             *string `json:"img_key,omitempty"`
+	PerformanceDay     int64   `json:"performance_day"`
+	MaxMembers         int     `json:"max_members"`
+	DepartureLatitude  float64 `json:"departure_latitude"`
+	DepartureLongitude float64 `json:"departure_longitude"`
+	ArrivalLatitude    float64 `json:"arrival_latitude"`
+	ArrivalLongitude   float64 `json:"arrival_longitude"`
+	DepartureName      string  `json:"departure_name"`
+	ArrivalName        string  `json:"arrival_name"`
 }
 
 // ChatRoom, ChatRoomMember : gorm mode
-type Region struct {
-	MapX float64 `json:"map_x"`
-	MapY float64 `json:"map_y"`
-}
 
 type ChatRoom struct {
 	gorm.Model
-	Members        []*ChatRoomMember `json:"members"`
-	DepartureCoord Region            `json:"departure_coord"`
-	ArrivalCoord   Region            `json:"arrival_coord"`
+	Members            []*ChatRoomMember `json:"members"`
+	DepartureLatitude  float64           `json:"daparture_latitude"`
+	DepartureLongitude float64           `json:"departure_longitude"`
+	ArrivalLatitude    float64           `json:"arrival_latitude"`
+	ArrivalLongitude   float64           `json:"arrival_longitude"`
 
 	DepartureName string `json:"departure_name"`
 	ArrivalName   string `json:"arrival_name"`
