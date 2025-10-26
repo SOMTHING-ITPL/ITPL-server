@@ -2,97 +2,32 @@ package chat
 
 import (
 	"log"
-	"net/http"
-	"strconv"
 
 	"github.com/gorilla/websocket"
 )
 
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true // Allow all origins for now
-	},
-}
+// 여기 단순히 roomid랑
+func ServeWs(roomID uint64, userID uint, conn *websocket.Conn, rm *RoomManager) {
+	log.Printf("[WS DEBUG] ServeWs called - roomID: %d, userID: %d", roomID, userID)
 
-// // roomManager.rooms[roomID]에 user 추가
-// func (rm *RoomManager) JoinUserToRoom(u *WSMember, roomID uint) {
-// 	rm.Lock()
-// 	defer rm.Unlock()
-// 	room, exists := rm.Rooms[roomID]
-// 	if !exists {
-// 		rm.Rooms[roomID] = &WSRoom{
-// 			Members: make([]*WSMember, 0),
-// 		}
-// 		room = rm.Rooms[roomID]
-// 	}
-// 	room.Lock()
-// 	defer room.Unlock()
-// 	room.Members = append(room.Members, u)
-// }
+	hub := rm.GetOrCreate(uint(roomID)) //uint64 써야 할 것 같은데 급하니깐 keep dynamodb 랑 안 맞으면 큰일남.
+	log.Printf("[WS DEBUG] Hub retrieved/created for room %d", roomID)
 
-// // roomManager.rooms[roomID]에서 user 제거
-// func (rm *RoomManager) LeaveUserFromRoom(u *WSMember, roomId uint) error {
-// 	rm.Lock()
-// 	defer rm.Unlock()
-// 	room, exists := rm.Rooms[roomId]
-// 	if !exists {
-// 		return fmt.Errorf("room %d does not exist", roomId)
-// 	}
-// 	room.Lock()
-// 	defer room.Unlock()
-// 	for i, member := range room.Members {
-// 		if member == u {
-// 			room.Members = append(room.Members[:i], room.Members[i+1:]...)
-// 			break
-// 		}
-// 	}
-// 	if len(room.Members) == 0 {
-// 		delete(rm.Rooms, roomId)
-// 	}
-// 	return nil
-// }
-
-func ServeWs(w http.ResponseWriter, r *http.Request, rm *RoomManager) {
-	roomIDStr := r.URL.Query().Get("room")
-	userIDStr := r.URL.Query().Get("uid")
-	if roomIDStr == "" || userIDStr == "" {
-		http.Error(w, "missing params", http.StatusBadRequest)
-		return
-	}
-
-	roomID, err := strconv.ParseUint(roomIDStr, 10, 32)
-	if err != nil {
-		http.Error(w, "invalid room ID", http.StatusBadRequest)
-		return
-	}
-
-	userID, err := strconv.ParseUint(userIDStr, 10, 32)
-	if err != nil {
-		http.Error(w, "invalid user ID", http.StatusBadRequest)
-		return
-	}
-
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	hub := rm.GetOrCreate(uint(roomID))
 	client := &Client{
-		id:     uint(userID),
+		id:     userID,
 		roomID: uint(roomID),
 		hub:    hub,
 		conn:   conn,
 		send:   make(chan Message, 256),
 	}
+	log.Printf("[WS DEBUG] Client created for user %d in room %d", userID, roomID)
 
 	hub.register <- client
+	log.Printf("[WS DEBUG] Client %d registered with hub for room %d", userID, roomID)
 
 	go client.ReadMessages()
 	go client.WriteMessages()
+	log.Printf("[WS DEBUG] Started read/write goroutines for user %d", userID)
 
 	return
 }
