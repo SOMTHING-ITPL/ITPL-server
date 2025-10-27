@@ -77,6 +77,15 @@ func (r *ChatRoomRepository) AddUserToChatRoom(userRepo *user.Repository, userId
 	return nil
 }
 
+func (r *ChatRoomRepository) SearchChatRoomsByTitle(title string) ([]ChatRoom, error) {
+	var rooms []ChatRoom
+	err := r.DB.Where("title LIKE ?", "%"+title+"%").Preload("Members").Find(&rooms).Error
+	if err != nil {
+		return nil, err
+	}
+	return rooms, nil
+}
+
 func (r *ChatRoomRepository) GetChatRoomsByCoordinate(text string, performanceDay int64, departureLatitude, departureLongitude, arrivalLatitude, arrivalLongitude float64) ([]ChatRoom, error) {
 	var rooms []ChatRoom
 

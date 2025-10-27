@@ -1,6 +1,5 @@
 syntax = "proto3";
 
-package recommender;
 option go_package = "ITPL-server/grpc_client/recommend_client";
 
 service Recommender {
@@ -9,7 +8,7 @@ service Recommender {
 
 message UserRequest {
   int32 user_id = 1;
-  repeated string genres = 2;
+  repeated int32 genres = 2;
   repeated string artists = 3;
   repeated string fav_ids = 4;
   int32 topk = 5;

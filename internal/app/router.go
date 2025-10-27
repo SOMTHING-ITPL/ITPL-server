@@ -173,6 +173,7 @@ func registerPerformanceRoutes(rg *gin.RouterGroup, performanceHandler *handler.
 
 func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHandler) {
 	rg.GET("/rooms", chatRoomHandler.GetChatRoomsByCoordinate())
+	rg.GET("/rooms/title", chatRoomHandler.GetChatRoomsByTitle())
 	rg.GET("/room/:room_id/members", chatRoomHandler.GetChatRoomMembers())
 	rg.GET("/history/:room_id", chatRoomHandler.GetHistory())
 	rg.GET("/my-rooms", chatRoomHandler.GetMyChatRooms())
@@ -182,5 +183,11 @@ func registerChatRoutes(rg *gin.RouterGroup, chatRoomHandler *handler.ChatRoomHa
 
 	rg.PATCH("/room/leave/:room_id", chatRoomHandler.LeaveChatRoom())
 
+	rg.DELETE("room/:room_id", chatRoomHandler.DeleteChatRoom())
+
 	rg.GET("/ws/:room_id", chatRoomHandler.ConnectToChatRoom())
+	//auth middle ware
+	// rg.GET("/ws", func(c *gin.Context) {
+	// 	chat.ServeWs(c.Writer, c.Request, rm)
+	// })
 }
