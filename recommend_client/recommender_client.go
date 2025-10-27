@@ -13,6 +13,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+// usage
+// client, err := NewClient(addr)
+
+// socket : python server addr
 func NewClient(socket string) (*RecommenderRPCClient, error) {
 	conn, err := grpc.NewClient(socket, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -25,6 +29,9 @@ func NewClient(socket string) (*RecommenderRPCClient, error) {
 	return &RecommenderRPCClient{Conn: conn, Client: client}, nil
 }
 
+// usage
+// performances, err := client.PerformanceRecommendation(userRepo, performanceRepo, artistRepo, userID, topK)
+// userID 기반으로 장르, 아티스트, 좋아요 목록 추출 후 grpc 요청
 func (c *RecommenderRPCClient) PerformanceRecommendation(userRepo *user.Repository, performanceRepo *performance.Repository, artistRepo *artist.Repository, userID uint, topK int32) ([]performance.Performance, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
