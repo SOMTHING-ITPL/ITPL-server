@@ -151,7 +151,10 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			return
 		}
 
-		course.SetPerformanceID(h.database, &createdCourse, req.PerformanceID)
+		if err := course.SetPerformanceID(h.database, &createdCourse, req.PerformanceID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set performance_id"})
+			return
+		}
 		courseInfo := ToCourseInfo(createdCourse)
 		courseInfo.ImageURL = performance.PosterURL
 		res := response{

@@ -142,9 +142,11 @@ func ModifyCourseImageKey(db *gorm.DB, courseId uint, key *string) error {
 }
 
 func SetPerformanceID(db *gorm.DB, course *Course, performanceId uint) error {
-	course.PerformanceID = &performanceId
-	if err := db.Save(&course).Error; err != nil {
-		return fmt.Errorf("failed to save performance id: %w", err)
+	err := db.Model(&Course{}).Where("id = ?", course.ID).Updates(Course{
+		PerformanceID: &performanceId,
+	}).Error
+	if err != nil {
+		return err
 	}
 	return nil
 }
