@@ -98,6 +98,7 @@ func (h *UserHandler) VerifyEmailCode() gin.HandlerFunc {
 
 func (h *UserHandler) GetUser() gin.HandlerFunc {
 	type res struct {
+		ID			   string  `json:"id"`
 		CreatedAt      string  `json:"created_at"`
 		UpdatedAt      string  `json:"updated_at"`
 		Email          string  `json:"email,omitempty"`
@@ -141,6 +142,7 @@ func (h *UserHandler) GetUser() gin.HandlerFunc {
 			Data: CommonRes{
 				Message: "success",
 				Data: res{
+					ID:			   fmt.Sprintf("%d", user.ID),
 					CreatedAt:      user.CreatedAt.Format(time.RFC3339),
 					UpdatedAt:      user.UpdatedAt.Format(time.RFC3339),
 					NickName:       user.NickName,

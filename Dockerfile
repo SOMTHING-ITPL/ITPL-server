@@ -15,10 +15,13 @@ RUN go build -o main ./cmd/itpl_server/main.go
 # Runtime stage
 FROM debian:bullseye-slim
 
-RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    tzdata \
+ && rm -rf /var/lib/apt/lists/*
 
 ENV TZ=Asia/Seoul
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
 WORKDIR /app   
 

@@ -9,6 +9,7 @@ import (
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/scheduler"
 	"github.com/SOMTHING-ITPL/ITPL-server/internal/storage"
 	"github.com/SOMTHING-ITPL/ITPL-server/performance"
+	"github.com/SOMTHING-ITPL/ITPL-server/update_client"
 	"github.com/joho/godotenv"
 )
 
@@ -38,18 +39,24 @@ func main() {
 	//running
 	today := time.Now()
 
-	afterSixMonths := today.AddDate(0, 0, -10) //6으로 변경해야함.
+	afterSixMonths := today.AddDate(0, 6, 0) //6으로 변경해야함.
 
 	layout := "20060102"
 	todayStr := today.Format(layout)
 	afterSixMonthsStr := afterSixMonths.Format(layout)
+	sock := config.GrpcCfg.Host + ":" + config.GrpcCfg.UpdatePort
+	fmt.Print(sock)
+	cli, err := update_client.NewClient(sock)
 
+	if err != nil {
+		log.Fatal("Failed to create update client:", err)
+	}
 	//공연예정 -> 잠시
-	if err := scheduler.PutPerformanceList(afterSixMonthsStr, todayStr, false, nil); err != nil {
+	if err := scheduler.PutPerformanceList(afterSixMonthsStr, todayStr, false, nil, cli); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 	//공연중
-	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, true, nil); err != nil {
+	if err := scheduler.PutPerformanceList(todayStr, afterSixMonthsStr, true, nil, cli); err != nil {
 		fmt.Errorf("error is occur ! %s", err)
 	}
 
