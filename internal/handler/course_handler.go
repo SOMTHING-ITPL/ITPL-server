@@ -151,7 +151,10 @@ func (h *CourseHandler) CourseSuggestionHandler() gin.HandlerFunc {
 			return
 		}
 
-		course.SetPerformanceID(h.database, &createdCourse, req.PerformanceID)
+		if err := course.SetPerformanceID(h.database, &createdCourse, req.PerformanceID); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to set performance_id"})
+			return
+		}
 		courseInfo := ToCourseInfo(createdCourse)
 		courseInfo.ImageURL = performance.PosterURL
 		res := response{
@@ -199,13 +202,15 @@ func (h *CourseHandler) GetCourseDetails() gin.HandlerFunc {
 			imageURL = &URL
 		} else {
 			if co.IsAICreated {
-				performance, err := h.performanceRepo.GetPerformanceById(*co.PerformanceID)
-				if err != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
-					return
+				if co.PerformanceID != nil {
+					performance, err := h.performanceRepo.GetPerformanceById(*co.PerformanceID)
+					if err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+						return
+					}
+					defaultURL := performance.PosterURL
+					imageURL = defaultURL
 				}
-				defaultURL := performance.PosterURL
-				imageURL = defaultURL
 			}
 		}
 
@@ -279,13 +284,15 @@ func (h *CourseHandler) GetMyCourses() gin.HandlerFunc {
 				imageURL = &URL
 			} else {
 				if course.IsAICreated {
-					performance, err := h.performanceRepo.GetPerformanceById(*course.PerformanceID)
-					if err != nil {
-						c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
-						return
+					if course.PerformanceID != nil {
+						performance, err := h.performanceRepo.GetPerformanceById(*course.PerformanceID)
+						if err != nil {
+							c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get performance"})
+							return
+						}
+						defaultURL := performance.PosterURL
+						imageURL = defaultURL
 					}
-					defaultURL := performance.PosterURL
-					imageURL = defaultURL
 				}
 			}
 			courseInfos = append(courseInfos, CourseInfoResponse{

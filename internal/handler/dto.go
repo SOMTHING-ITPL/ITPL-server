@@ -139,7 +139,13 @@ func ToCourseDetails(db *gorm.DB, details []course.CourseDetail) ([]CourseDetail
 }
 
 func ToChatRoomInfoResponse(cfg aws.Config, bucketName string, room chat.ChatRoom) (ChatRoomInfoResponse, error) {
-	imageUrl, err := s3.GetPresignURL(cfg, bucketName, *room.ImageKey)
+	imageUrl := ""
+	var err error
+
+	if room.ImageKey != nil {
+		imageUrl, err = s3.GetPresignURL(cfg, bucketName, *room.ImageKey)
+	}
+
 	currentMembers := len(room.Members)
 	return ChatRoomInfoResponse{
 		ID:             room.ID,
