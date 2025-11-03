@@ -18,3 +18,4 @@
 2025-10-26T21:01:59.713+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "GET", "path": "/api/chat/room/1/members", "client_ip": "::1", "response": "{\"error\":\"Failed to get chat room member info\"}"}
 2025-10-26T21:39:46.448+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 401, "method": "GET", "path": "/api/chat/history/1", "client_ip": "::1", "response": "{\"error\":\"Invalid token\"}"}
 2025-10-26T21:40:10.893+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 500, "method": "GET", "path": "/api/chat/history/1", "client_ip": "::1", "response": "{\"error\":\"Failed to get chat room member info\"}"}
+2025-10-27T02:16:07.138+0900	error	app/log_middleware.go:74	HTTP error : 	{"status": 400, "method": "POST", "path": "/api/testdata/sample/artist", "client_ip": "::1", "response": "{\"error\":\"failed to get file \"}"}

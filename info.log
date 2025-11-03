@@ -46,3 +46,5 @@
 2025-10-26T22:18:21.259+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "POST", "path": "/api/auth/login", "client_ip": "::1"}
 2025-10-26T22:18:58.349+0900	info	app/log_middleware.go:82	HTTP request	{"status": 204, "method": "DELETE", "path": "/api/chat/room/1", "client_ip": "::1"}
 2025-10-26T22:20:36.065+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "GET", "path": "/api/chat/my-rooms", "client_ip": "::1"}
+2025-10-27T02:14:01.452+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "POST", "path": "/api/auth/login", "client_ip": "::1"}
+2025-10-27T02:18:40.533+0900	info	app/log_middleware.go:82	HTTP request	{"status": 200, "method": "POST", "path": "/api/testdata/sample/artist", "client_ip": "::1"}

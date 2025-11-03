@@ -24,7 +24,7 @@ const (
 type UserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	UserId        int32                  `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	Genres        []string               `protobuf:"bytes,2,rep,name=genres,proto3" json:"genres,omitempty"`
+	Genres        []int32                `protobuf:"varint,2,rep,packed,name=genres,proto3" json:"genres,omitempty"`
 	Artists       []string               `protobuf:"bytes,3,rep,name=artists,proto3" json:"artists,omitempty"`
 	FavIds        []string               `protobuf:"bytes,4,rep,name=fav_ids,json=favIds,proto3" json:"fav_ids,omitempty"`
 	Topk          int32                  `protobuf:"varint,5,opt,name=topk,proto3" json:"topk,omitempty"`
@@ -69,7 +69,7 @@ func (x *UserRequest) GetUserId() int32 {
 	return 0
 }
 
-func (x *UserRequest) GetGenres() []string {
+func (x *UserRequest) GetGenres() []int32 {
 	if x != nil {
 		return x.Genres
 	}
@@ -208,7 +208,7 @@ const file_recommender_proto_rawDesc = "" +
 	"\x11recommender.proto\"\x85\x01\n" +
 	"\vUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\x05R\x06userId\x12\x16\n" +
-	"\x06genres\x18\x02 \x03(\tR\x06genres\x12\x18\n" +
+	"\x06genres\x18\x02 \x03(\x05R\x06genres\x12\x18\n" +
 	"\aartists\x18\x03 \x03(\tR\aartists\x12\x17\n" +
 	"\afav_ids\x18\x04 \x03(\tR\x06favIds\x12\x12\n" +
 	"\x04topk\x18\x05 \x01(\x05R\x04topk\"C\n" +
